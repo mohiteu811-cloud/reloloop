@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ReloLoop — Sell it here. Buy it there. Move smarter.</title>
+<title>ReloLoop — Onboarding</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,1685 +15,1353 @@
     --forest-soft: #2C4034;
     --moss: #4A6B52;
     --clay: #C9542A;
-    --clay-deep: #A4421F;
-    --ink: #161613;
+    --clay-soft: #DCA68F;
     --paper: #FBF7EE;
     --rule: rgba(27, 42, 34, 0.18);
     --rule-soft: rgba(27, 42, 34, 0.08);
+    --error: #B33A1F;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
+  html, body { height: 100%; }
 
   body {
     background: var(--cream);
     color: var(--forest);
     font-family: 'Geist', sans-serif;
-    font-weight: 400;
-    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     background-image:
-      radial-gradient(circle at 20% 10%, rgba(74, 107, 82, 0.08) 0%, transparent 40%),
-      radial-gradient(circle at 80% 90%, rgba(201, 84, 42, 0.06) 0%, transparent 35%);
+      radial-gradient(circle at 15% 5%, rgba(74,107,82,0.07) 0%, transparent 35%),
+      radial-gradient(circle at 85% 95%, rgba(201,84,42,0.05) 0%, transparent 35%);
   }
 
-  /* Subtle grain overlay */
   body::before {
     content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.4;
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    opacity: 0.35;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.16 0 0 0 0 0.13 0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     mix-blend-mode: multiply;
   }
 
   ::selection { background: var(--clay); color: var(--paper); }
 
-  /* Typography */
-  .display {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 50;
-    font-weight: 400;
-    line-height: 0.92;
-    letter-spacing: -0.035em;
-  }
-
-  .display em {
-    font-style: italic;
-    font-variation-settings: "opsz" 144, "SOFT" 100;
-    color: var(--clay);
-  }
-
-  .mono {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 500;
-  }
-
-  .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--moss);
-    font-weight: 500;
-  }
-
-  /* Layout */
-  .container {
-    max-width: 1320px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    position: relative;
-    z-index: 2;
-  }
-
-  section {
-    padding: 7rem 0;
-    position: relative;
-  }
-
-  /* === NAV === */
-  nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    padding: 1.5rem 2rem;
-    backdrop-filter: blur(12px) saturate(1.4);
-    -webkit-backdrop-filter: blur(12px) saturate(1.4);
-    background: rgba(242, 235, 221, 0.78);
+  /* === TOP BAR === */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px) saturate(1.4);
+    background: rgba(242,235,221,0.78);
     border-bottom: 1px solid var(--rule-soft);
+    padding: 0.9rem 1.5rem;
   }
-
-  .nav-inner {
-    max-width: 1320px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
+  .topbar-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
     align-items: center;
   }
-
   .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
+    display: flex; align-items: center; gap: 0.5rem;
     font-family: 'Fraunces', serif;
     font-variation-settings: "opsz" 14, "SOFT" 50;
-    font-size: 1.35rem;
-    font-weight: 500;
-    letter-spacing: -0.02em;
+    font-size: 1.15rem; font-weight: 500; letter-spacing: -0.02em;
+    color: var(--forest); text-decoration: none;
+  }
+  .logo svg { width: 22px; height: 22px; }
+
+  .back-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 0.4rem 0.6rem; border-radius: 8px;
     color: var(--forest);
+    display: flex; align-items: center; gap: 0.4rem;
+    font-family: inherit; font-size: 0.85rem;
+    transition: background 0.2s;
+    visibility: hidden;
   }
+  .back-btn.visible { visibility: visible; }
+  .back-btn:hover { background: var(--rule-soft); }
+  .back-btn svg { width: 14px; height: 14px; }
 
-  .logo-mark {
-    width: 28px;
-    height: 28px;
-    position: relative;
+  .progress-wrap { display: flex; align-items: center; gap: 0.7rem; justify-content: center; }
+  .progress-track {
+    width: 180px; height: 3px; background: var(--rule); border-radius: 999px; overflow: hidden;
   }
-
-  .logo-mark svg { width: 100%; height: 100%; }
-
-  .nav-links {
-    display: flex;
-    gap: 2.5rem;
-    list-style: none;
-    align-items: center;
-  }
-
-  .nav-links a {
-    color: var(--forest);
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: color 0.2s;
-  }
-
-  .nav-links a:hover { color: var(--clay); }
-
-  .nav-cta {
-    padding: 0.55rem 1.1rem;
-    background: var(--forest);
-    color: var(--cream);
+  .progress-fill {
+    height: 100%; background: var(--clay);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     border-radius: 999px;
-    font-size: 0.82rem !important;
-    transition: all 0.25s ease;
+  }
+  .progress-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--moss); white-space: nowrap;
   }
 
-  .nav-cta:hover {
-    background: var(--clay) !important;
-    color: var(--paper) !important;
+  .right-meta {
+    display: flex; justify-content: flex-end; gap: 0.5rem; align-items: center;
   }
-
-  @media (max-width: 720px) {
-    .nav-links li:not(:last-child) { display: none; }
-  }
-
-  /* === HERO === */
-  .hero {
-    padding: 11rem 0 6rem;
-    min-height: 92vh;
-    display: flex;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 3rem;
-    width: 100%;
-  }
-
-  .hero-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.7rem;
-    padding: 0.4rem 0.9rem 0.4rem 0.5rem;
+  .proto-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 0.3rem 0.6rem;
     border: 1px solid var(--rule);
     border-radius: 999px;
-    background: rgba(251, 247, 238, 0.5);
-    margin-bottom: 2rem;
-    width: fit-content;
-  }
-
-  .hero-tag-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--clay);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.85); }
-  }
-
-  .hero h1 {
-    font-size: clamp(3rem, 9vw, 8.5rem);
-    margin-bottom: 2rem;
-  }
-
-  .hero h1 .line {
-    display: block;
-    overflow: hidden;
-  }
-
-  .hero h1 .line span {
-    display: inline-block;
-    animation: rise 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-  }
-
-  .hero h1 .line:nth-child(1) span { animation-delay: 0.1s; }
-  .hero h1 .line:nth-child(2) span { animation-delay: 0.25s; }
-  .hero h1 .line:nth-child(3) span { animation-delay: 0.4s; }
-
-  @keyframes rise {
-    from { transform: translateY(110%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  .hero-bottom {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 4rem;
-    align-items: end;
-    border-top: 1px solid var(--rule);
-    padding-top: 2.5rem;
-    margin-top: 1rem;
-  }
-
-  @media (max-width: 860px) {
-    .hero-bottom { grid-template-columns: 1fr; gap: 2rem; }
-  }
-
-  .hero-lede {
-    font-size: clamp(1.05rem, 1.5vw, 1.3rem);
-    line-height: 1.5;
-    color: var(--forest-soft);
-    max-width: 38ch;
-    font-weight: 400;
-  }
-
-  .hero-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    align-items: flex-start;
-  }
-
-  .hero-meta-row {
-    display: flex;
-    gap: 1rem;
-    align-items: baseline;
-    width: 100%;
-    border-bottom: 1px dashed var(--rule);
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .hero-meta-row:last-child { border-bottom: none; }
-
-  .hero-meta .label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
     color: var(--moss);
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    min-width: 5.5rem;
+    background: rgba(251,247,238,0.4);
   }
 
-  .hero-meta .value {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 14;
-    font-size: 0.95rem;
-    color: var(--forest);
+  /* === MAIN === */
+  main {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem;
+    position: relative; z-index: 2;
   }
 
-  /* Floating loop visual */
-  .hero-loop {
-    position: absolute;
-    right: -5%;
-    top: 18%;
-    width: 460px;
-    height: 460px;
-    pointer-events: none;
-    opacity: 0.85;
-    animation: drift 22s ease-in-out infinite, slow-spin 60s linear infinite;
-  }
-
-  @keyframes drift {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(-20px, 20px); }
-  }
-
-  @keyframes slow-spin {
-    from { transform: rotate(0); }
-    to { transform: rotate(360deg); }
-  }
-
-  @media (max-width: 1100px) {
-    .hero-loop { display: none; }
-  }
-
-  /* === MARQUEE === */
-  .marquee {
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-    padding: 1.4rem 0;
-    overflow: hidden;
-    background: var(--cream-deep);
-  }
-
-  .marquee-track {
-    display: flex;
-    gap: 3.5rem;
-    animation: scroll 38s linear infinite;
-    white-space: nowrap;
-    align-items: center;
-    width: max-content;
-  }
-
-  .marquee-track span {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 80;
-    font-style: italic;
-    font-size: 1.6rem;
-    color: var(--forest);
-  }
-
-  .marquee-track .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--clay);
-    flex-shrink: 0;
-  }
-
-  @keyframes scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
-  /* === PROBLEM === */
-  .problem-header {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 4rem;
-    margin-bottom: 5rem;
-    align-items: end;
-  }
-
-  @media (max-width: 860px) {
-    .problem-header { grid-template-columns: 1fr; gap: 2rem; }
-  }
-
-  .section-label {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-
-  .section-label::before {
-    content: '';
-    width: 30px;
-    height: 1px;
-    background: var(--moss);
-  }
-
-  h2 {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 50;
-    font-weight: 400;
-    font-size: clamp(2.2rem, 5vw, 4rem);
-    line-height: 0.98;
-    letter-spacing: -0.025em;
-  }
-
-  h2 em {
-    font-style: italic;
-    font-variation-settings: "opsz" 144, "SOFT" 100;
-    color: var(--clay);
-  }
-
-  .problem-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--rule);
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-  }
-
-  @media (max-width: 720px) {
-    .problem-stats { grid-template-columns: 1fr; }
-  }
-
-  .stat {
-    background: var(--cream);
-    padding: 3rem 2rem 3rem 0;
-    position: relative;
-  }
-
-  .stat:not(:first-child) { padding-left: 2rem; }
-
-  .stat-number {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 50;
-    font-weight: 300;
-    font-size: clamp(4rem, 9vw, 7rem);
-    line-height: 0.9;
-    letter-spacing: -0.04em;
-    color: var(--forest);
-    margin-bottom: 1rem;
-    display: block;
-  }
-
-  .stat-number em {
-    font-style: italic;
-    font-variation-settings: "opsz" 144, "SOFT" 100;
-    color: var(--clay);
-    font-weight: 400;
-  }
-
-  .stat-label {
-    font-size: 0.95rem;
-    color: var(--forest-soft);
-    line-height: 1.45;
-    max-width: 28ch;
-  }
-
-  .problem-context {
-    margin-top: 4rem;
-    padding-top: 3rem;
-    border-top: 1px solid var(--rule);
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 4rem;
-  }
-
-  @media (max-width: 860px) {
-    .problem-context { grid-template-columns: 1fr; gap: 1.5rem; }
-  }
-
-  .problem-context p {
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: var(--forest-soft);
-    max-width: 60ch;
-  }
-
-  /* === WHITESPACE / VENN === */
-  .whitespace {
-    background: var(--paper);
-    border-radius: 0;
-    margin: 0 -2rem;
-    padding: 7rem 2rem;
-    position: relative;
-  }
-
-  .whitespace-inner {
-    max-width: 1320px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5rem;
-    align-items: center;
-  }
-
-  @media (max-width: 900px) {
-    .whitespace-inner { grid-template-columns: 1fr; gap: 3rem; }
-  }
-
-  .venn {
-    position: relative;
+  .screen {
+    display: none;
     width: 100%;
-    max-width: 480px;
-    aspect-ratio: 1.4 / 1;
-    margin: 0 auto;
+    max-width: 640px;
+    animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .venn svg { width: 100%; height: 100%; }
+  /* === COMMON SCREEN STYLES === */
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--moss); margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .eyebrow::before {
+    content: ''; width: 24px; height: 1px; background: var(--moss);
+  }
 
-  .whitespace-text h2 { margin-bottom: 1.5rem; }
-  .whitespace-text p {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: var(--forest-soft);
+  h1.screen-title {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 60;
+    font-weight: 400;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
     margin-bottom: 1rem;
+  }
+  h1.screen-title em {
+    font-style: italic;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    color: var(--clay);
+  }
+
+  .screen-sub {
+    font-size: 1.05rem; color: var(--forest-soft); line-height: 1.55;
+    margin-bottom: 2.5rem;
     max-width: 50ch;
   }
 
-  /* === SOLUTION / STEPS === */
-  .steps-header {
-    text-align: left;
-    margin-bottom: 5rem;
-    max-width: 800px;
-  }
-
-  .steps-header h2 { margin-top: 1rem; margin-bottom: 1.5rem; }
-
-  .steps-header p {
-    font-size: 1.1rem;
-    color: var(--forest-soft);
-    max-width: 60ch;
-    line-height: 1.6;
-  }
-
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    border-top: 1px solid var(--forest);
-  }
-
-  @media (max-width: 900px) {
-    .steps { grid-template-columns: 1fr 1fr; }
-  }
-  @media (max-width: 540px) {
-    .steps { grid-template-columns: 1fr; }
-  }
-
-  .step {
-    padding: 2.5rem 1.8rem 2.5rem 0;
-    border-right: 1px solid var(--rule);
-    position: relative;
-    transition: background 0.3s ease;
-  }
-
-  .step:last-child { border-right: none; padding-right: 0; }
-
-  @media (max-width: 900px) {
-    .step:nth-child(2) { border-right: none; }
-    .step:nth-child(1), .step:nth-child(2) { border-bottom: 1px solid var(--rule); }
-  }
-
-  .step-num {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 50;
-    font-weight: 300;
-    font-style: italic;
-    font-size: 4rem;
-    line-height: 1;
-    color: var(--clay);
-    margin-bottom: 1.5rem;
-    display: block;
-  }
-
-  .step-title {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 24;
-    font-size: 1.35rem;
-    font-weight: 500;
-    margin-bottom: 0.6rem;
-    line-height: 1.2;
-  }
-
-  .step-desc {
-    font-size: 0.92rem;
-    color: var(--forest-soft);
-    line-height: 1.55;
-  }
-
-  /* === PARTNERSHIP === */
-  .partnership {
-    background: var(--forest);
-    color: var(--cream);
-    margin: 0 -2rem;
-    padding: 8rem 2rem;
-  }
-
-  .partnership .container { max-width: 1320px; }
-
-  .partnership .section-label {
-    color: var(--cream-deep);
-  }
-
-  .partnership .section-label::before {
-    background: var(--clay);
-  }
-
-  .partnership .section-label .mono { color: var(--cream-deep); }
-
-  .partnership h2 {
-    color: var(--cream);
-    margin-bottom: 1.5rem;
-    margin-top: 1rem;
-    max-width: 18ch;
-  }
-
-  .partnership-intro {
-    color: var(--cream-deep);
-    font-size: 1.1rem;
-    line-height: 1.6;
-    max-width: 56ch;
-    margin-bottom: 5rem;
-  }
-
-  .partnership-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-  }
-
-  @media (max-width: 860px) {
-    .partnership-grid { grid-template-columns: 1fr; gap: 2rem; }
-  }
-
-  .partner-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(242, 235, 221, 0.15);
-    padding: 2.5rem;
-    border-radius: 4px;
-    transition: border-color 0.3s, background 0.3s;
-  }
-
-  .partner-card:hover {
-    border-color: var(--clay);
-    background: rgba(201, 84, 42, 0.05);
-  }
-
-  .partner-card h3 {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 36, "SOFT" 50;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 2rem;
-    margin-bottom: 1.2rem;
-    color: var(--cream);
-  }
-
-  .partner-card p {
-    color: var(--cream-deep);
-    line-height: 1.65;
-    font-size: 0.98rem;
-  }
-
-  .partnership-callout {
-    margin-top: 4rem;
-    padding: 2.5rem;
-    background: var(--clay);
-    border-radius: 4px;
-    color: var(--paper);
-    display: flex;
-    gap: 2rem;
-    align-items: center;
-  }
-
-  @media (max-width: 720px) {
-    .partnership-callout { flex-direction: column; align-items: flex-start; }
-  }
-
-  .partnership-callout .badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    padding: 0.3rem 0.7rem;
-    border: 1px solid rgba(251, 247, 238, 0.4);
+  /* === BUTTONS === */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.5rem;
+    padding: 0.95rem 1.6rem;
     border-radius: 999px;
-    flex-shrink: 0;
-    align-self: flex-start;
+    border: 1px solid transparent;
+    font-family: inherit; font-size: 0.95rem; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-decoration: none;
+  }
+  .btn:disabled {
+    opacity: 0.4; cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--forest); color: var(--cream);
+  }
+  .btn-primary:not(:disabled):hover {
+    background: var(--clay); transform: translateY(-1px);
+  }
+  .btn-ghost {
+    background: transparent; color: var(--forest-soft);
+    padding-left: 0.4rem; padding-right: 0.4rem;
+  }
+  .btn-ghost:hover { color: var(--clay); }
+
+  .btn-arrow {
+    width: 14px; height: 14px;
+    transition: transform 0.2s;
+  }
+  .btn:not(:disabled):hover .btn-arrow { transform: translateX(3px); }
+
+  .actions {
+    display: flex; gap: 1rem; align-items: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
   }
 
-  .partnership-callout p {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 24, "SOFT" 50;
-    font-size: 1.25rem;
-    font-weight: 400;
-    line-height: 1.4;
+  /* === ROLE CARDS === */
+  .role-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
+    margin-bottom: 1.5rem;
   }
+  @media (max-width: 540px) { .role-grid { grid-template-columns: 1fr; } }
 
-  /* === REVENUE === */
-  .revenue-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: end;
-    margin-bottom: 4rem;
-  }
-
-  @media (max-width: 860px) {
-    .revenue-header { grid-template-columns: 1fr; gap: 1.5rem; }
-  }
-
-  .revenue-table {
-    border-top: 1px solid var(--forest);
-    border-bottom: 1px solid var(--forest);
-  }
-
-  .rev-row {
-    display: grid;
-    grid-template-columns: 1.2fr 2fr 1fr;
-    padding: 1.8rem 0;
-    border-bottom: 1px solid var(--rule);
-    align-items: center;
-    transition: background 0.2s, padding 0.3s;
-    gap: 2rem;
-  }
-
-  .rev-row:last-child { border-bottom: none; }
-
-  .rev-row:hover {
+  .role-card {
     background: var(--paper);
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  @media (max-width: 720px) {
-    .rev-row {
-      grid-template-columns: 1fr;
-      gap: 0.4rem;
-      padding: 1.5rem 0;
-    }
-  }
-
-  .rev-name {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 24;
-    font-size: 1.2rem;
-    font-weight: 500;
-  }
-
-  .rev-desc {
-    color: var(--forest-soft);
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-
-  .rev-rate {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 100;
-    font-style: italic;
-    font-size: 1.6rem;
-    color: var(--clay);
-    text-align: right;
-  }
-
-  @media (max-width: 720px) {
-    .rev-rate { text-align: left; font-size: 1.4rem; }
-  }
-
-  /* === SUSTAINABILITY === */
-  .sustain {
-    background: var(--cream-deep);
-    margin: 0 -2rem;
-    padding: 8rem 2rem;
-  }
-
-  .sustain .container { max-width: 1320px; }
-
-  .sustain h2 { max-width: 14ch; }
-
-  .sustain-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5rem;
-    align-items: center;
-    margin-top: 4rem;
-  }
-
-  @media (max-width: 900px) {
-    .sustain-grid { grid-template-columns: 1fr; gap: 3rem; }
-  }
-
-  .sustain-list {
-    list-style: none;
-  }
-
-  .sustain-list li {
-    padding: 1.5rem 0;
-    border-bottom: 1px solid var(--rule);
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2rem;
-    align-items: start;
-  }
-
-  .sustain-list li:first-child { border-top: 1px solid var(--rule); }
-
-  .sustain-icon {
-    width: 36px;
-    height: 36px;
-    color: var(--moss);
-    flex-shrink: 0;
-  }
-
-  .sustain-list h4 {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 24;
-    font-size: 1.15rem;
-    font-weight: 500;
-    margin-bottom: 0.3rem;
-  }
-
-  .sustain-list p {
-    color: var(--forest-soft);
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-
-  .platinum-card {
-    background: var(--forest);
-    color: var(--cream);
-    padding: 3rem;
-    border-radius: 4px;
+    border: 1.5px solid var(--rule);
+    border-radius: 14px;
+    padding: 2rem 1.6rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
     position: relative;
     overflow: hidden;
   }
-
-  .platinum-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -30%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(201, 84, 42, 0.18) 0%, transparent 60%);
+  .role-card:hover {
+    border-color: var(--forest);
+    transform: translateY(-2px);
+    background: var(--cream-deep);
   }
-
-  .platinum-card .badge {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--clay);
-    margin-bottom: 1.5rem;
-    display: inline-block;
-    padding: 0.3rem 0.7rem;
-    border: 1px solid rgba(201, 84, 42, 0.4);
-    border-radius: 999px;
+  .role-card.selected {
+    border-color: var(--clay);
+    background: rgba(201,84,42,0.06);
   }
-
-  .platinum-card .figure {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 60;
-    font-size: clamp(3.5rem, 7vw, 5.5rem);
-    font-weight: 300;
-    line-height: 0.95;
-    margin-bottom: 1rem;
-    position: relative;
-  }
-
-  .platinum-card .figure em {
-    font-style: italic;
-    font-variation-settings: "opsz" 144, "SOFT" 100;
-    color: var(--clay);
-  }
-
-  .platinum-card p {
-    color: var(--cream-deep);
-    font-size: 1rem;
-    line-height: 1.55;
-    position: relative;
-    max-width: 38ch;
-  }
-
-  /* === GROWTH LAYERS === */
-  .growth-header {
-    margin-bottom: 5rem;
-    max-width: 720px;
-  }
-
-  .growth-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background: var(--rule);
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-  }
-
-  @media (max-width: 720px) {
-    .growth-grid { grid-template-columns: 1fr; }
-  }
-
-  .growth-card {
-    background: var(--cream);
-    padding: 2.5rem 2rem 2.5rem 0;
-    transition: background 0.3s;
-    position: relative;
-  }
-
-  .growth-card:nth-child(odd) { padding-right: 2rem; }
-  .growth-card:nth-child(even) { padding-left: 2rem; }
-
-  .growth-card:hover {
-    background: var(--paper);
-  }
-
-  .growth-card .layer-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+  .role-icon {
+    width: 32px; height: 32px;
     color: var(--moss);
-    margin-bottom: 1rem;
-    display: block;
-  }
-
-  .growth-card h3 {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 36, "SOFT" 50;
-    font-size: 1.7rem;
-    font-weight: 500;
-    line-height: 1.15;
-    margin-bottom: 1rem;
-  }
-
-  .growth-card h3 em {
-    font-style: italic;
-    color: var(--clay);
-    font-variation-settings: "opsz" 36, "SOFT" 100;
-  }
-
-  .growth-card p {
-    color: var(--forest-soft);
-    line-height: 1.6;
-    font-size: 0.95rem;
     margin-bottom: 1.2rem;
   }
+  .role-card.selected .role-icon { color: var(--clay); }
+  .role-card h3 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24, "SOFT" 50;
+    font-size: 1.35rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+  .role-card p {
+    font-size: 0.92rem; color: var(--forest-soft); line-height: 1.45;
+  }
+  .role-card.both {
+    grid-column: span 2;
+    padding: 1.4rem 1.6rem;
+    display: flex; gap: 1.2rem; align-items: center;
+  }
+  @media (max-width: 540px) { .role-card.both { grid-column: span 1; } }
+  .role-card.both .role-icon { margin: 0; flex-shrink: 0; }
+  .role-card.both div h3 { margin-bottom: 0.2rem; font-size: 1.15rem; }
 
-  .growth-tag {
+  /* === LABEL/INPUT === */
+  .field { margin-bottom: 1.6rem; }
+  .field-label {
+    display: block;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--clay);
-    padding: 0.3rem 0.6rem;
-    border: 1px solid var(--clay);
-    border-radius: 999px;
-    display: inline-block;
+    font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--moss); margin-bottom: 0.7rem;
   }
 
-  /* === WHY NOW === */
-  .why {
+  /* City pills */
+  .pills {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+  }
+  .pill {
     background: var(--paper);
-    margin: 0 -2rem;
-    padding: 8rem 2rem;
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    padding: 0.7rem 1.2rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--forest);
+    transition: all 0.2s;
+  }
+  .pill:hover { border-color: var(--forest); }
+  .pill.selected {
+    background: var(--forest); color: var(--cream); border-color: var(--forest);
   }
 
-  .why .container { max-width: 1320px; }
-
-  .why-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-top: 4rem;
+  /* Date picker */
+  .date-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
   }
+  @media (max-width: 540px) { .date-grid { grid-template-columns: 1fr 1fr; } }
 
-  @media (max-width: 720px) {
-    .why-grid { grid-template-columns: 1fr; }
+  .date-card {
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+    transition: all 0.2s;
   }
-
-  .why-item {
-    padding: 2rem;
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    background: var(--cream);
-    transition: transform 0.3s, border-color 0.3s;
-  }
-
-  .why-item:hover {
-    transform: translateY(-3px);
+  .date-card:hover { border-color: var(--forest); transform: translateY(-1px); }
+  .date-card.selected {
     border-color: var(--clay);
+    background: rgba(201,84,42,0.06);
   }
-
-  .why-item h4 {
+  .date-card .when {
     font-family: 'Fraunces', serif;
     font-variation-settings: "opsz" 24;
-    font-size: 1.15rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
     font-weight: 500;
+    margin-bottom: 0.2rem;
   }
-
-  .why-item p {
+  .date-card .approx {
+    font-size: 0.78rem;
     color: var(--forest-soft);
-    font-size: 0.92rem;
-    line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em;
   }
 
-  /* === CTA === */
-  .cta {
-    padding: 9rem 0;
+  /* Item grid */
+  .item-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 540px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .item-tile {
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 12px;
+    padding: 1.2rem 0.8rem 1rem;
+    cursor: pointer;
     text-align: center;
+    font-family: inherit;
+    color: inherit;
+    transition: all 0.2s;
     position: relative;
   }
-
-  .cta-headline {
-    font-family: 'Fraunces', serif;
-    font-variation-settings: "opsz" 144, "SOFT" 80;
-    font-weight: 300;
-    font-size: clamp(2.5rem, 7vw, 5.5rem);
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    max-width: 18ch;
-    margin: 0 auto 2.5rem;
+  .item-tile:hover { border-color: var(--forest); }
+  .item-tile.selected {
+    border-color: var(--clay);
+    background: rgba(201,84,42,0.06);
   }
-
-  .cta-headline em {
-    font-style: italic;
-    color: var(--clay);
-    font-variation-settings: "opsz" 144, "SOFT" 100;
+  .item-tile .icon {
+    width: 36px; height: 36px;
+    margin: 0 auto 0.5rem;
+    color: var(--moss);
+    display: block;
   }
-
-  .cta-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 1rem 1.8rem;
-    border-radius: 999px;
-    text-decoration: none;
+  .item-tile.selected .icon { color: var(--clay); }
+  .item-tile .name {
+    font-size: 0.9rem;
     font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.25s;
-    border: 1px solid transparent;
-    cursor: pointer;
   }
-
-  .btn-primary {
-    background: var(--forest);
-    color: var(--cream);
-  }
-
-  .btn-primary:hover {
+  .item-tile .badge {
+    position: absolute;
+    top: 8px; right: 8px;
     background: var(--clay);
-    transform: translateY(-2px);
+    color: var(--paper);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.25s cubic-bezier(0.5, 1.6, 0.4, 1);
+  }
+  .item-tile.selected .badge { opacity: 1; transform: scale(1); }
+
+  .item-counter {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--moss);
+    margin: 1rem 0 1.5rem;
   }
 
-  .btn-secondary {
-    background: transparent;
+  /* Text input */
+  .text-input {
+    width: 100%;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    font-family: inherit;
+    font-size: 1.05rem;
     color: var(--forest);
-    border-color: var(--forest);
+    transition: border-color 0.2s, background 0.2s;
   }
+  .text-input:focus {
+    outline: none;
+    border-color: var(--clay);
+    background: var(--cream);
+  }
+  .text-input.error { border-color: var(--error); }
+  .text-input::placeholder { color: rgba(27,42,34,0.35); }
 
-  .btn-secondary:hover {
+  .helper {
+    font-size: 0.82rem; color: var(--forest-soft);
+    margin-top: 0.5rem;
+  }
+  .helper.err { color: var(--error); }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center; justify-content: space-between;
+    padding: 1rem 1.2rem;
+    background: var(--paper);
+    border: 1.5px solid var(--rule);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 0.6rem;
+  }
+  .toggle-row:hover { border-color: var(--forest-soft); }
+  .toggle-row.on {
+    border-color: var(--clay);
+    background: rgba(201,84,42,0.04);
+  }
+  .toggle-row-text { flex: 1; }
+  .toggle-row-text .name { font-weight: 500; margin-bottom: 0.1rem; }
+  .toggle-row-text .desc { font-size: 0.85rem; color: var(--forest-soft); }
+  .toggle-switch {
+    width: 38px; height: 22px;
+    background: var(--rule);
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: var(--paper);
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle-row.on .toggle-switch { background: var(--clay); }
+  .toggle-row.on .toggle-switch::after { transform: translateX(16px); }
+
+  /* === SUMMARY (final screen) === */
+  .success-card {
     background: var(--forest);
     color: var(--cream);
+    border-radius: 18px;
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
   }
+  .success-card::before {
+    content: ''; position: absolute;
+    top: -40%; right: -20%;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(201,84,42,0.22), transparent 65%);
+    pointer-events: none;
+  }
+  .success-card .checkmark {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--clay);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    animation: pop 0.6s cubic-bezier(0.5, 1.6, 0.4, 1) backwards;
+    animation-delay: 0.15s;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .success-card .checkmark svg { width: 28px; height: 28px; color: var(--paper); }
 
-  .btn-arrow {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.25s;
-  }
-
-  .btn:hover .btn-arrow {
-    transform: translate(3px, -3px);
-  }
-
-  /* === FOOTER === */
-  footer {
-    background: var(--forest);
-    color: var(--cream-deep);
-    padding: 5rem 2rem 2rem;
-    margin: 0 -2rem;
-  }
-
-  .footer-inner {
-    max-width: 1320px;
-    margin: 0 auto;
-  }
-
-  .footer-top {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 3rem;
-    padding-bottom: 4rem;
-    border-bottom: 1px solid rgba(242, 235, 221, 0.15);
-  }
-
-  @media (max-width: 860px) {
-    .footer-top { grid-template-columns: 1fr 1fr; gap: 2rem; }
-  }
-  @media (max-width: 540px) {
-    .footer-top { grid-template-columns: 1fr; }
-  }
-
-  .footer-brand h3 {
+  .success-card h2 {
     font-family: 'Fraunces', serif;
     font-variation-settings: "opsz" 144, "SOFT" 80;
     font-weight: 400;
-    font-size: 2.5rem;
-    color: var(--cream);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    line-height: 1.05;
     margin-bottom: 1rem;
-    line-height: 1;
+    position: relative;
   }
-
-  .footer-brand h3 em {
+  .success-card h2 em {
     font-style: italic;
-    color: var(--clay);
+    color: var(--clay-soft);
     font-variation-settings: "opsz" 144, "SOFT" 100;
   }
-
-  .footer-brand p {
-    max-width: 32ch;
-    line-height: 1.55;
-    font-size: 0.95rem;
+  .success-card .summary-line {
+    font-size: 1rem; line-height: 1.55; color: var(--cream-deep);
+    margin-bottom: 1.5rem;
+    position: relative;
   }
-
-  .footer-col h5 {
+  .summary-meta {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+    margin-top: 1.5rem;
+    position: relative;
+  }
+  .summary-meta .chip {
+    background: rgba(251,247,238,0.08);
+    border: 1px solid rgba(251,247,238,0.2);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--clay);
-    margin-bottom: 1.2rem;
-    font-weight: 500;
+    letter-spacing: 0.06em;
   }
 
-  .footer-col ul {
-    list-style: none;
+  /* What happens next */
+  .next-steps {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
   }
-
-  .footer-col li {
-    margin-bottom: 0.7rem;
+  .next-steps h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--moss); margin-bottom: 1rem;
   }
-
-  .footer-col a {
-    color: var(--cream-deep);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.2s;
-  }
-
-  .footer-col a:hover { color: var(--clay); }
-
-  .footer-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 2rem;
-    flex-wrap: wrap;
+  .next-list { list-style: none; }
+  .next-list li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
     gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    align-items: start;
   }
+  .next-list li:last-child { border-bottom: none; }
+  .next-list .step-num {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--clay);
+    line-height: 1;
+  }
+  .next-list .step-text {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    padding-top: 0.2rem;
+  }
+  .next-list .step-text strong { font-weight: 500; }
 
-  .footer-bottom p {
+  /* === BUYER MATCHES === */
+  .matches-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 540px) { .matches-grid { grid-template-columns: 1fr; } }
+
+  .match {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+  }
+  .match:hover { transform: translateY(-2px); border-color: var(--forest); }
+  .match-img {
+    aspect-ratio: 4/3;
+    background: var(--cream-deep);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--moss);
+    position: relative;
+  }
+  .match-img svg { width: 38%; height: 38%; opacity: 0.45; }
+  .match-img .verified {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--forest);
+    color: var(--cream);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(242, 235, 221, 0.55);
+    font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  .match-img .verified::before {
+    content: ''; width: 6px; height: 6px; background: var(--clay); border-radius: 50%;
+  }
+  .match-info { padding: 1rem; }
+  .match-info .name {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 1.05rem; font-weight: 500;
+    margin-bottom: 0.3rem;
+  }
+  .match-info .meta {
+    font-size: 0.8rem; color: var(--forest-soft);
+    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+  .match-info .price {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 80;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--clay);
   }
 
-  /* Reveal animations */
-  .reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* === Reset Floating Button === */
+  .reset-btn {
+    position: fixed;
+    bottom: 1.5rem; right: 1.5rem;
+    background: var(--forest);
+    color: var(--cream);
+    border: none;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    transition: all 0.2s;
+    z-index: 60;
   }
+  .reset-btn:hover { background: var(--clay); transform: rotate(-90deg); }
+  .reset-btn svg { width: 18px; height: 18px; }
 
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
+  /* Loader */
+  .loader {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>
 </head>
 <body>
 
-<!-- ============== NAV ============== -->
-<nav>
-  <div class="nav-inner">
-    <a href="#" class="logo">
-      <span class="logo-mark">
+<!-- ========================== TOP BAR ========================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex; align-items:center; gap: 1rem;">
+      <a href="#" class="logo">
         <svg viewBox="0 0 32 32" fill="none">
           <path d="M16 4C9.373 4 4 9.373 4 16s5.373 12 12 12c5 0 9.295-3.06 11.107-7.413" stroke="#1B2A22" stroke-width="2.4" stroke-linecap="round"/>
           <path d="M28 16C28 9.373 22.627 4 16 4" stroke="#C9542A" stroke-width="2.4" stroke-linecap="round"/>
           <path d="M22.5 4.2L28 4l.2 5.5" stroke="#C9542A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </span>
-      ReloLoop
-    </a>
-    <ul class="nav-links">
-      <li><a href="#problem">The Problem</a></li>
-      <li><a href="#solution">How it Works</a></li>
-      <li><a href="#partnership">Crown Partnership</a></li>
-      <li><a href="#sustainability">Impact</a></li>
-      <li><a href="#cta" class="nav-cta">Pitch Deck →</a></li>
-    </ul>
-  </div>
-</nav>
+        ReloLoop
+      </a>
+      <button class="back-btn" id="backBtn" onclick="goBack()">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+    </div>
 
-<!-- ============== HERO ============== -->
-<header class="hero">
-  <!-- Big floating loop graphic -->
-  <svg class="hero-loop" viewBox="0 0 460 460" fill="none">
-    <defs>
-      <linearGradient id="loopGrad" x1="0" x2="1" y1="0" y2="1">
-        <stop offset="0%" stop-color="#4A6B52" stop-opacity="0.25"/>
-        <stop offset="100%" stop-color="#C9542A" stop-opacity="0.18"/>
-      </linearGradient>
-    </defs>
-    <circle cx="230" cy="230" r="180" stroke="url(#loopGrad)" stroke-width="1" fill="none"/>
-    <circle cx="230" cy="230" r="140" stroke="rgba(27,42,34,0.12)" stroke-width="1" fill="none" stroke-dasharray="2 4"/>
-    <circle cx="230" cy="230" r="100" stroke="rgba(74,107,82,0.18)" stroke-width="1" fill="none"/>
-    <path d="M50 230 A180 180 0 0 1 410 230" stroke="#C9542A" stroke-width="1.5" fill="none" opacity="0.4"/>
-    <path d="M410 230 A180 180 0 0 1 50 230" stroke="#4A6B52" stroke-width="1.5" fill="none" opacity="0.3"/>
-    <circle cx="50" cy="230" r="4" fill="#C9542A"/>
-    <circle cx="410" cy="230" r="4" fill="#4A6B52"/>
-    <text x="230" y="225" text-anchor="middle" font-family="JetBrains Mono" font-size="9" letter-spacing="3" fill="#1B2A22" opacity="0.4">CIRCULAR</text>
-    <text x="230" y="240" text-anchor="middle" font-family="JetBrains Mono" font-size="9" letter-spacing="3" fill="#1B2A22" opacity="0.4">RELOCATION</text>
-  </svg>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-label" id="progressLabel">Step 1 of 5</span>
+    </div>
 
-  <div class="container">
-    <div class="hero-grid">
-      <div class="hero-tag">
-        <span class="hero-tag-dot"></span>
-        <span class="mono">Crown Relocations · Circular Initiative</span>
-      </div>
-
-      <h1 class="display">
-        <span class="line"><span>Sell it here.</span></span>
-        <span class="line"><span>Buy it <em>there</em>.</span></span>
-        <span class="line"><span>Move smarter.</span></span>
-      </h1>
-
-      <div class="hero-bottom">
-        <p class="hero-lede">
-          New Zealand's first circular relocation marketplace — built inside Crown's existing logistics. Catches the enquiries Crown turns away, and turns them into delivery revenue.
-        </p>
-        <div class="hero-meta">
-          <div class="hero-meta-row">
-            <span class="label">Pilot</span>
-            <span class="value">Auckland · Wellington · Christchurch</span>
-          </div>
-          <div class="hero-meta-row">
-            <span class="label">Status</span>
-            <span class="value">Concept stage · Ready for build</span>
-          </div>
-          <div class="hero-meta-row">
-            <span class="label">By</span>
-            <span class="value">Sriram Suresh — for Crown NZ</span>
-          </div>
-        </div>
-      </div>
+    <div class="right-meta">
+      <span class="proto-badge">Prototype</span>
     </div>
   </div>
 </header>
 
-<!-- ============== MARQUEE ============== -->
-<div class="marquee">
-  <div class="marquee-track">
-    <span>Sell in Auckland</span><span class="dot"></span>
-    <span>Buy in Wellington</span><span class="dot"></span>
-    <span>Delivered by Crown</span><span class="dot"></span>
-    <span>Out of landfill</span><span class="dot"></span>
-    <span>Off the road</span><span class="dot"></span>
-    <span>Into a new home</span><span class="dot"></span>
-    <span>Sell in Auckland</span><span class="dot"></span>
-    <span>Buy in Wellington</span><span class="dot"></span>
-    <span>Delivered by Crown</span><span class="dot"></span>
-    <span>Out of landfill</span><span class="dot"></span>
-    <span>Off the road</span><span class="dot"></span>
-    <span>Into a new home</span><span class="dot"></span>
-  </div>
-</div>
+<!-- ========================== MAIN ========================== -->
+<main>
 
-<!-- ============== PROBLEM ============== -->
-<section id="problem">
-  <div class="container">
-    <div class="problem-header reveal">
-      <div class="section-label">
-        <span class="mono">01 — The Problem</span>
-      </div>
-      <h2>People relocating in NZ are <em>stuck</em>. Their stuff is worth too much to leave, and too little to move.</h2>
-    </div>
+  <!-- ===== SCREEN 1 — ROLE SELECT ===== -->
+  <section class="screen active" data-screen="role">
+    <div class="eyebrow">Welcome to ReloLoop</div>
+    <h1 class="screen-title">First — what brings you <em>here</em>?</h1>
+    <p class="screen-sub">We'll tailor the next few questions based on what you need. This takes about 90 seconds.</p>
 
-    <div class="problem-stats reveal">
-      <div class="stat">
-        <span class="stat-number">$<em>1,000</em>+</span>
-        <p class="stat-label">Minimum charge to move a single item between NZ cities — more than the item itself is often worth.</p>
-      </div>
-      <div class="stat">
-        <span class="stat-number"><em>Thousands</em></span>
-        <p class="stat-label">Of small-item enquiries turned away by relocation companies every year, with no good alternative.</p>
-      </div>
-      <div class="stat">
-        <span class="stat-number"><em>Zero</em></span>
-        <p class="stat-label">Affordable solutions currently exist in the NZ market between full-truck moves and sketchy marketplaces.</p>
-      </div>
-    </div>
+    <div class="role-grid">
+      <button class="role-card" data-role="seller" onclick="pickRole('seller')">
+        <svg class="role-icon" viewBox="0 0 32 32" fill="none">
+          <path d="M5 12 L5 27 L27 27 L27 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M3 12 L29 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M11 7 L21 7 L23 12 L9 12 Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M16 17 L16 23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <h3>I'm moving</h3>
+        <p>I want to sell things I can't take with me.</p>
+      </button>
 
-    <div class="problem-context reveal">
-      <span class="eyebrow">The compounding pressure</span>
-      <p>Long-distance and export move enquiries have been declining for years. ReloLoop opens an entirely new revenue category — local circular moves — bringing in customers who would never have engaged with a relocation company in the first place.</p>
-    </div>
-  </div>
-</section>
+      <button class="role-card" data-role="buyer" onclick="pickRole('buyer')">
+        <svg class="role-icon" viewBox="0 0 32 32" fill="none">
+          <circle cx="14" cy="14" r="9" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M21 21 L27 27" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <h3>I'm setting up a new place</h3>
+        <p>I want to find furniture in my new city.</p>
+      </button>
 
-<!-- ============== WHITESPACE ============== -->
-<section class="whitespace">
-  <div class="whitespace-inner">
-    <div class="venn reveal">
-      <svg viewBox="0 0 480 340" fill="none">
-        <defs>
-          <radialGradient id="g1" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stop-color="#1B2A22" stop-opacity="0.15"/>
-            <stop offset="100%" stop-color="#1B2A22" stop-opacity="0.04"/>
-          </radialGradient>
-          <radialGradient id="g2" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stop-color="#4A6B52" stop-opacity="0.18"/>
-            <stop offset="100%" stop-color="#4A6B52" stop-opacity="0.04"/>
-          </radialGradient>
-        </defs>
-        <circle cx="160" cy="170" r="135" fill="url(#g1)" stroke="#1B2A22" stroke-width="1" stroke-opacity="0.4"/>
-        <circle cx="320" cy="170" r="135" fill="url(#g2)" stroke="#4A6B52" stroke-width="1" stroke-opacity="0.5"/>
-        <text x="100" y="170" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="16" fill="#1B2A22">House</text>
-        <text x="100" y="190" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="16" fill="#1B2A22">Moves</text>
-
-        <text x="380" y="170" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="16" fill="#1B2A22">Secondhand</text>
-        <text x="380" y="190" text-anchor="middle" font-family="Fraunces" font-style="italic" font-size="16" fill="#1B2A22">Marketplaces</text>
-
-        <!-- ReloLoop in the middle -->
-        <circle cx="240" cy="170" r="46" fill="#C9542A"/>
-        <text x="240" y="167" text-anchor="middle" font-family="Fraunces" font-style="italic" font-weight="500" font-size="18" fill="#FBF7EE">Relo</text>
-        <text x="240" y="187" text-anchor="middle" font-family="Fraunces" font-style="italic" font-weight="500" font-size="18" fill="#FBF7EE">Loop</text>
-
-        <!-- Annotation arrow -->
-        <path d="M 240 65 L 240 110" stroke="#1B2A22" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
-        <text x="240" y="50" text-anchor="middle" font-family="JetBrains Mono" font-size="9" letter-spacing="3" fill="#1B2A22" opacity="0.6">THE WHITE SPACE</text>
-      </svg>
-    </div>
-
-    <div class="whitespace-text reveal">
-      <span class="eyebrow">The opening</span>
-      <h2 style="margin-top: 1rem;">A real <em>white space</em> between house moves and Marketplace.</h2>
-      <p>Traditional relocation companies cost too much for a single fridge. Trade Me and Facebook Marketplace are full of flakes, no-shows, and condition surprises.</p>
-      <p>ReloLoop sits in the middle: trusted, professionally delivered, and priced for the way people actually move.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============== SOLUTION ============== -->
-<section id="solution">
-  <div class="container">
-    <div class="steps-header reveal">
-      <div class="section-label">
-        <span class="mono">02 — How It Works</span>
-      </div>
-      <h2>Four steps. Two cities. <em>One loop.</em></h2>
-      <p>A circular economy marketplace built specifically for people relocating within New Zealand — between cities or locally within the same city.</p>
-    </div>
-
-    <div class="steps reveal">
-      <div class="step">
-        <span class="step-num">01</span>
-        <h3 class="step-title">List before you leave</h3>
-        <p class="step-desc">Seller lists item with photo and price before moving. Takes minutes.</p>
-      </div>
-      <div class="step">
-        <span class="step-num">02</span>
-        <h3 class="step-title">Buyer browses ahead</h3>
-        <p class="step-desc">Buyer in same city — or another Crown city — finds the item and purchases.</p>
-      </div>
-      <div class="step">
-        <span class="step-num">03</span>
-        <h3 class="step-title">Crown delivers it</h3>
-        <p class="step-desc">Crown or local partner moves the item, scheduled into existing daily runs. Within 5 business days.</p>
-      </div>
-      <div class="step">
-        <span class="step-num">04</span>
-        <h3 class="step-title">Everyone wins</h3>
-        <p class="step-desc">Seller gets cash. Buyer gets furniture. Crown gets new revenue. Landfill stays empty.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== PARTNERSHIP ============== -->
-<section id="partnership" class="partnership">
-  <div class="container">
-    <div class="reveal">
-      <div class="section-label">
-        <span class="mono">03 — The Crown Partnership</span>
-      </div>
-      <h2>Not a competitor. A <em>complement.</em></h2>
-      <p class="partnership-intro">Crown's expertise is premium full-household moves and high-value items. ReloLoop handles the market Crown cannot cost-effectively serve today — the small-item enquiries that already arrive every day and currently get turned away.</p>
-    </div>
-
-    <div class="partnership-grid reveal">
-      <div class="partner-card">
-        <h3>Crown brings</h3>
-        <p>Decades of trust. Real delivery capability in every major NZ city. An established customer base. Insurance frameworks already in place. ReloLoop doesn't need to build from scratch — it plugs into something that already works.</p>
-      </div>
-      <div class="partner-card">
-        <h3>ReloLoop brings</h3>
-        <p>The missing piece. A platform that catches enquiries Crown currently turns away, turns them into actual transactions, and sends delivery work back to Crown. Plus a sustainability story corporates and councils are actively looking for.</p>
-      </div>
-    </div>
-
-    <div class="partnership-callout reveal">
-      <span class="badge">Operational Promise</span>
-      <p>Each booking capped at 2–3 items. Deliveries scheduled into Crown's existing daily runs within 5 business days. Zero disruption to core operations. Full household moves stay exclusively within Crown's premium service.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ============== REVENUE ============== -->
-<section id="revenue">
-  <div class="container">
-    <div class="revenue-header reveal">
-      <div>
-        <div class="section-label">
-          <span class="mono">04 — Revenue Model</span>
+      <button class="role-card both" data-role="both" onclick="pickRole('both')">
+        <svg class="role-icon" viewBox="0 0 32 32" fill="none">
+          <path d="M5 16 A 11 11 0 0 1 27 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M27 16 A 11 11 0 0 1 5 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="2 3"/>
+          <path d="M22 5 L27 5 L27 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 27 L5 27 L5 22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <h3>Both — I'm relocating</h3>
+          <p>Selling in one city, furnishing in another.</p>
         </div>
-        <h2 style="margin-top: 1rem;">Five streams. <em>One transaction.</em></h2>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 2 — MOVE BASICS ===== -->
+  <section class="screen" data-screen="move">
+    <div class="eyebrow" id="moveEyebrow">Step 02 — Your move</div>
+    <h1 class="screen-title" id="moveTitle">Tell us about your <em>move</em>.</h1>
+    <p class="screen-sub" id="moveSub">We use this to match you with the right buyers and schedule delivery into Crown's existing routes.</p>
+
+    <div class="field" id="fieldFrom">
+      <label class="field-label">Moving from</label>
+      <div class="pills" id="fromPills">
+        <button class="pill" data-city="Auckland">Auckland</button>
+        <button class="pill" data-city="Wellington">Wellington</button>
+        <button class="pill" data-city="Christchurch">Christchurch</button>
+        <button class="pill" data-city="Other">Other</button>
       </div>
-      <p style="color: var(--forest-soft); line-height: 1.55; font-size: 1.02rem; max-width: 50ch;">Every successful sale stacks platform fees, delivery margin, and optional add-ons. Crown captures the full delivery fee on every transaction.</p>
     </div>
 
-    <div class="revenue-table reveal">
-      <div class="rev-row">
-        <div class="rev-name">Platform Commission</div>
-        <div class="rev-desc">Percentage of every completed transaction.</div>
-        <div class="rev-rate">10–15%</div>
-      </div>
-      <div class="rev-row">
-        <div class="rev-name">Local Delivery Fee</div>
-        <div class="rev-desc">Crown charges a minimum per delivery within the city — full fee to Crown.</div>
-        <div class="rev-rate">$100 min</div>
-      </div>
-      <div class="rev-row">
-        <div class="rev-name">Premium Listings</div>
-        <div class="rev-desc">Sellers pay to feature items at the top of search results.</div>
-        <div class="rev-rate">$9–$19</div>
-      </div>
-      <div class="rev-row">
-        <div class="rev-name">Insurance Add-on</div>
-        <div class="rev-desc">Optional goods-in-transit cover at checkout.</div>
-        <div class="rev-rate">$250 min</div>
-      </div>
-      <div class="rev-row">
-        <div class="rev-name">Access Surcharges</div>
-        <div class="rev-desc">For complex access — apartment floors, bad access, stairs.</div>
-        <div class="rev-rate">$50+</div>
+    <div class="field" id="fieldTo">
+      <label class="field-label" id="toLabel">Moving to</label>
+      <div class="pills" id="toPills">
+        <button class="pill" data-city="Auckland">Auckland</button>
+        <button class="pill" data-city="Wellington">Wellington</button>
+        <button class="pill" data-city="Christchurch">Christchurch</button>
+        <button class="pill" data-city="Other">Other</button>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ============== SUSTAINABILITY ============== -->
-<section id="sustainability" class="sustain">
-  <div class="container">
-    <div class="reveal">
-      <div class="section-label">
-        <span class="mono">05 — Circular Economy</span>
+    <div class="field">
+      <label class="field-label" id="whenLabel">When</label>
+      <div class="date-grid" id="whenGrid">
+        <button class="date-card" data-when="2w">
+          <div class="when">In 2 weeks</div>
+          <div class="approx">SOON</div>
+        </button>
+        <button class="date-card" data-when="1m">
+          <div class="when">Next month</div>
+          <div class="approx">~30 DAYS</div>
+        </button>
+        <button class="date-card" data-when="3m">
+          <div class="when">2–3 months out</div>
+          <div class="approx">~60–90 DAYS</div>
+        </button>
+        <button class="date-card" data-when="flex">
+          <div class="when">Flexible</div>
+          <div class="approx">NO RUSH</div>
+        </button>
+        <button class="date-card" data-when="local">
+          <div class="when">Local move</div>
+          <div class="approx">SAME CITY</div>
+        </button>
       </div>
-      <h2 style="margin-top: 1rem;">Not a marketplace. An <em>environmental</em> initiative.</h2>
     </div>
 
-    <div class="sustain-grid">
-      <ul class="sustain-list reveal">
-        <li>
-          <svg class="sustain-icon" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="14" stroke="currentColor" stroke-width="1.4"/>
-            <path d="M11 18 L16 23 L25 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <div>
-            <h4>Zero unnecessary freight</h4>
-            <p>Items never leave the city — sold locally, delivered locally as part of existing routes.</p>
-          </div>
-        </li>
-        <li>
-          <svg class="sustain-icon" viewBox="0 0 36 36" fill="none">
-            <path d="M9 12 L9 28 L27 28 L27 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            <path d="M6 12 L30 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            <path d="M14 8 L22 8 L23 12 L13 12 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-            <path d="M15 17 L15 23 M21 17 L21 23" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
-          <div>
-            <h4>Reduces landfill waste</h4>
-            <p>Usable goods find new owners instead of being discarded between moves.</p>
-          </div>
-        </li>
-        <li>
-          <svg class="sustain-icon" viewBox="0 0 36 36" fill="none">
-            <path d="M18 6 L21 13 L29 13 L23 18 L25 26 L18 21 L11 26 L13 18 L7 13 L15 13 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-          </svg>
-          <div>
-            <h4>Grant eligible</h4>
-            <p>NZ Government and councils actively fund circular economy initiatives. MBIE-aligned.</p>
-          </div>
-        </li>
-        <li>
-          <svg class="sustain-icon" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="14" stroke="currentColor" stroke-width="1.4"/>
-            <path d="M18 8 L18 18 L25 22" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
-          <div>
-            <h4>ESG aligned</h4>
-            <p>Strengthens Crown's sustainability credentials with corporate clients increasingly driven by ESG mandates.</p>
-          </div>
-        </li>
+    <div class="actions">
+      <button class="btn btn-primary" id="moveContinue" disabled onclick="submitMove()">
+        Continue
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 3 — ITEMS (seller path) ===== -->
+  <section class="screen" data-screen="items">
+    <div class="eyebrow">Step 03 — What you have</div>
+    <h1 class="screen-title">What are you <em>selling</em>?</h1>
+    <p class="screen-sub">Tap everything you've got — don't worry about photos or prices yet. We'll guide you through listing each one after.</p>
+
+    <div class="item-grid" id="itemGrid"></div>
+
+    <div class="item-counter" id="itemCounter">0 items selected</div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="itemsContinue" disabled onclick="goNext('items')">
+        Continue
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="btn btn-ghost" onclick="skipItems()">I'll do this later</button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 3B — LOOKING FOR (buyer path) ===== -->
+  <section class="screen" data-screen="wants">
+    <div class="eyebrow">Step 03 — What you need</div>
+    <h1 class="screen-title">What are you <em>looking for</em>?</h1>
+    <p class="screen-sub">We'll alert you the moment something matches in your destination city — including items listed before they arrive on the platform.</p>
+
+    <div class="item-grid" id="wantsGrid"></div>
+
+    <div class="item-counter" id="wantsCounter">0 categories selected</div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="wantsContinue" disabled onclick="goNext('wants')">
+        Continue
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="btn btn-ghost" onclick="skipWants()">Just let me browse</button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 4 — CONTACT ===== -->
+  <section class="screen" data-screen="contact">
+    <div class="eyebrow">Step 04 — Stay in the loop</div>
+    <h1 class="screen-title" id="contactTitle">Last thing — where should we <em>reach you</em>?</h1>
+    <p class="screen-sub" id="contactSub">We'll send a magic link to sign in (no password to remember). We never share your details.</p>
+
+    <div class="field">
+      <label class="field-label">First name</label>
+      <input type="text" class="text-input" id="firstName" placeholder="Sarah" autocomplete="given-name" />
+    </div>
+
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input type="email" class="text-input" id="email" placeholder="sarah@example.com" autocomplete="email" />
+      <div class="helper" id="emailHelper">We'll only email you about your listings and matched buyers.</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Mobile (optional, for delivery coordination)</label>
+      <input type="tel" class="text-input" id="phone" placeholder="021 234 5678" autocomplete="tel" />
+    </div>
+
+    <div class="toggle-row" id="togglePrefs" onclick="togglePref('alerts')">
+      <div class="toggle-row-text">
+        <div class="name" id="prefName">Email me when there's buyer interest</div>
+        <div class="desc">We'll only ping you when something matters.</div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+
+    <div class="toggle-row" onclick="togglePref('newsletter')">
+      <div class="toggle-row-text">
+        <div class="name">Send me circular-economy tips & city moving guides</div>
+        <div class="desc">Monthly. Unsubscribe anytime.</div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="finishBtn" onclick="finishSignup()">
+        Create my account
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN 5 — SUCCESS (seller) ===== -->
+  <section class="screen" data-screen="success-seller">
+    <div class="success-card">
+      <div class="checkmark">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12 L10 17 L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 id="successTitleSeller">You're <em>in the loop</em>, <span id="nameOut">there</span>.</h2>
+      <p class="summary-line" id="successLineSeller">We've reserved your account and pre-staged your listings. Crown's team will reach out within 24 hours to walk you through photos, pricing, and pickup timing.</p>
+      <div class="summary-meta" id="metaChipsSeller"></div>
+    </div>
+
+    <div class="next-steps">
+      <h3>What happens next</h3>
+      <ul class="next-list">
+        <li><span class="step-num">i.</span><span class="step-text"><strong>Check your email.</strong> A magic link is on its way to <span id="emailOut1">your inbox</span>. One tap to sign in — no password.</span></li>
+        <li><span class="step-num">ii.</span><span class="step-text"><strong>Snap a photo of one item.</strong> The fastest way to your first sale. Most sellers list their best item in under 4 minutes.</span></li>
+        <li><span class="step-num">iii.</span><span class="step-text"><strong>We promote your listings</strong> to buyers in your destination city before you arrive.</span></li>
+        <li><span class="step-num">iv.</span><span class="step-text"><strong>Crown handles delivery.</strong> Once an item sells, we slot it into existing daily runs. Cash to you within 5 business days.</span></li>
       </ul>
-
-      <div class="platinum-card reveal">
-        <span class="badge">The North Star</span>
-        <div class="figure"><em>10×</em> growth.<br>Platinum status.</div>
-        <p>If Crown captures the freight CO₂ saved through ReloLoop, EcoVadis Platinum becomes within reach. Replicated across markets, this takes Crown from a $1–2B company to a $10B company in five years.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== GROWTH LAYERS ============== -->
-<section id="growth">
-  <div class="container">
-    <div class="growth-header reveal">
-      <div class="section-label">
-        <span class="mono">06 — Strategic Growth Layers</span>
-      </div>
-      <h2 style="margin-top: 1rem;">Five layers. <em>Compounding</em> moats.</h2>
     </div>
 
-    <div class="growth-grid reveal">
-      <div class="growth-card">
-        <span class="layer-num">Layer 01</span>
-        <h3>Corporate moves <em>(Mobility Team)</em></h3>
-        <p>Crown already works with corporates for international moves. Extend ReloLoop as a perk: "Move to Wellington? Sell your furniture in Auckland via ReloLoop — Crown handles end-to-end." That cross-market hand-off creates B2B recurring referrals.</p>
-        <span class="growth-tag">High Conviction · Near-term</span>
-      </div>
-
-      <div class="growth-card">
-        <span class="layer-num">Layer 02</span>
-        <h3>"Crown Certified" <em>used goods</em></h3>
-        <p>Secondhand marketplaces are trust-deficit environments. Crown's brand becomes a quality signal: "Crown-Inspected & Guaranteed Delivery" — cleaned, sanitised, professionally moved. Customers pay extra for reliability — instant margin.</p>
-        <span class="growth-tag">High-margin Opportunity</span>
-      </div>
-
-      <div class="growth-card">
-        <span class="layer-num">Layer 03</span>
-        <h3>Item bundles <em>& room packs</em></h3>
-        <p>Aggregate ReloLoop listings into "studio set" or "family starter pack" bundles delivered together. Faster sales velocity, higher ticket size, less logistics fragmentation per trip.</p>
-        <span class="growth-tag">Pilot: AKL ↔ WELL ↔ CHC</span>
-      </div>
-
-      <div class="growth-card">
-        <span class="layer-num">Layer 04</span>
-        <h3>Sustainability <em>grants</em></h3>
-        <p>NZ government loves circular economy pilots. Pitch for council or MBIE funding — could offset early operational costs or marketing entirely. Bonus revenue, not core.</p>
-        <span class="growth-tag">Bonus, Not Revenue Line</span>
-      </div>
-
-      <div class="growth-card">
-        <span class="layer-num">Layer 05</span>
-        <h3>Data <em>& analytics</em></h3>
-        <p>Once volume builds, sell anonymised relocation and consumption data — routes, demand clusters, item categories — to furniture retailers, appliance brands, and real estate developers.</p>
-        <span class="growth-tag">Instrument Now · Monetise Later</span>
-      </div>
-
-      <div class="growth-card">
-        <span class="layer-num">The Honest Risk</span>
-        <h3>Marketplace <em>liquidity</em></h3>
-        <p>Chicken-and-egg: needing buyers and sellers in the same cities at the same time. The AKL–WELL–CHC pilot focus is the right call to solve this — concentrated demand corridors first, then expand.</p>
-        <span class="growth-tag" style="color: var(--moss); border-color: var(--moss);">Acknowledged · Mitigated</span>
-      </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="resetFlow()">
+        List my first item
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="btn btn-ghost" onclick="resetFlow()">I'll do it later</button>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ============== WHY NOW ============== -->
-<section class="why">
-  <div class="container">
-    <div class="reveal">
-      <div class="section-label">
-        <span class="mono">07 — Why Now, Why Us</span>
+  <!-- ===== SCREEN 5 — SUCCESS (buyer) ===== -->
+  <section class="screen" data-screen="success-buyer">
+    <div class="success-card">
+      <div class="checkmark">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12 L10 17 L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
-      <h2 style="margin-top: 1rem;">A genuinely <em>fundable</em> idea — already inside the company that should build it.</h2>
+      <h2>You're set up, <em><span id="nameOutB">there</span></em>.</h2>
+      <p class="summary-line" id="successLineBuyer">Here are listings already in <span id="cityOutB">your city</span> matching what you're after — Crown-verified and ready to deliver.</p>
+      <div class="summary-meta" id="metaChipsBuyer"></div>
     </div>
 
-    <div class="why-grid reveal">
-      <div class="why-item">
-        <h4>No competitor exists in NZ</h4>
-        <p>Similar platforms — AnyVan in the UK, uShip in the US — are multi-billion-dollar businesses overseas. NZ is open ground.</p>
-      </div>
-      <div class="why-item">
-        <h4>Built by industry insiders</h4>
-        <p>Deep relocation expertise. We understand the customer pain point firsthand — and the operational realities.</p>
-      </div>
-      <div class="why-item">
-        <h4>Crown referral network</h4>
-        <p>Immediate access to warm leads from existing Crown enquiries from day one. No cold-start.</p>
-      </div>
-      <div class="why-item">
-        <h4>NZ property market drives demand</h4>
-        <p>Tens of thousands of Kiwis relocate between cities every year. Cost-of-living pressure makes this acute.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== CTA ============== -->
-<section id="cta" class="cta">
-  <div class="container">
-    <div class="reveal">
-      <h2 class="cta-headline">A circular economy idea — sitting inside a company that <em>already has everything</em> it needs to execute.</h2>
-      <div class="cta-buttons">
-        <a href="#" class="btn btn-primary">
-          Read the full pitch
-          <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
-            <path d="M3 13 L13 3 M5 3 L13 3 L13 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <div style="margin-bottom: 0.6rem;" class="eyebrow">Available now in your city</div>
+    <div class="matches-grid">
+      <div class="match">
+        <div class="match-img">
+          <span class="verified">Crown verified</span>
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="6" y="22" width="52" height="28" rx="6" stroke="currentColor" stroke-width="2"/>
+            <path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/>
+            <path d="M14 50 L14 56 M50 50 L50 56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-        </a>
-        <a href="#" class="btn btn-secondary">
-          Get in touch
-          <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
-            <path d="M3 13 L13 3 M5 3 L13 3 L13 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
+        </div>
+        <div class="match-info">
+          <div class="name">3-seater linen sofa</div>
+          <div class="meta">PONSONBY · LIKE NEW</div>
+          <div class="price">$650</div>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
 
-<!-- ============== FOOTER ============== -->
-<footer>
-  <div class="footer-inner">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <h3>Relo<em>Loop</em></h3>
-        <p>New Zealand's circular relocation marketplace. Sell it here. Buy it there. Move smarter.</p>
+      <div class="match">
+        <div class="match-img">
+          <span class="verified">Crown verified</span>
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="14" y="6" width="36" height="52" rx="3" stroke="currentColor" stroke-width="2"/>
+            <path d="M14 24 L50 24" stroke="currentColor" stroke-width="2"/>
+            <circle cx="22" cy="15" r="1.4" fill="currentColor"/>
+            <circle cx="22" cy="38" r="1.4" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="match-info">
+          <div class="name">Fisher & Paykel fridge</div>
+          <div class="meta">MT EDEN · GOOD CONDITION</div>
+          <div class="price">$420</div>
+        </div>
       </div>
-      <div class="footer-col">
-        <h5>Concept</h5>
-        <ul>
-          <li><a href="#problem">The Problem</a></li>
-          <li><a href="#solution">How it Works</a></li>
-          <li><a href="#revenue">Revenue Model</a></li>
-        </ul>
+
+      <div class="match">
+        <div class="match-img">
+          <span class="verified">Crown verified</span>
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="6" y="20" width="52" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 26 L12 56 M52 26 L52 56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M20 26 L20 56 M44 26 L44 56" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="match-info">
+          <div class="name">Solid oak dining table</div>
+          <div class="meta">GREY LYNN · GOOD</div>
+          <div class="price">$380</div>
+        </div>
       </div>
-      <div class="footer-col">
-        <h5>Strategy</h5>
-        <ul>
-          <li><a href="#partnership">Partnership</a></li>
-          <li><a href="#sustainability">Impact</a></li>
-          <li><a href="#growth">Growth Layers</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h5>Pilot Cities</h5>
-        <ul>
-          <li><a href="#">Auckland</a></li>
-          <li><a href="#">Wellington</a></li>
-          <li><a href="#">Christchurch</a></li>
-        </ul>
+
+      <div class="match">
+        <div class="match-img">
+          <span class="verified">Crown verified</span>
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="8" y="20" width="48" height="32" rx="3" stroke="currentColor" stroke-width="2"/>
+            <rect x="14" y="26" width="36" height="20" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="match-info">
+          <div class="name">55" Samsung smart TV</div>
+          <div class="meta">PARNELL · LIKE NEW</div>
+          <div class="price">$540</div>
+        </div>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>ReloLoop · Confidential · Crown Relocations</p>
-      <p>Prepared by Sriram Suresh · 2026</p>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="resetFlow()">
+        Browse all listings
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="btn btn-ghost" onclick="resetFlow()">Set up alerts only</button>
     </div>
-  </div>
-</footer>
+  </section>
+
+</main>
+
+<button class="reset-btn" onclick="resetFlow()" title="Restart the flow">
+  <svg viewBox="0 0 24 24" fill="none">
+    <path d="M3 12 A 9 9 0 1 0 5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M3 3 L3 8 L8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
 
 <script>
-  // Reveal-on-scroll
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  // ============================================================
+  // STATE
+  // ============================================================
+  const state = {
+    role: null,             // 'seller' | 'buyer' | 'both'
+    fromCity: null,
+    toCity: null,
+    when: null,
+    items: [],              // for seller: things they're selling
+    wants: [],              // for buyer: categories they want
+    firstName: '',
+    email: '',
+    phone: '',
+    prefs: { alerts: true, newsletter: false },
+    history: ['role'],
+  };
 
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  // Item taxonomy (used for both seller and buyer)
+  const ITEMS = [
+    { id: 'sofa', name: 'Sofa', icon: 'M5 18 L5 12 Q5 9 8 9 L24 9 Q27 9 27 12 L27 18 M3 18 L29 18 L29 23 L25 23 L25 26 M7 26 L7 23 L3 23 Z' },
+    { id: 'fridge', name: 'Fridge', icon: 'M9 4 L23 4 L23 28 L9 28 Z M9 12 L23 12 M12 7 L12 10 M12 15 L12 22' },
+    { id: 'washer', name: 'Washing machine', icon: 'M5 4 L27 4 L27 28 L5 28 Z M16 18 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 M9 8 L11 8' },
+    { id: 'tv', name: 'TV', icon: 'M3 6 L29 6 L29 22 L3 22 Z M11 26 L21 26' },
+    { id: 'bed', name: 'Bed', icon: 'M3 14 L3 24 L29 24 L29 14 Q29 11 26 11 L18 11 Q15 11 15 14 M15 14 L3 14 M5 24 L5 27 M27 24 L27 27' },
+    { id: 'dining', name: 'Dining table', icon: 'M3 12 L29 12 L29 15 L3 15 Z M7 15 L7 26 M25 15 L25 26' },
+    { id: 'wardrobe', name: 'Wardrobe', icon: 'M7 4 L25 4 L25 28 L7 28 Z M16 4 L16 28 M13 16 L13 18 M19 16 L19 18' },
+    { id: 'desk', name: 'Desk / chair', icon: 'M5 14 L27 14 L27 17 L5 17 Z M8 17 L8 26 M24 17 L24 26 M14 22 L18 22 M16 22 L16 26' },
+    { id: 'kitchen', name: 'Small appliances', icon: 'M8 6 L24 6 L24 22 L8 22 Z M8 12 L24 12 M11 17 L21 17' },
+    { id: 'rugs', name: 'Rugs / lighting', icon: 'M5 8 L27 8 L24 26 L8 26 Z M9 12 L23 12' },
+    { id: 'outdoor', name: 'Outdoor / BBQ', icon: 'M16 4 L16 8 M16 8 Q9 8 9 16 Q9 22 16 22 Q23 22 23 16 Q23 8 16 8 M11 22 L13 28 M21 22 L19 28' },
+    { id: 'other', name: 'Something else', icon: 'M16 4 a12 12 0 1 0 0.001 0 M11 13 Q11 9 16 9 Q21 9 21 13 Q21 16 17 17 L17 19 M16 23 L16 25' },
+  ];
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+  function renderItemTiles(targetId, sourceList) {
+    const grid = document.getElementById(targetId);
+    grid.innerHTML = '';
+    ITEMS.forEach(it => {
+      const tile = document.createElement('button');
+      tile.className = 'item-tile';
+      tile.dataset.id = it.id;
+      tile.innerHTML = `
+        <span class="badge">✓</span>
+        <svg class="icon" viewBox="0 0 32 32" fill="none">
+          <path d="${it.icon}" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="name">${it.name}</div>
+      `;
+      tile.onclick = () => toggleItem(targetId === 'itemGrid' ? 'items' : 'wants', it.id, tile);
+      if (sourceList.includes(it.id)) tile.classList.add('selected');
+      grid.appendChild(tile);
+    });
+  }
+
+  function toggleItem(kind, id, tile) {
+    const list = state[kind];
+    const idx = list.indexOf(id);
+    if (idx > -1) { list.splice(idx, 1); tile.classList.remove('selected'); }
+    else { list.push(id); tile.classList.add('selected'); }
+
+    // update counter + button state
+    if (kind === 'items') {
+      document.getElementById('itemCounter').textContent =
+        `${list.length} item${list.length === 1 ? '' : 's'} selected`;
+      document.getElementById('itemsContinue').disabled = list.length === 0;
+    } else {
+      document.getElementById('wantsCounter').textContent =
+        `${list.length} categor${list.length === 1 ? 'y' : 'ies'} selected`;
+      document.getElementById('wantsContinue').disabled = list.length === 0;
+    }
+  }
+
+  // ============================================================
+  // ROLE SELECT
+  // ============================================================
+  function pickRole(role) {
+    state.role = role;
+    document.querySelectorAll('.role-card').forEach(c =>
+      c.classList.toggle('selected', c.dataset.role === role)
+    );
+
+    // Tailor copy on screen 2 based on role
+    const moveTitle = document.getElementById('moveTitle');
+    const moveSub = document.getElementById('moveSub');
+    const fieldFrom = document.getElementById('fieldFrom');
+    const toLabel = document.getElementById('toLabel');
+
+    if (role === 'seller') {
+      moveTitle.innerHTML = 'Tell us about your <em>move</em>.';
+      moveSub.textContent = 'We use this to match your listings with buyers in your destination city before you even arrive.';
+      fieldFrom.style.display = '';
+    } else if (role === 'buyer') {
+      moveTitle.innerHTML = 'Where will you be <em>setting up</em>?';
+      moveSub.textContent = 'We\'ll show you Crown-verified listings in your city, and alert you when new ones drop.';
+      fieldFrom.style.display = 'none';
+      toLabel.textContent = 'New city';
+    } else {
+      moveTitle.innerHTML = 'Tell us about your <em>relocation</em>.';
+      moveSub.textContent = 'We\'ll list what you\'re selling on one side and surface what\'s available on the other.';
+      fieldFrom.style.display = '';
+    }
+
+    // small delay for card animation feedback
+    setTimeout(() => goNext('role'), 320);
+  }
+
+  // ============================================================
+  // PILLS / DATE
+  // ============================================================
+  document.querySelectorAll('#fromPills .pill').forEach(p => {
+    p.onclick = () => {
+      document.querySelectorAll('#fromPills .pill').forEach(x => x.classList.remove('selected'));
+      p.classList.add('selected');
+      state.fromCity = p.dataset.city;
+      checkMoveValid();
+    };
+  });
+  document.querySelectorAll('#toPills .pill').forEach(p => {
+    p.onclick = () => {
+      document.querySelectorAll('#toPills .pill').forEach(x => x.classList.remove('selected'));
+      p.classList.add('selected');
+      state.toCity = p.dataset.city;
+      checkMoveValid();
+    };
+  });
+  document.querySelectorAll('#whenGrid .date-card').forEach(d => {
+    d.onclick = () => {
+      document.querySelectorAll('#whenGrid .date-card').forEach(x => x.classList.remove('selected'));
+      d.classList.add('selected');
+      state.when = d.dataset.when;
+      checkMoveValid();
+    };
+  });
+
+  function checkMoveValid() {
+    const needsFrom = state.role !== 'buyer';
+    const fromOk = !needsFrom || !!state.fromCity;
+    const toOk = !!state.toCity;
+    const whenOk = !!state.when;
+    document.getElementById('moveContinue').disabled = !(fromOk && toOk && whenOk);
+  }
+
+  function submitMove() {
+    if (state.role === 'seller' || state.role === 'both') {
+      goNext('move'); // -> items
+    } else {
+      goNext('move-buyer'); // -> wants
+    }
+  }
+
+  // ============================================================
+  // PREFERENCES TOGGLES
+  // ============================================================
+  function togglePref(key) {
+    state.prefs[key] = !state.prefs[key];
+    const rows = document.querySelectorAll('.toggle-row');
+    rows[0].classList.toggle('on', state.prefs.alerts);
+    rows[1].classList.toggle('on', state.prefs.newsletter);
+  }
+  // initialize default
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.toggle-row')[0].classList.add('on'); // alerts on by default
+  });
+
+  // ============================================================
+  // CONTACT VALIDATION
+  // ============================================================
+  document.getElementById('email').addEventListener('input', validateEmail);
+  document.getElementById('firstName').addEventListener('input', () => {
+    state.firstName = document.getElementById('firstName').value.trim();
+  });
+
+  function validateEmail() {
+    const emailIn = document.getElementById('email');
+    const helper = document.getElementById('emailHelper');
+    const v = emailIn.value.trim();
+    state.email = v;
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    if (v && !valid) {
+      emailIn.classList.add('error');
+      helper.textContent = 'Hmm — that doesn\'t look like a valid email.';
+      helper.classList.add('err');
+    } else {
+      emailIn.classList.remove('error');
+      helper.textContent = "We'll only email you about your listings and matched buyers.";
+      helper.classList.remove('err');
+    }
+  }
+
+  function finishSignup() {
+    state.email = document.getElementById('email').value.trim();
+    state.firstName = document.getElementById('firstName').value.trim();
+    state.phone = document.getElementById('phone').value.trim();
+    if (!state.firstName) {
+      document.getElementById('firstName').classList.add('error');
+      document.getElementById('firstName').focus();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
+      document.getElementById('email').focus();
+      validateEmail();
+      return;
+    }
+
+    const btn = document.getElementById('finishBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Setting things up…';
+
+    // Simulate magic link send
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = 'Create my account <svg class="btn-arrow" viewBox="0 0 16 16" fill="none"><path d="M3 8 L13 8 M9 4 L13 8 L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      goNext('contact');
+    }, 1100);
+  }
+
+  // ============================================================
+  // NAV / FLOW STATE MACHINE
+  // ============================================================
+  // Define total steps per path for progress bar
+  function totalStepsForRole() {
+    return 5; // role -> move -> (items|wants) -> contact -> success
+  }
+
+  function showScreen(name, push = true) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.querySelector(`.screen[data-screen="${name}"]`);
+    if (!target) return;
+    target.classList.add('active');
+    if (push) state.history.push(name);
+
+    document.getElementById('backBtn').classList.toggle('visible', state.history.length > 1 && !name.startsWith('success'));
+
+    // Progress
+    const stepMap = { 'role': 1, 'move': 2, 'items': 3, 'wants': 3, 'contact': 4, 'success-seller': 5, 'success-buyer': 5 };
+    const stepNum = stepMap[name] || 1;
+    const total = totalStepsForRole();
+    const pct = (stepNum / total) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = name.startsWith('success')
+      ? 'All done'
+      : `Step ${stepNum} of ${total}`;
+
+    // Specific screen entry hooks
+    if (name === 'items') renderItemTiles('itemGrid', state.items);
+    if (name === 'wants') renderItemTiles('wantsGrid', state.wants);
+
+    if (name === 'contact') {
+      // Tailor pref copy
+      document.getElementById('prefName').textContent =
+        state.role === 'buyer'
+          ? 'Email me when new matches appear in my city'
+          : 'Email me when there\'s buyer interest';
+      document.getElementById('contactSub').textContent =
+        'We\'ll send a magic link to sign in (no password to remember). We never share your details.';
+    }
+
+    if (name.startsWith('success')) {
+      populateSuccess(name);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goNext(from) {
+    if (from === 'role') showScreen('move');
+    else if (from === 'move') showScreen('items');
+    else if (from === 'move-buyer') showScreen('wants');
+    else if (from === 'items') showScreen('contact');
+    else if (from === 'wants') showScreen('contact');
+    else if (from === 'contact') {
+      showScreen(state.role === 'buyer' ? 'success-buyer' : 'success-seller');
+    }
+  }
+
+  function skipItems() {
+    state.items = [];
+    showScreen('contact');
+  }
+  function skipWants() {
+    state.wants = [];
+    showScreen('contact');
+  }
+
+  function goBack() {
+    if (state.history.length <= 1) return;
+    state.history.pop();
+    const prev = state.history[state.history.length - 1];
+    showScreen(prev, false);
+  }
+
+  function populateSuccess(name) {
+    const cityName = state.toCity || 'your city';
+    const namePretty = state.firstName || 'there';
+
+    if (name === 'success-seller') {
+      document.getElementById('nameOut').textContent = namePretty;
+      document.getElementById('emailOut1').textContent = state.email || 'your inbox';
+      const meta = [];
+      if (state.fromCity && state.toCity && state.fromCity !== state.toCity) {
+        meta.push(`${state.fromCity} → ${state.toCity}`);
+      } else if (state.toCity) {
+        meta.push(`${state.toCity} (local)`);
+      }
+      if (state.items.length) meta.push(`${state.items.length} item${state.items.length === 1 ? '' : 's'} to list`);
+      if (state.when) {
+        const map = { '2w': 'Move in 2 weeks', '1m': 'Move next month', '3m': 'Move in 2–3mo', 'flex': 'Flexible timing', 'local': 'Local move' };
+        meta.push(map[state.when] || '');
+      }
+      const chips = document.getElementById('metaChipsSeller');
+      chips.innerHTML = meta.filter(Boolean).map(m => `<span class="chip">${m}</span>`).join('');
+    } else if (name === 'success-buyer') {
+      document.getElementById('nameOutB').textContent = namePretty;
+      document.getElementById('cityOutB').textContent = cityName;
+      const meta = [];
+      if (state.toCity) meta.push(`Setting up in ${state.toCity}`);
+      if (state.wants.length) meta.push(`${state.wants.length} categor${state.wants.length === 1 ? 'y' : 'ies'} watched`);
+      const chips = document.getElementById('metaChipsBuyer');
+      chips.innerHTML = meta.map(m => `<span class="chip">${m}</span>`).join('');
+    }
+  }
+
+  // ============================================================
+  // RESET
+  // ============================================================
+  function resetFlow() {
+    Object.assign(state, {
+      role: null, fromCity: null, toCity: null, when: null,
+      items: [], wants: [], firstName: '', email: '', phone: '',
+      prefs: { alerts: true, newsletter: false },
+      history: ['role'],
+    });
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.pill').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.date-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('firstName').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('moveContinue').disabled = true;
+    document.getElementById('itemsContinue').disabled = true;
+    document.getElementById('wantsContinue').disabled = true;
+    document.getElementById('itemCounter').textContent = '0 items selected';
+    document.getElementById('wantsCounter').textContent = '0 categories selected';
+    showScreen('role', false);
+    state.history = ['role'];
+  }
 </script>
 
 </body>
