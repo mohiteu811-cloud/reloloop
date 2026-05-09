@@ -1,0 +1,2756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>reloloop — app wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #E8DCC1;
+    --cream-deep: #D6C8A8;
+    --forest: #0E3D45;
+    --forest-soft: #2A5A63;
+    --moss: #5BA8B3;
+    --clay: #1F8A95;
+    --clay-deep: #0E5A63;
+    --ink: #051A1F;
+    --paper: #F6F9FD;
+    --rule: rgba(11,27,58,0.18);
+    --rule-soft: rgba(11,27,58,0.08);
+    --error: #B33A1F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--cream);
+    color: var(--forest);
+    font-family: 'Space Grotesk', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    opacity: 0.32;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.24 0 0 0 0 0.27 0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+
+  /* ====== HEADER ====== */
+  header.doc-head {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(232, 220, 193, 0.92);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.9rem 2rem;
+  }
+  .head-inner {
+    max-width: 1600px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 2rem;
+    align-items: center;
+  }
+  .lockup { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .lockup .mark { width: 26px; height: 26px; }
+  .lockup .word {
+    font-size: 1.2rem; font-weight: 500;
+    letter-spacing: -0.04em; color: var(--forest);
+  }
+  .lockup .word b { font-weight: 700; color: var(--clay); }
+  .head-tabs {
+    display: flex; gap: 1.5rem; justify-content: center;
+    flex-wrap: wrap;
+  }
+  .head-tabs a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--forest-soft);
+    text-decoration: none;
+    padding: 0.4rem 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .head-tabs a:hover, .head-tabs a.active {
+    color: var(--clay); border-bottom-color: var(--clay);
+  }
+  .head-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--forest-soft);
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: rgba(246,249,253,0.4);
+  }
+  @media (max-width: 900px) {
+    .head-inner { grid-template-columns: auto auto; }
+    .head-tabs { display: none; }
+  }
+
+  /* ====== MAIN ====== */
+  main {
+    max-width: 1600px; margin: 0 auto;
+    padding: 4rem 2rem 6rem;
+    position: relative; z-index: 2;
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    margin-bottom: 6rem;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 4rem;
+  }
+  .hero .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--moss);
+    display: flex; align-items: center; gap: 0.7rem;
+    margin-bottom: 2rem;
+  }
+  .hero .eyebrow::before {
+    content: ''; width: 28px; height: 1px; background: var(--moss);
+  }
+  h1.hero-title {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-weight: 400;
+    font-size: clamp(3rem, 7vw, 6.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    color: var(--forest);
+    margin-bottom: 2rem;
+    max-width: 22ch;
+  }
+  h1.hero-title em {
+    font-style: italic;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    color: var(--clay);
+  }
+  .hero-deck {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: clamp(1.15rem, 1.5vw, 1.45rem);
+    line-height: 1.5;
+    color: var(--forest-soft);
+    max-width: 62ch;
+    margin-bottom: 2.5rem;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (max-width: 720px) {
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  .hero-stat {
+    background: var(--cream);
+    padding: 1.6rem 1.4rem 1.4rem;
+  }
+  .hero-stat .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 0.7rem;
+  }
+  .hero-stat .figure {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--forest);
+    margin-bottom: 0.4rem;
+  }
+  .hero-stat .figure em {
+    font-style: italic;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    color: var(--clay);
+  }
+  .hero-stat .note {
+    font-size: 0.82rem;
+    color: var(--forest-soft);
+    line-height: 1.4;
+  }
+
+  /* ====== SECTION ====== */
+  section.flow {
+    margin-bottom: 8rem;
+    scroll-margin-top: 100px;
+  }
+  .flow-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--forest-soft);
+    border-top: 1px solid var(--rule);
+    padding-top: 0.9rem;
+    margin-bottom: 1.4rem;
+    display: flex; justify-content: space-between;
+  }
+  .flow-num span:last-child { color: var(--clay); }
+  h2.flow-title {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    color: var(--forest);
+    margin-bottom: 1.4rem;
+    max-width: 22ch;
+  }
+  h2.flow-title em {
+    font-style: italic;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    color: var(--clay);
+  }
+  .flow-deck {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+    line-height: 1.5;
+    color: var(--forest-soft);
+    max-width: 60ch;
+    margin-bottom: 3rem;
+  }
+
+  /* ====== SCREENS HORIZONTAL ROW ====== */
+  .screens-row {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    padding: 1rem 0 2.5rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: var(--clay) var(--rule-soft);
+  }
+  .screens-row::-webkit-scrollbar { height: 6px; }
+  .screens-row::-webkit-scrollbar-track { background: var(--rule-soft); }
+  .screens-row::-webkit-scrollbar-thumb { background: var(--clay); border-radius: 3px; }
+
+  /* ====== PHONE FRAME ====== */
+  .phone-block {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    width: 320px;
+  }
+  .phone-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--forest-soft);
+    margin-bottom: 0.5rem;
+    display: flex; justify-content: space-between;
+  }
+  .phone-num span:last-child { color: var(--clay); }
+  .phone {
+    width: 320px;
+    height: 660px;
+    background: var(--paper);
+    border: 1.5px solid var(--forest);
+    overflow: hidden;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-caption {
+    margin-top: 0.9rem;
+    font-size: 0.83rem;
+    line-height: 1.45;
+    color: var(--forest-soft);
+  }
+  .phone-caption strong { color: var(--forest); font-weight: 500; }
+
+  /* ====== PHONE — TOPBAR ====== */
+  .pt {
+    flex-shrink: 0;
+    padding: 0.7rem 1rem 0.6rem;
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.5rem;
+    background: rgba(246,249,253,0.6);
+  }
+  .pt-back {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--forest);
+  }
+  .pt-back svg { width: 12px; height: 12px; }
+  .pt-word {
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--forest);
+    flex: 1;
+  }
+  .pt-word b { font-weight: 700; color: var(--clay); }
+  .pt-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--forest-soft);
+  }
+  .pt-icon {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--forest-soft);
+  }
+  .pt-icon svg { width: 14px; height: 14px; }
+
+  .pt-progress {
+    height: 3px;
+    background: var(--rule);
+    flex-shrink: 0;
+  }
+  .pt-progress-fill {
+    height: 100%;
+    background: var(--clay);
+  }
+
+  /* ====== PHONE — BODY ====== */
+  .pb {
+    flex: 1;
+    overflow: hidden;
+    padding: 1rem 1rem 1.2rem;
+    position: relative;
+  }
+  .pb.pad-tight { padding: 0.8rem 1rem; }
+  .pb.no-pad { padding: 0; }
+  .pb.dark { background: var(--forest); color: var(--cream); }
+  .pb.cream-bg { background: var(--cream); }
+
+  .sect-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 0.4rem;
+  }
+  .pb h3 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 50;
+    font-weight: 500;
+    font-size: 1.5rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--forest);
+    margin-bottom: 0.6rem;
+  }
+  .pb.dark h3 { color: var(--cream); }
+  .pb h3 em {
+    font-style: italic;
+    color: var(--clay);
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+  }
+  .pb.dark h3 em { color: var(--moss); }
+  .pb p.lead {
+    font-size: 0.84rem;
+    color: var(--forest-soft);
+    line-height: 1.45;
+    margin-bottom: 1rem;
+  }
+  .pb.dark p.lead { color: rgba(232, 220, 193, 0.75); }
+
+  /* ====== UI BITS ====== */
+  .field-mini {
+    margin-bottom: 0.9rem;
+  }
+  .field-mini-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--moss);
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.5rem;
+  }
+  .field-mini-val {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 1rem;
+    color: var(--forest);
+  }
+  .field-mini-val em {
+    font-style: italic;
+    color: var(--clay);
+    font-variation-settings: "opsz" 24, "SOFT" 100;
+  }
+
+  .pill-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.52rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--forest-soft);
+    background: rgba(246,249,253,0.4);
+  }
+  .pill-mini.solid {
+    background: var(--clay);
+    color: var(--paper);
+    border-color: var(--clay);
+  }
+  .pill-mini.dark {
+    background: var(--forest);
+    color: var(--cream);
+    border-color: var(--forest);
+  }
+  .pill-mini.warn {
+    background: var(--cream-deep);
+    border-color: var(--cream-deep);
+    color: var(--forest);
+  }
+  .pill-mini::before {
+    content: '';
+    width: 5px; height: 5px;
+    background: currentColor;
+    border-radius: 50%;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .btn-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0;
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-mini.primary {
+    background: var(--forest); color: var(--cream);
+    width: 100%;
+  }
+  .btn-mini.secondary {
+    background: transparent;
+    color: var(--forest);
+    border: 1px solid var(--forest);
+    width: 100%;
+  }
+  .btn-mini.ghost {
+    background: transparent;
+    color: var(--forest-soft);
+    padding: 0.6rem 0;
+  }
+  .btn-mini.clay {
+    background: var(--clay);
+    color: var(--paper);
+    width: 100%;
+  }
+
+  /* ====== CARDS ====== */
+  .card-mini {
+    background: var(--cream);
+    border: 1px solid var(--rule);
+    padding: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  .card-mini.solid { background: var(--paper); }
+  .card-mini.accent { border: 2px solid var(--clay); background: var(--paper); }
+  .card-mini-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+  .card-mini-title {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--forest);
+  }
+  .card-mini-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--forest-soft);
+    margin-bottom: 0.3rem;
+  }
+  .card-mini-price {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--clay);
+    line-height: 1;
+  }
+  .card-mini-foot {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin-top: 0.5rem;
+  }
+
+  /* ====== ITEM IMAGE PLACEHOLDER ====== */
+  .item-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background:
+      repeating-linear-gradient(135deg, transparent 0 8px, rgba(11,27,58,0.05) 8px 9px),
+      var(--cream-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--forest-soft);
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  .item-img svg { width: 35%; height: 35%; opacity: 0.55; }
+  .item-img .verified {
+    position: absolute; top: 6px; left: 6px;
+    background: var(--forest);
+    color: var(--cream);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  .item-img .verified::before {
+    content: ''; width: 4px; height: 4px;
+    background: var(--clay);
+    border-radius: 50%;
+  }
+  .item-img.tall { aspect-ratio: 1/1; }
+  .item-img .heart {
+    position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px;
+    border-radius: 999px;
+    background: rgba(246,249,253,0.85);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--forest-soft);
+  }
+  .item-img .heart svg { width: 11px; height: 11px; opacity: 1; }
+  .item-img .heart.active { color: var(--clay); }
+
+  /* ====== CAMERA SCREEN ====== */
+  .camera-view {
+    background: var(--ink);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    color: var(--cream);
+  }
+  .camera-view .viewfinder {
+    flex: 1;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(91,168,179,0.15) 0%, transparent 60%),
+      var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .camera-view .viewfinder::before {
+    content: '';
+    position: absolute;
+    width: 75%; height: 60%;
+    border: 1px dashed rgba(232, 220, 193, 0.35);
+  }
+  .camera-view .viewfinder svg {
+    width: 60%; height: 60%; opacity: 0.4;
+    color: var(--cream);
+  }
+  .camera-view .top-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 0.8rem 1rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(180deg, rgba(5,26,31,0.85) 0%, transparent 100%);
+  }
+  .camera-view .top-overlay .x {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream);
+  }
+  .camera-view .hint {
+    position: absolute;
+    bottom: 8rem;
+    left: 50%; transform: translateX(-50%);
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 0.95rem;
+    text-align: center;
+    color: var(--cream);
+    background: rgba(5,26,31,0.65);
+    padding: 0.5rem 1rem;
+    backdrop-filter: blur(8px);
+    width: max-content;
+  }
+  .camera-view .hint em { font-style: italic; color: var(--moss); }
+  .camera-view .controls {
+    padding: 1.2rem 1rem 1.4rem;
+    background: rgba(5,26,31,0.85);
+    display: flex; justify-content: center; align-items: center;
+    gap: 1.5rem;
+    position: relative;
+  }
+  .camera-view .shutter {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 3px solid var(--ink);
+    box-shadow: 0 0 0 3px var(--cream);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .camera-view .controls .gallery {
+    width: 32px; height: 32px;
+    background: rgba(232,220,193,0.18);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream);
+  }
+  .camera-view .controls .flash {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream);
+  }
+  .camera-view .photo-count {
+    position: absolute;
+    top: -22px; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--moss);
+  }
+
+  /* ====== PROCESSING SCREEN ====== */
+  .processing {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--cream);
+  }
+  .processing .ring {
+    width: 80px; height: 80px;
+    border: 2px solid var(--rule);
+    border-top-color: var(--clay);
+    border-radius: 50%;
+    animation: spin 1.4s linear infinite;
+    margin-bottom: 1.6rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .processing h4 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 50;
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+    line-height: 1.1;
+  }
+  .processing h4 em {
+    font-style: italic; color: var(--clay);
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+  }
+  .processing p {
+    font-size: 0.85rem;
+    color: var(--forest-soft);
+    margin-bottom: 1.5rem;
+    max-width: 24ch;
+    line-height: 1.5;
+  }
+  .processing .steps {
+    text-align: left;
+    width: 100%;
+    border-top: 1px solid var(--rule);
+    padding-top: 0.8rem;
+  }
+  .processing .step {
+    padding: 0.4rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--forest-soft);
+    display: flex; gap: 0.5rem; align-items: center;
+  }
+  .processing .step.done { color: var(--clay); }
+  .processing .step.done::before {
+    content: '✓'; color: var(--clay); font-weight: bold;
+  }
+  .processing .step.current {
+    color: var(--forest);
+  }
+  .processing .step.current::before {
+    content: '◇'; color: var(--clay);
+  }
+  .processing .step.pending::before {
+    content: '○'; color: var(--rule);
+  }
+
+  /* ====== AUTOFILL REVIEW ====== */
+  .autofill-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.6rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    align-items: center;
+  }
+  .autofill-row:last-child { border-bottom: none; }
+  .autofill-row .ai-mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 0.14em;
+    color: var(--clay);
+    background: rgba(31,138,149,0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .autofill-row .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--forest-soft);
+  }
+  .autofill-row .val {
+    font-size: 0.82rem; color: var(--forest); font-weight: 500;
+    text-align: right;
+  }
+  .autofill-row .edit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; color: var(--clay);
+    cursor: pointer;
+  }
+
+  /* ====== PRICE WIDGET ====== */
+  .price-widget {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 0.9rem;
+    margin: 0.5rem 0 0.8rem;
+  }
+  .price-widget .input-line {
+    display: flex; align-items: baseline; gap: 0.3rem;
+    border-bottom: 1px solid var(--forest);
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.5rem;
+  }
+  .price-widget .currency {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; color: var(--forest-soft);
+  }
+  .price-widget .amount {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-style: italic;
+    font-size: 2rem;
+    color: var(--forest);
+    line-height: 1;
+  }
+  .price-widget .hint-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 0.4rem;
+  }
+  .price-widget .compare-bar {
+    height: 6px;
+    background: var(--rule);
+    margin-bottom: 0.4rem;
+    position: relative;
+  }
+  .price-widget .compare-fill {
+    position: absolute; top: 0; bottom: 0;
+    background: var(--clay);
+    opacity: 0.4;
+  }
+  .price-widget .compare-mark {
+    position: absolute; top: -2px; bottom: -2px;
+    width: 2px;
+    background: var(--clay);
+  }
+  .price-widget .compare-labels {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 0.14em;
+    color: var(--forest-soft);
+  }
+
+  /* ====== FEED HEADER ====== */
+  .feed-tabs {
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.8rem;
+  }
+  .feed-tab {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--forest-soft);
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .feed-tab.active {
+    color: var(--clay);
+    border-bottom-color: var(--clay);
+  }
+  .feed-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0.7rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .feed-row:last-child { border-bottom: none; }
+  .feed-row .thumb {
+    aspect-ratio: 1;
+    background:
+      repeating-linear-gradient(135deg, transparent 0 8px, rgba(11,27,58,0.05) 8px 9px),
+      var(--cream-deep);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--forest-soft);
+  }
+  .feed-row .thumb svg { width: 50%; opacity: 0.5; }
+  .feed-row .info { padding-top: 0.1rem; }
+  .feed-row .info .t {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.1;
+    margin-bottom: 0.15rem;
+  }
+  .feed-row .info .m {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--forest-soft);
+    margin-bottom: 0.3rem;
+  }
+  .feed-row .info .p {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--clay);
+    line-height: 1;
+  }
+  .feed-row .info .pillrow {
+    display: flex; gap: 0.3rem; margin-top: 0.3rem;
+  }
+
+  /* ====== DASHBOARD STATS ====== */
+  .dash-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-bottom: 0.8rem;
+  }
+  .dash-stat {
+    background: var(--cream);
+    padding: 0.7rem 0.7rem 0.6rem;
+  }
+  .dash-stat .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--moss); margin-bottom: 0.2rem;
+  }
+  .dash-stat .v {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 50;
+    font-size: 1.5rem;
+    color: var(--forest);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .dash-stat .v em {
+    font-style: italic; color: var(--clay);
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+  }
+
+  /* ====== MATCH BADGE ====== */
+  .match-badge {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+    background: var(--clay);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+  }
+  .match-badge::before {
+    content: '∞'; font-size: 0.75rem; line-height: 0.5;
+  }
+
+  /* ====== TAB BAR ====== */
+  .tabbar {
+    border-top: 1px solid var(--rule);
+    background: rgba(246,249,253,0.95);
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 0.5rem 0 0.6rem;
+  }
+  .tabbar .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    color: var(--forest-soft);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.45rem; letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .tabbar .tab svg { width: 18px; height: 18px; }
+  .tabbar .tab.active { color: var(--clay); }
+  .tabbar .tab.fab svg {
+    width: 30px; height: 30px;
+    color: var(--cream);
+    background: var(--clay);
+    padding: 6px;
+    border-radius: 999px;
+  }
+  .tabbar .tab.fab { color: transparent; height: 0; }
+
+  /* ====== MATCH DEEP-DIVE ====== */
+  .deep-section {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 4rem 0;
+    margin: 4rem -2rem;
+    position: relative;
+  }
+  .deep-section.dark {
+    background: var(--forest);
+    color: var(--cream);
+  }
+  .deep-section.dark .flow-num { color: rgba(232,220,193,0.6); }
+  .deep-section.dark .flow-num span:last-child { color: var(--moss); }
+  .deep-section.dark h2.flow-title { color: var(--cream); }
+  .deep-section.dark h2.flow-title em { color: var(--moss); }
+  .deep-section.dark .flow-deck { color: rgba(232,220,193,0.75); }
+  .deep-inner {
+    max-width: 1600px; margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ====== MATCHING DIAGRAM ====== */
+  .match-diagram {
+    background: var(--cream);
+    border: 1px solid var(--rule);
+    padding: 2.5rem 2rem;
+    margin: 2rem 0;
+  }
+  .deep-section.dark .match-diagram {
+    background: rgba(0,0,0,0.18);
+    border-color: rgba(232,220,193,0.18);
+  }
+  .embed-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 900px) {
+    .embed-flow {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .embed-flow .arrow { display: none; }
+  }
+  .embed-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 1.2rem;
+    text-align: center;
+  }
+  .deep-section.dark .embed-card {
+    background: rgba(0,0,0,0.25);
+    border-color: rgba(232,220,193,0.18);
+  }
+  .embed-card .step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 0.7rem;
+  }
+  .embed-card .what {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 50;
+    font-size: 1.1rem;
+    color: var(--forest);
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+  }
+  .deep-section.dark .embed-card .what { color: var(--cream); }
+  .embed-card .what em {
+    font-style: italic; color: var(--clay);
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+  }
+  .deep-section.dark .embed-card .what em { color: var(--moss); }
+  .embed-card .desc {
+    font-size: 0.78rem;
+    color: var(--forest-soft);
+    line-height: 1.4;
+  }
+  .deep-section.dark .embed-card .desc { color: rgba(232,220,193,0.7); }
+  .embed-card .vec-preview {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--clay);
+    margin-top: 0.6rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .arrow {
+    color: var(--clay);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.5rem;
+  }
+
+  /* ====== MATCH EXAMPLE ====== */
+  .match-example {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin: 2rem 0;
+  }
+  @media (max-width: 720px) {
+    .match-example {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .match-example .similarity { transform: rotate(90deg); justify-self: center; }
+  }
+  .person-box {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 1.5rem;
+  }
+  .deep-section.dark .person-box {
+    background: rgba(0,0,0,0.25);
+    border-color: rgba(232,220,193,0.18);
+  }
+  .person-box .who {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 50;
+    font-size: 1.3rem;
+    color: var(--forest);
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+  }
+  .deep-section.dark .person-box .who { color: var(--cream); }
+  .person-box .route {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--moss);
+    margin-bottom: 1rem;
+  }
+  .person-box .item-listed {
+    background: var(--cream);
+    padding: 0.8rem;
+    border: 1px solid var(--rule);
+    margin-bottom: 0.5rem;
+  }
+  .deep-section.dark .person-box .item-listed {
+    background: rgba(232,220,193,0.06);
+    border-color: rgba(232,220,193,0.12);
+  }
+  .person-box .item-listed .name {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 0.95rem;
+    margin-bottom: 0.2rem;
+    color: var(--forest);
+    font-weight: 500;
+  }
+  .deep-section.dark .person-box .item-listed .name { color: var(--cream); }
+  .person-box .item-listed .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--forest-soft);
+  }
+  .deep-section.dark .person-box .item-listed .meta { color: rgba(232,220,193,0.55); }
+
+  .similarity {
+    text-align: center;
+  }
+  .similarity .num {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-style: italic;
+    font-size: 2.4rem;
+    color: var(--clay);
+    line-height: 1;
+  }
+  .deep-section.dark .similarity .num { color: var(--moss); }
+  .similarity .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--forest-soft);
+    margin-top: 0.4rem;
+  }
+  .deep-section.dark .similarity .lbl { color: rgba(232,220,193,0.55); }
+
+  /* ====== ROUTE DIAGRAM ====== */
+  .route-diagram {
+    background: var(--cream);
+    border: 1px solid var(--rule);
+    padding: 2rem 1.5rem;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .deep-section.dark .route-diagram {
+    background: rgba(0,0,0,0.18);
+    border-color: rgba(232,220,193,0.18);
+  }
+  .route-line {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .route-line:last-child { margin-bottom: 0; }
+  .route-city {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 50;
+    font-size: 1.2rem;
+    color: var(--forest);
+    font-weight: 500;
+    min-width: 110px;
+  }
+  .deep-section.dark .route-city { color: var(--cream); }
+  .route-track {
+    height: 2px;
+    background: var(--rule);
+    position: relative;
+  }
+  .deep-section.dark .route-track { background: rgba(232,220,193,0.18); }
+  .route-track::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0; height: 2px;
+    background: linear-gradient(90deg, var(--clay) 0%, var(--clay) 100%);
+    opacity: 0.6;
+  }
+  .route-track::after {
+    content: '→';
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    color: var(--clay);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.4rem;
+  }
+  .route-track.reverse::after { content: '←'; right: auto; left: -10px; }
+  .route-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--moss);
+    text-align: right;
+    min-width: 100px;
+  }
+  .route-bundle {
+    margin-top: 0.7rem;
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+  }
+
+  /* ====== SCHEMA TEASER ====== */
+  .schema-block {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 2rem;
+    margin: 2rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .schema-block .kw { color: var(--moss); }
+  .schema-block .typ { color: var(--clay); }
+  .schema-block .com { color: rgba(232,220,193,0.45); font-style: italic; }
+  .schema-block .at { color: var(--cream-deep); }
+
+  /* ====== SECTION-FOOT ====== */
+  .section-foot {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  @media (max-width: 720px) { .section-foot { grid-template-columns: 1fr; } }
+  .section-foot .principle {
+    border-top: 1px solid var(--rule);
+    padding-top: 0.8rem;
+  }
+  .section-foot .principle .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--clay);
+    margin-bottom: 0.5rem;
+  }
+  .section-foot .principle .v {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 24;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--forest);
+  }
+  .deep-section.dark .section-foot .principle .v { color: var(--cream); }
+
+  /* ====== FOOTER ====== */
+  footer.doc-foot {
+    background: var(--forest);
+    color: var(--cream);
+    padding: 3rem 2rem;
+    margin-top: 4rem;
+    position: relative;
+    z-index: 2;
+  }
+  .foot-inner {
+    max-width: 1600px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 2rem;
+    align-items: center;
+  }
+  @media (max-width: 720px) {
+    .foot-inner { grid-template-columns: 1fr; text-align: center; }
+  }
+  footer.doc-foot .lockup .word { color: var(--cream); }
+  footer.doc-foot .lockup .word b { color: var(--moss); }
+  footer.doc-foot .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(232,220,193,0.6);
+  }
+  footer.doc-foot .ver {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(232,220,193,0.6);
+  }
+
+  /* tiny utility */
+  .row { display: flex; gap: 0.4rem; align-items: center; }
+  .row.between { justify-content: space-between; }
+  .row.wrap { flex-wrap: wrap; }
+  .stack > * + * { margin-top: 0.5rem; }
+  .smol { font-size: 0.78rem; color: var(--forest-soft); line-height: 1.45; }
+  .pic-icon { width: 28px; height: 28px; opacity: 0.55; }
+
+  /* offer card */
+  .offer-line {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    align-items: center;
+  }
+  .offer-line:last-child { border-bottom: none; }
+  .offer-line .av {
+    width: 24px; height: 24px;
+    background: var(--cream-deep);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--forest);
+    font-weight: 600;
+  }
+  .offer-line .who {
+    font-size: 0.78rem;
+    color: var(--forest);
+    font-weight: 500;
+  }
+  .offer-line .ago {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--forest-soft);
+    margin-top: 0.1rem;
+  }
+  .offer-line .amt {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 36, "SOFT" 100;
+    font-style: italic;
+    color: var(--clay);
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-head">
+  <div class="head-inner">
+    <a href="#top" class="lockup">
+      <svg class="mark" viewBox="0 0 80 80" fill="none">
+        <path d="M12 70 L12 35 Q12 18 30 18 L42 18 L42 26 L30 26 Q22 26 22 35 L22 70 Z" fill="#0E3D45"/>
+        <path d="M68 70 L68 35 Q68 18 50 18 L38 18 L38 26 L50 26 Q58 26 58 35 L58 70 Z" fill="#0E3D45"/>
+        <path d="M40 18 L52 18 L56 30 L36 30 Z" fill="#1F8A95"/>
+        <line x1="6" y1="72" x2="74" y2="72" stroke="#0E3D45" stroke-width="3"/>
+      </svg>
+      <span class="word">relo<b>loop</b></span>
+    </a>
+    <nav class="head-tabs">
+      <a href="#seller">§ 01 — Seller</a>
+      <a href="#buyer">§ 02 — Buyer</a>
+      <a href="#match">§ 03 — Matching</a>
+      <a href="#schema">§ 04 — Schema</a>
+      <a href="#api">§ 05 — API</a>
+    </nav>
+    <span class="head-meta">App wireframe · v1</span>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============================================================ -->
+  <!-- HERO -->
+  <!-- ============================================================ -->
+  <section class="hero">
+    <div class="eyebrow">App wireframe + schema</div>
+    <h1 class="hero-title">A platform for <em>circular</em> moves.</h1>
+    <p class="hero-deck">An end-to-end view of how the ReloLoop app works for sellers and buyers, how the matching engine pairs comparable items across cities, and how it all sits on top of a small set of database tables and a single matching primitive — vector similarity over photo-and-text embeddings.</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="label">Seller flow</div>
+        <div class="figure"><em>9</em> screens</div>
+        <div class="note">Listing creation, dashboard, offers, pickup</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Buyer flow</div>
+        <div class="figure"><em>7</em> screens</div>
+        <div class="note">Smart feed, item detail, offer, watchlist</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Core models</div>
+        <div class="figure"><em>14</em> tables</div>
+        <div class="note">Postgres + pgvector for similarity</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Matching</div>
+        <div class="figure"><em>768</em>-dim</div>
+        <div class="note">CLIP image + text combined embedding</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SELLER FLOW -->
+  <!-- ============================================================ -->
+  <section class="flow" id="seller">
+    <div class="flow-num">
+      <span>§ 01 — Seller flow</span>
+      <span>Sriram · Auckland → Christchurch</span>
+    </div>
+    <h2 class="flow-title">Listing a piece in <em>under four minutes</em>.</h2>
+    <p class="flow-deck">Sriram is moving Auckland → Christchurch in three weeks. He's selling a TV, fridge, and sofa. The whole flow is photo-first: he points the camera, the AI extracts everything else.</p>
+
+    <div class="screens-row">
+
+      <!-- Screen S1 — Dashboard -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 01</span><span>Dashboard</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-word">relo<b>loop</b></div>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M2 8 L14 8 M2 4 L14 4 M2 12 L14 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ Hi, Sriram</div>
+            <h3>Auckland → <em>Christchurch</em></h3>
+            <p class="lead">Move date · 24 days away</p>
+
+            <div class="dash-stats">
+              <div class="dash-stat"><div class="l">Listings live</div><div class="v"><em>3</em></div></div>
+              <div class="dash-stat"><div class="l">Watching</div><div class="v">12</div></div>
+              <div class="dash-stat"><div class="l">Offers</div><div class="v"><em>2</em></div></div>
+              <div class="dash-stat"><div class="l">Earned</div><div class="v">$0</div></div>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 0.5rem;">Your listings</div>
+
+            <div class="card-mini">
+              <div class="card-mini-head">
+                <div>
+                  <div class="card-mini-meta">Living room · Sofa</div>
+                  <div class="card-mini-title">3-seater linen sofa</div>
+                </div>
+                <div class="card-mini-price">$650</div>
+              </div>
+              <div class="card-mini-foot">
+                <span class="pill-mini solid">2 offers</span>
+                <span class="pill-mini">8 watching</span>
+              </div>
+            </div>
+
+            <div class="card-mini">
+              <div class="card-mini-head">
+                <div>
+                  <div class="card-mini-meta">Kitchen · Appliance</div>
+                  <div class="card-mini-title">Fisher &amp; Paykel fridge</div>
+                </div>
+                <div class="card-mini-price">$420</div>
+              </div>
+              <div class="card-mini-foot">
+                <span class="pill-mini">4 watching</span>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab active">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 12 L12 4 L21 12 M5 10 L5 20 L19 20 L19 10" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Home</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M16 16 L20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span>Browse</span>
+            </div>
+            <div class="tab fab">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 6 L12 18 M6 12 L18 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6 L20 6 L20 16 L13 16 L9 20 L9 16 L4 16 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              <span>Inbox</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20 Q5 14 12 14 Q19 14 19 20" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Me</span>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Dashboard.</strong> Move context lives at the top — every other screen orients to it. Active listings, offers awaiting response, total earned.</p>
+      </div>
+
+      <!-- Screen S2 — Camera -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 02</span><span>Capture</span></div>
+        <div class="phone">
+          <div class="camera-view">
+            <div class="top-overlay">
+              <div class="x">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3 3 L13 13 M13 3 L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="pill-mini" style="background: rgba(232,220,193,0.18); border-color: rgba(232,220,193,0.35); color: var(--cream);">Photo 1 of 4</div>
+              <div style="width:28px;"></div>
+            </div>
+
+            <div class="viewfinder">
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M10 36 L54 36" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M14 50 L14 56 M50 50 L50 56" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+              <div class="hint">Step back so the <em>whole sofa</em> is in frame.</div>
+            </div>
+
+            <div class="controls">
+              <div class="photo-count">Tap to capture · long-press to record</div>
+              <div class="gallery">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="3" width="12" height="10" stroke="currentColor" stroke-width="1.4"/>
+                  <circle cx="6" cy="7" r="1" fill="currentColor"/>
+                  <path d="M3 12 L7 8 L10 11 L13 8" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="shutter"></div>
+              <div class="flash">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M9 1 L4 9 L8 9 L7 15 L12 7 L8 7 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Capture.</strong> Native camera, contextual prompts. Up to 4 photos per listing — different angles guide the AI for better category detection and condition scoring.</p>
+      </div>
+
+      <!-- Screen S3 — Processing -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 03</span><span>Processing</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">New listing</div>
+            <div class="pt-meta">2 / 5</div>
+          </div>
+          <div class="pt-progress"><div class="pt-progress-fill" style="width: 40%;"></div></div>
+          <div class="processing">
+            <div class="ring"></div>
+            <h4>Reading your <em>photos</em>…</h4>
+            <p>Photos uploaded. Now we're identifying what it is, the condition, and a fair price for the route.</p>
+            <div class="steps">
+              <div class="step done">Uploaded · 2.4 MB</div>
+              <div class="step done">Identified category</div>
+              <div class="step current">Estimating condition</div>
+              <div class="step pending">Suggesting price</div>
+              <div class="step pending">Finding comparables</div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Processing.</strong> Server-side. Photos go to R2, embeddings + Gemini analysis run async. Fallback path if AI is slow: user can fill in fields manually.</p>
+      </div>
+
+      <!-- Screen S4 — Review -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 04</span><span>Review</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">New listing</div>
+            <div class="pt-meta">3 / 5</div>
+          </div>
+          <div class="pt-progress"><div class="pt-progress-fill" style="width: 60%;"></div></div>
+          <div class="pb">
+            <div class="sect-tag">§ Auto-detected — review before publishing</div>
+            <h3>What we <em>see</em>.</h3>
+
+            <div class="item-img" style="aspect-ratio: 4/3; margin-bottom: 0.6rem;">
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/>
+                <path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/>
+                <path d="M14 50 L14 56 M50 50 L50 56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+
+            <div style="border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 0.4rem 0; margin-bottom: 0.7rem;">
+              <div class="autofill-row">
+                <span class="ai-mark">AI</span>
+                <span class="label">Title</span>
+                <span class="val">3-seater linen sofa</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-mark">AI</span>
+                <span class="label">Category</span>
+                <span class="val">Sofa</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-mark">AI</span>
+                <span class="label">Condition</span>
+                <span class="val">Like new</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-mark">AI</span>
+                <span class="label">Dimensions</span>
+                <span class="val">~210 × 90 × 85cm</span>
+              </div>
+              <div class="autofill-row">
+                <span class="label" style="grid-column: 1 / 3;">Pickup notes</span>
+                <span class="edit">+ add</span>
+              </div>
+            </div>
+
+            <button class="btn-mini primary">Looks right — keep going →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>AI review.</strong> Every auto-detected field is editable. The "AI" tag flags what was machine-extracted so the seller knows what to verify.</p>
+      </div>
+
+      <!-- Screen S5 — Pricing -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 05</span><span>Pricing</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">New listing</div>
+            <div class="pt-meta">4 / 5</div>
+          </div>
+          <div class="pt-progress"><div class="pt-progress-fill" style="width: 80%;"></div></div>
+          <div class="pb">
+            <div class="sect-tag">§ Set your price</div>
+            <h3>Price your <em>sofa</em>.</h3>
+            <p class="lead">Based on 14 comparable sofas sold on the AKL → CHC route in the last 90 days.</p>
+
+            <div class="price-widget">
+              <div class="hint-line">Suggested · $580 – $720</div>
+              <div class="input-line">
+                <span class="currency">NZ$</span>
+                <span class="amount">650</span>
+              </div>
+              <div class="compare-bar">
+                <div class="compare-fill" style="left: 25%; right: 25%;"></div>
+                <div class="compare-mark" style="left: 50%;"></div>
+              </div>
+              <div class="compare-labels">
+                <span>$400</span>
+                <span>Comparable range</span>
+                <span>$900</span>
+              </div>
+            </div>
+
+            <div class="card-mini solid">
+              <div class="card-mini-meta">After Crown delivery + commission</div>
+              <div class="row between" style="margin-top: 0.3rem;">
+                <span class="smol">You'll receive</span>
+                <span class="card-mini-price">$565</span>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top: 0.7rem; gap: 0.5rem;">
+              <button class="btn-mini secondary" style="flex:1;">Lower</button>
+              <button class="btn-mini primary" style="flex:1;">Publish →</button>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Pricing.</strong> Suggested range from comparables. Slider shows where the seller sits within the route's recent sale prices. Net-payout previewed.</p>
+      </div>
+
+      <!-- Screen S6 — Published -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 06</span><span>Published</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-word">relo<b>loop</b></div>
+            <div class="pt-meta">Published</div>
+          </div>
+          <div class="pb cream-bg">
+            <div style="padding: 1.5rem 0.5rem 1rem; text-align: center;">
+              <svg width="56" height="56" viewBox="0 0 80 80" fill="none" style="margin-bottom: 0.8rem;">
+                <path d="M12 70 L12 35 Q12 18 30 18 L42 18 L42 26 L30 26 Q22 26 22 35 L22 70 Z" fill="#0E3D45"/>
+                <path d="M68 70 L68 35 Q68 18 50 18 L38 18 L38 26 L50 26 Q58 26 58 35 L58 70 Z" fill="#0E3D45"/>
+                <path d="M40 18 L52 18 L56 30 L36 30 Z" fill="#1F8A95"/>
+                <line x1="6" y1="72" x2="74" y2="72" stroke="#0E3D45" stroke-width="3"/>
+              </svg>
+              <h3>You're <em>live</em>.</h3>
+              <p class="lead" style="max-width: 26ch; margin-left: auto; margin-right: auto;">Your sofa is now visible to 142 buyers arriving in Christchurch.</p>
+            </div>
+
+            <div class="card-mini accent">
+              <div class="card-mini-meta">First match</div>
+              <div class="card-mini-title" style="margin-bottom: 0.4rem;">Sarah K. is watching this listing</div>
+              <div class="row" style="gap: 0.4rem;">
+                <span class="match-badge">94% match</span>
+                <span class="pill-mini">Arrives 3 weeks</span>
+              </div>
+            </div>
+
+            <div class="row" style="gap: 0.5rem; margin-top: 1rem;">
+              <button class="btn-mini secondary" style="flex:1;">View listing</button>
+              <button class="btn-mini primary" style="flex:1;">Add another →</button>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 1.2rem;">What's next</div>
+            <ul style="list-style: none; padding-left: 0;">
+              <li class="row" style="padding: 0.5rem 0; border-bottom: 1px solid var(--rule-soft); gap: 0.6rem;">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--clay);">i.</span>
+                <span class="smol">We'll notify you of every offer</span>
+              </li>
+              <li class="row" style="padding: 0.5rem 0; border-bottom: 1px solid var(--rule-soft); gap: 0.6rem;">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--clay);">ii.</span>
+                <span class="smol">Pickup gets booked into your move</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Published.</strong> Confirmation, plus the first signal of demand. The "94% match" pill foreshadows the matching engine — buyers are already paired in the background.</p>
+      </div>
+
+      <!-- Screen S7 — Listing detail with offers -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 07</span><span>My listing detail</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">Listing</div>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <circle cx="3" cy="8" r="1.2" fill="currentColor"/>
+                <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+                <circle cx="13" cy="8" r="1.2" fill="currentColor"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb pad-tight">
+            <div class="item-img" style="aspect-ratio: 4/3; margin-bottom: 0.6rem;">
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/>
+                <path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/>
+                <path d="M14 50 L14 56 M50 50 L50 56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+
+            <div class="row between" style="margin-bottom: 0.4rem;">
+              <div>
+                <div class="card-mini-meta">Sofa · Like new</div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0;">3-seater linen sofa</h3>
+              </div>
+              <div class="card-mini-price" style="font-size: 1.4rem;">$650</div>
+            </div>
+
+            <div class="dash-stats" style="margin-top: 0.5rem;">
+              <div class="dash-stat"><div class="l">Watching</div><div class="v">8</div></div>
+              <div class="dash-stat"><div class="l">Offers</div><div class="v"><em>2</em></div></div>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 0.8rem;">Offers</div>
+            <div style="border-top: 1px solid var(--rule);">
+              <div class="offer-line">
+                <div class="av">SK</div>
+                <div>
+                  <div class="who">Sarah K.</div>
+                  <div class="ago">2 hours ago · 94% match</div>
+                </div>
+                <div class="amt">$620</div>
+              </div>
+              <div class="offer-line">
+                <div class="av">MR</div>
+                <div>
+                  <div class="who">Maria R.</div>
+                  <div class="ago">Yesterday · 88% match</div>
+                </div>
+                <div class="amt">$580</div>
+              </div>
+            </div>
+
+            <button class="btn-mini clay" style="margin-top: 0.7rem;">Accept Sarah's offer →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Listing detail.</strong> Watchers, offers ranked by match score (not just price). Match score reflects buyer-fit, not just bid amount — high-match offers convert better.</p>
+      </div>
+
+      <!-- Screen S8 — Pickup -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 08</span><span>Pickup scheduled</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">Sale confirmed</div>
+            <div class="pt-meta">Booking</div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ Sold to Sarah K. — $620</div>
+            <h3>Crown picks up <em>Saturday</em>.</h3>
+            <p class="lead">We've slotted your sofa into the AKL → CHC delivery run on Saturday. You don't need to do anything else.</p>
+
+            <div class="card-mini solid">
+              <div class="card-mini-meta">Pickup window</div>
+              <div class="row between">
+                <div>
+                  <div style="font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 500;">Sat 25 May</div>
+                  <div class="smol">Between 10am — 2pm</div>
+                </div>
+                <span class="pill-mini solid">Confirmed</span>
+              </div>
+            </div>
+
+            <div class="card-mini">
+              <div class="card-mini-meta">Crown driver</div>
+              <div class="row" style="gap: 0.5rem; margin-top: 0.2rem;">
+                <div style="width: 28px; height: 28px; background: var(--cream-deep); border-radius: 50%; display:flex; align-items:center; justify-content:center; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; font-weight: 600;">DT</div>
+                <div>
+                  <div style="font-size: 0.85rem; font-weight: 500;">David T.</div>
+                  <div class="smol">Crown · 12 yrs experience</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-mini">
+              <div class="card-mini-meta">Your payout</div>
+              <div class="row between" style="margin-top: 0.3rem;">
+                <span class="smol">After delivery confirmed</span>
+                <span class="card-mini-price">$565</span>
+              </div>
+              <div class="smol" style="margin-top: 0.3rem;">Lands in your account 27 May</div>
+            </div>
+
+            <button class="btn-mini secondary" style="margin-top: 0.7rem;">Add a pickup note</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Pickup.</strong> Crown's existing fleet handles delivery. The seller never touches the logistics — payout drops after delivery is confirmed at the destination.</p>
+      </div>
+
+      <!-- Screen S9 — Messaging -->
+      <div class="phone-block">
+        <div class="phone-num"><span>S · 09</span><span>Buyer chat</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">Sarah K.</div>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M3 14 Q3 10 8 10 Q13 10 13 14" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ Re — 3-seater linen sofa</div>
+
+            <div style="background: var(--paper); padding: 0.6rem 0.8rem; margin: 0.6rem 0; max-width: 78%; border: 1px solid var(--rule);">
+              <div class="smol" style="margin-bottom: 0.2rem;">Hi! Just wondering — is the sofa still firm? Have a 3yo so worried about wear.</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; color: var(--forest-soft); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.4rem;">Sarah · 10:32 am</div>
+            </div>
+
+            <div style="background: var(--forest); color: var(--cream); padding: 0.6rem 0.8rem; margin: 0.6rem 0 0.6rem auto; max-width: 78%;">
+              <div class="smol" style="color: var(--cream); margin-bottom: 0.2rem;">Yeah still firm — barely sat on it the last 6 months. Happy to send extra angles.</div>
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; color: rgba(232,220,193,0.6); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 0.4rem;">You · 10:34 am</div>
+            </div>
+
+            <div style="background: var(--paper); padding: 0.5rem 0.7rem; margin: 0.6rem 0; max-width: 70%; border: 1px solid var(--clay); border-style: dashed;">
+              <div class="card-mini-meta" style="color: var(--clay);">Suggested reply</div>
+              <div class="smol">"Here are 2 close-ups of the cushions"</div>
+            </div>
+
+            <div style="position: absolute; bottom: 0.8rem; left: 1rem; right: 1rem; background: var(--paper); border: 1px solid var(--rule); padding: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+              <span class="smol" style="flex: 1;">Type a message…</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="color: var(--clay);">
+                <path d="M2 14 L14 8 L2 2 L4 8 L2 14 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" fill="currentColor" fill-opacity="0.2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Messaging.</strong> Inline chat per listing. Suggested replies for common questions. Photos/videos can be added straight to the conversation — they attach to the listing for future buyers too.</p>
+      </div>
+
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Principle — Photo first</div>
+        <div class="v">The phone camera is the only required input. Everything else — title, category, condition, dimensions, suggested price — is extracted from photos by the AI pipeline.</div>
+      </div>
+      <div class="principle">
+        <div class="l">Principle — Sellers don't touch logistics</div>
+        <div class="v">Pickup, transit, delivery, payout — all handled by Crown's existing operation. The seller's only job is to leave the item ready on the agreed pickup day.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- BUYER FLOW -->
+  <!-- ============================================================ -->
+  <section class="flow" id="buyer">
+    <div class="flow-num">
+      <span>§ 02 — Buyer flow</span>
+      <span>Sarah · arriving in Christchurch</span>
+    </div>
+    <h2 class="flow-title">A feed that already <em>knows</em> the buyer.</h2>
+    <p class="flow-deck">Sarah is moving to Christchurch in three weeks. She entered her wants on signup — sofa, fridge, dining table. Every screen she sees is filtered through her destination, her arrival date, and the items she's after.</p>
+
+    <div class="screens-row">
+
+      <!-- Screen B1 — Smart feed -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 01</span><span>Smart feed</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-word">relo<b>loop</b></div>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M3 5 L13 5 M5 8 L11 8 M7 11 L9 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb pad-tight">
+            <div class="sect-tag">§ Arriving in Christchurch · 21 days</div>
+            <h3 style="font-size: 1.3rem;">For <em>your</em> new place.</h3>
+
+            <div class="feed-tabs">
+              <span class="feed-tab active">Smart match</span>
+              <span class="feed-tab">In CHC</span>
+              <span class="feed-tab">En route</span>
+            </div>
+
+            <!-- Match row 1 -->
+            <div class="feed-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/>
+                  <path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">3-seater linen sofa</div>
+                <div class="m">Auckland → CHC · 24 days</div>
+                <div class="row" style="justify-content: space-between; align-items: flex-end;">
+                  <span class="p">$650</span>
+                  <span class="match-badge">94%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="14" y="6" width="36" height="52" stroke="currentColor" stroke-width="2"/>
+                  <path d="M14 24 L50 24" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">F&amp;P fridge</div>
+                <div class="m">Already in CHC · ready</div>
+                <div class="row" style="justify-content: space-between; align-items: flex-end;">
+                  <span class="p">$420</span>
+                  <span class="match-badge">88%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="6" y="20" width="52" height="6" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 26 L12 56 M52 26 L52 56" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">Solid oak dining table</div>
+                <div class="m">Wellington → CHC · 8 days</div>
+                <div class="row" style="justify-content: space-between; align-items: flex-end;">
+                  <span class="p">$380</span>
+                  <span class="match-badge">76%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="8" y="20" width="48" height="32" stroke="currentColor" stroke-width="2"/>
+                  <rect x="14" y="26" width="36" height="20" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">55" Samsung smart TV</div>
+                <div class="m">Already in CHC</div>
+                <div class="row" style="justify-content: space-between; align-items: flex-end;">
+                  <span class="p">$540</span>
+                  <span class="match-badge">71%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12 L12 4 L21 12 M5 10 L5 20 L19 20 L19 10" stroke="currentColor" stroke-width="1.6"/></svg><span>Home</span></div>
+            <div class="tab active"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M16 16 L20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Browse</span></div>
+            <div class="tab fab"><svg viewBox="0 0 24 24" fill="none"><path d="M12 6 L12 18 M6 12 L18 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6 L20 6 L20 16 L13 16 L9 20 L9 16 L4 16 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span>Inbox</span></div>
+            <div class="tab"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20 Q5 14 12 14 Q19 14 19 20" stroke="currentColor" stroke-width="1.6"/></svg><span>Me</span></div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Smart feed.</strong> Three tabs — items semantically matched to her wants ("Smart match"), items already at destination ("In CHC"), items en route. Match scores shown alongside price.</p>
+      </div>
+
+      <!-- Screen B2 — Filters -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 02</span><span>Filters</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M3 3 L13 13 M13 3 L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">Filter feed</div>
+            <div class="pt-meta">Reset</div>
+          </div>
+          <div class="pb">
+            <div class="field-mini">
+              <div class="field-mini-label">Category</div>
+              <div class="row wrap" style="gap: 0.3rem;">
+                <span class="pill-mini solid">Sofa</span>
+                <span class="pill-mini solid">Fridge</span>
+                <span class="pill-mini solid">Dining</span>
+                <span class="pill-mini">+ TV</span>
+                <span class="pill-mini">+ Bed</span>
+                <span class="pill-mini">+ Other</span>
+              </div>
+            </div>
+
+            <div class="field-mini">
+              <div class="field-mini-label">Price · NZ$</div>
+              <div class="field-mini-val"><em>$200</em> — $800</div>
+              <div style="height: 4px; background: var(--rule); margin-top: 0.5rem; position: relative;">
+                <div style="position: absolute; left: 20%; right: 25%; top: 0; bottom: 0; background: var(--clay);"></div>
+                <div style="position: absolute; left: 20%; top: -3px; width: 10px; height: 10px; background: var(--clay); border-radius: 50%;"></div>
+                <div style="position: absolute; right: 25%; top: -3px; width: 10px; height: 10px; background: var(--clay); border-radius: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="field-mini">
+              <div class="field-mini-label">Condition</div>
+              <div class="row wrap" style="gap: 0.3rem;">
+                <span class="pill-mini solid">Like new</span>
+                <span class="pill-mini solid">Good</span>
+                <span class="pill-mini">+ Used</span>
+              </div>
+            </div>
+
+            <div class="field-mini">
+              <div class="field-mini-label">Availability</div>
+              <div class="row wrap" style="gap: 0.3rem;">
+                <span class="pill-mini solid">Already in CHC</span>
+                <span class="pill-mini solid">Arriving before me</span>
+                <span class="pill-mini">+ Any time</span>
+              </div>
+            </div>
+
+            <div class="field-mini">
+              <div class="field-mini-label">Crown verified only</div>
+              <div class="row between">
+                <span class="smol">Show only condition-checked listings</span>
+                <div style="width: 36px; height: 20px; background: var(--clay); border-radius: 999px; position: relative;">
+                  <div style="position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; background: var(--paper); border-radius: 50%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-mini primary" style="margin-top: 1rem;">Show 47 results →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Filters.</strong> Category, price, condition, availability windows. The "Crown verified" toggle is the trust differentiator vs Trade Me / Marketplace.</p>
+      </div>
+
+      <!-- Screen B3 — Item detail -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 03</span><span>Item detail</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">Listing</div>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M8 14 L8 14 C 4 11 1 8 1 5 C 1 3 3 1 5 1 C 6 1 8 3 8 3 C 8 3 10 1 11 1 C 13 1 15 3 15 5 C 15 8 12 11 8 14 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb pad-tight">
+            <div class="item-img" style="aspect-ratio: 4/3;">
+              <span class="verified">Crown verified</span>
+              <div class="heart active">
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 14 C 4 11 1 8 1 5 C 1 3 3 1 5 1 C 6 1 8 3 8 3 C 8 3 10 1 11 1 C 13 1 15 3 15 5 C 15 8 12 11 8 14 Z"/>
+                </svg>
+              </div>
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/>
+                <path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/>
+                <path d="M14 50 L14 56 M50 50 L50 56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+
+            <div class="row between" style="margin-bottom: 0.3rem;">
+              <span class="match-badge">94% match for you</span>
+              <span class="pill-mini">4 photos</span>
+            </div>
+
+            <h3 style="font-size: 1.3rem; margin-top: 0.5rem; margin-bottom: 0.2rem;">3-seater linen sofa</h3>
+            <div class="card-mini-meta" style="margin-bottom: 0.4rem;">Sofa · Like new · ~210 × 90 × 85cm</div>
+            <div class="card-mini-price" style="font-size: 1.6rem; margin-bottom: 0.7rem;">$650</div>
+
+            <div class="card-mini solid" style="margin-bottom: 0.5rem;">
+              <div class="card-mini-meta">Sold by Sriram · Crown member</div>
+              <div class="row" style="gap: 0.4rem; margin-top: 0.3rem;">
+                <span class="pill-mini">Auckland → CHC</span>
+                <span class="pill-mini">Arrives 25 May</span>
+              </div>
+            </div>
+
+            <div class="row" style="gap: 0.4rem;">
+              <button class="btn-mini secondary" style="flex:1;">Message</button>
+              <button class="btn-mini primary" style="flex:1;">Make offer →</button>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 0.8rem;">Comparable on this route</div>
+            <div class="row" style="gap: 0.4rem; overflow-x: auto;">
+              <div style="flex-shrink: 0; width: 80px;">
+                <div class="thumb" style="aspect-ratio: 1; background: var(--cream-deep);"></div>
+                <div class="smol" style="font-size: 0.65rem; margin-top: 0.2rem;">$520</div>
+              </div>
+              <div style="flex-shrink: 0; width: 80px;">
+                <div class="thumb" style="aspect-ratio: 1; background: var(--cream-deep);"></div>
+                <div class="smol" style="font-size: 0.65rem; margin-top: 0.2rem;">$700</div>
+              </div>
+              <div style="flex-shrink: 0; width: 80px;">
+                <div class="thumb" style="aspect-ratio: 1; background: var(--cream-deep);"></div>
+                <div class="smol" style="font-size: 0.65rem; margin-top: 0.2rem;">$580</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Item detail.</strong> Crown verified badge, match score, route + arrival date. "Comparable on this route" is the matching engine surfacing peer listings — buyer can negotiate or pivot.</p>
+      </div>
+
+      <!-- Screen B4 — Make offer -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 04</span><span>Make offer</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">Make offer</div>
+            <div class="pt-meta">Step 1 of 2</div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ 3-seater linen sofa</div>
+            <h3>Your <em>offer</em>.</h3>
+            <p class="lead">Asking price is $650. The route's recent comparable sales sit between $520 — $720.</p>
+
+            <div class="price-widget">
+              <div class="hint-line">Your offer</div>
+              <div class="input-line">
+                <span class="currency">NZ$</span>
+                <span class="amount">620</span>
+              </div>
+              <div class="compare-bar">
+                <div class="compare-fill" style="left: 0; right: 30%;"></div>
+                <div class="compare-mark" style="left: 60%;"></div>
+              </div>
+              <div class="compare-labels">
+                <span>$400</span>
+                <span>Likely accepted</span>
+                <span>$900</span>
+              </div>
+            </div>
+
+            <div class="card-mini solid">
+              <div class="card-mini-meta">Total cost · including delivery</div>
+              <div style="border-top: 1px solid var(--rule-soft); padding-top: 0.4rem; margin-top: 0.4rem;">
+                <div class="row between" style="margin-bottom: 0.2rem;"><span class="smol">Item</span><span class="smol" style="color: var(--forest); font-weight: 500;">$620</span></div>
+                <div class="row between" style="margin-bottom: 0.2rem;"><span class="smol">Crown delivery · AKL → CHC</span><span class="smol" style="color: var(--forest); font-weight: 500;">$120</span></div>
+                <div class="row between" style="border-top: 1px solid var(--rule); padding-top: 0.3rem; margin-top: 0.3rem;">
+                  <span style="font-size: 0.8rem; font-weight: 500;">You pay</span>
+                  <span class="card-mini-price">$740</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-mini primary" style="margin-top: 0.7rem;">Send offer →</button>
+            <button class="btn-mini ghost">Add a message to Sriram</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Make offer.</strong> Buyer's offer + Crown delivery cost transparently shown. Total locked in upfront — no surprise fees at checkout.</p>
+      </div>
+
+      <!-- Screen B5 — Watchlist -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 05</span><span>Watchlist</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-word">Saved</div>
+            <div class="pt-meta">5 items</div>
+          </div>
+          <div class="pb pad-tight">
+            <div class="sect-tag">§ For your CHC place</div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.7rem;">Watching <em>5</em>.</h3>
+
+            <div class="feed-row">
+              <div class="thumb"><svg viewBox="0 0 64 64" fill="none"><rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/><path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="info">
+                <div class="t">3-seater linen sofa</div>
+                <div class="m">Offer sent · awaiting</div>
+                <span class="pill-mini warn">Pending</span>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb"><svg viewBox="0 0 64 64" fill="none"><rect x="14" y="6" width="36" height="52" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="info">
+                <div class="t">F&amp;P fridge</div>
+                <div class="m">Price dropped · was $480</div>
+                <div class="row" style="justify-content: space-between; align-items: flex-end;">
+                  <span class="p">$420</span>
+                  <span class="pill-mini solid">↓ 12%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb"><svg viewBox="0 0 64 64" fill="none"><rect x="6" y="20" width="52" height="6" stroke="currentColor" stroke-width="2"/><path d="M12 26 L12 56 M52 26 L52 56" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="info">
+                <div class="t">Solid oak dining table</div>
+                <div class="m">2 others watching</div>
+                <span class="p">$380</span>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb"><svg viewBox="0 0 64 64" fill="none"><rect x="8" y="20" width="48" height="32" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="info">
+                <div class="t">55" Samsung smart TV</div>
+                <div class="m">Already in CHC</div>
+                <span class="p">$540</span>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb"><svg viewBox="0 0 64 64" fill="none"><rect x="3" y="14" width="26" height="10" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="info">
+                <div class="t">Queen bed frame · oak</div>
+                <div class="m">No matches yet · alerted</div>
+                <span class="pill-mini">Alert on</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Watchlist.</strong> Saved listings + price-drop alerts + "no match yet, alerted" entries. The bottom row shows a buyer-initiated want — no listing yet, system will notify when one appears.</p>
+      </div>
+
+      <!-- Screen B6 — Move settings -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 06</span><span>Move settings</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="pt-word">My move</div>
+            <div class="pt-meta">Edit</div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ The move</div>
+            <h3>Christchurch in <em>21</em> days.</h3>
+
+            <div class="field-mini" style="margin-top: 1rem;">
+              <div class="field-mini-label">Arriving in</div>
+              <div class="field-mini-val"><em>Christchurch</em></div>
+            </div>
+            <div class="field-mini">
+              <div class="field-mini-label">Arrival date</div>
+              <div class="field-mini-val">28 May 2026</div>
+            </div>
+            <div class="field-mini">
+              <div class="field-mini-label">From</div>
+              <div class="field-mini-val">Wellington</div>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 1rem;">What you're after</div>
+            <div class="row wrap" style="gap: 0.3rem;">
+              <span class="pill-mini solid">Sofa</span>
+              <span class="pill-mini solid">Fridge</span>
+              <span class="pill-mini solid">Dining</span>
+              <span class="pill-mini solid">TV</span>
+              <span class="pill-mini solid">Bed frame</span>
+              <span class="pill-mini">+ add</span>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 1rem;">Notifications</div>
+            <div class="row between" style="padding: 0.4rem 0; border-top: 1px solid var(--rule);">
+              <div>
+                <div style="font-size: 0.85rem; font-weight: 500;">New matches</div>
+                <div class="smol">When a comparable item is listed</div>
+              </div>
+              <div style="width: 32px; height: 18px; background: var(--clay); border-radius: 999px; position: relative;">
+                <div style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; background: var(--paper); border-radius: 50%;"></div>
+              </div>
+            </div>
+            <div class="row between" style="padding: 0.4rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);">
+              <div>
+                <div style="font-size: 0.85rem; font-weight: 500;">Price drops</div>
+                <div class="smol">Watched items get cheaper</div>
+              </div>
+              <div style="width: 32px; height: 18px; background: var(--clay); border-radius: 999px; position: relative;">
+                <div style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; background: var(--paper); border-radius: 50%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Move settings.</strong> The buyer's move context. Editable any time. Wants list drives the smart-match feed; notifications drive engagement before move date.</p>
+      </div>
+
+      <!-- Screen B7 — Inbox -->
+      <div class="phone-block">
+        <div class="phone-num"><span>B · 07</span><span>Inbox</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-word">Inbox</div>
+            <div class="pt-meta">3 new</div>
+          </div>
+          <div class="pb pad-tight">
+            <div class="sect-tag">§ Conversations &amp; alerts</div>
+
+            <div class="feed-row" style="background: var(--paper); margin: 0 -0.5rem 0.4rem; padding: 0.6rem 0.7rem;">
+              <div class="thumb" style="background: var(--clay); display: flex; align-items: center; justify-content: center; aspect-ratio: 1;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color: var(--paper); opacity: 1;">
+                  <path d="M3 12 L9 18 L21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">Sriram accepted your offer</div>
+                <div class="m">3-seater linen sofa · $620</div>
+                <span class="pill-mini solid">Action needed · pickup booked</span>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb"><svg viewBox="0 0 64 64" fill="none"><rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="info">
+                <div class="t">Sriram K.</div>
+                <div class="m">"Yeah still firm — barely sat on…"</div>
+                <span class="ago smol" style="font-size: 0.6rem;">10 min ago</span>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb" style="background: var(--cream-deep);">
+                <svg viewBox="0 0 24 24" fill="none" style="opacity: 1; color: var(--clay); width: 50%;">
+                  <path d="M3 12 A 9 9 0 0 1 21 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M21 8 L21 12 L17 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">New match · F&amp;P fridge</div>
+                <div class="m">Already in CHC · 88% match</div>
+                <span class="ago smol" style="font-size: 0.6rem;">2 hours ago</span>
+              </div>
+            </div>
+
+            <div class="feed-row">
+              <div class="thumb" style="background: var(--cream-deep);">
+                <svg viewBox="0 0 24 24" fill="none" style="opacity: 1; color: var(--clay); width: 50%;">
+                  <path d="M3 16 L9 10 L13 14 L21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M21 12 L21 6 L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="info">
+                <div class="t">Price drop on watched item</div>
+                <div class="m">Fridge · was $480, now $420</div>
+                <span class="ago smol" style="font-size: 0.6rem;">Yesterday</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Inbox.</strong> Mixed feed of conversations, status updates, match alerts, and price drops. The first row — accepted offer — surfaces the call-to-action.</p>
+      </div>
+
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Principle — The feed is personal, not generic</div>
+        <div class="v">Every screen the buyer sees is filtered through their move context — destination, arrival date, declared wants. There's no global "browse" experience.</div>
+      </div>
+      <div class="principle">
+        <div class="l">Principle — Match score over price rank</div>
+        <div class="v">Listings are ordered by semantic match to the buyer's wants and route, not just by price or recency. This is the structural advantage over Trade Me / Marketplace.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- MATCHING DEEP DIVE — DARK -->
+  <!-- ============================================================ -->
+  <div class="deep-section dark" id="match">
+    <div class="deep-inner">
+      <div class="flow-num">
+        <span>§ 03 — The matching engine</span>
+        <span>Vector similarity · geographic routing</span>
+      </div>
+      <h2 class="flow-title">How <em>comparable</em> works.</h2>
+      <p class="flow-deck">The engine is one primitive: a 768-dimension vector embedding of every listing's photos and text, queried with cosine similarity. Everything else — geography, timing, route capacity — layers on top as filters.</p>
+
+      <!-- Embedding pipeline -->
+      <div class="match-diagram">
+        <div class="sect-tag" style="margin-bottom: 1rem;">§ The embedding pipeline · per listing</div>
+
+        <div class="embed-flow">
+          <div class="embed-card">
+            <div class="step">i. Capture</div>
+            <div class="what">Photos + text</div>
+            <div class="desc">Up to 4 photos, AI-extracted title, category, condition, dimensions.</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="embed-card">
+            <div class="step">ii. Encode</div>
+            <div class="what"><em>CLIP</em> + text encoder</div>
+            <div class="desc">Image and text encoders run server-side. Outputs combined into one 768-dim vector.</div>
+            <div class="vec-preview">[0.23, -0.41, 0.07, 0.88, …]</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="embed-card">
+            <div class="step">iii. Store</div>
+            <div class="what">pgvector index</div>
+            <div class="desc">Vector stored in Postgres with HNSW index. Cosine-similarity queries return in &lt;30ms at 100k listings.</div>
+          </div>
+        </div>
+
+        <div class="sect-tag" style="margin-top: 1.5rem;">§ Worked example — Sriram &amp; Mohit · same route, same category</div>
+
+        <div class="match-example">
+          <div class="person-box">
+            <div class="who">Sriram</div>
+            <div class="route">Auckland → Christchurch · 24 days</div>
+            <div class="item-listed">
+              <div class="name">3-seater linen sofa</div>
+              <div class="meta">Like new · ~210cm · $650</div>
+            </div>
+            <div class="item-listed">
+              <div class="name">55" Samsung TV</div>
+              <div class="meta">Like new · 4K · $540</div>
+            </div>
+          </div>
+
+          <div class="similarity">
+            <div class="num">0.91</div>
+            <div class="lbl">cosine similarity · TVs</div>
+          </div>
+
+          <div class="person-box">
+            <div class="who">Mohit</div>
+            <div class="route">Auckland → Christchurch · 18 days</div>
+            <div class="item-listed">
+              <div class="name">3-seater fabric sofa</div>
+              <div class="meta">Good · ~200cm · $480</div>
+            </div>
+            <div class="item-listed">
+              <div class="name">50" LG OLED</div>
+              <div class="meta">Like new · 4K · $620</div>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-family: 'Fraunces', serif; font-size: 1rem; line-height: 1.5; color: rgba(232,220,193,0.85); max-width: 60ch; margin: 1rem auto 0; text-align: center; font-style: italic;">
+          The TVs are 91% similar. The sofas, 78% — different fabric, different size. The system shows them to the same Christchurch buyers as <em style="color: var(--moss);">comparable alternatives</em>.
+        </p>
+      </div>
+
+      <!-- The four behaviors unlocked -->
+      <div class="sect-tag" style="margin-top: 3rem; margin-bottom: 1rem; color: var(--moss);">§ What this primitive unlocks</div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: rgba(232,220,193,0.18); border: 1px solid rgba(232,220,193,0.18);">
+        <div style="background: var(--forest); padding: 1.8rem 1.5rem;">
+          <div class="sect-tag" style="color: var(--moss); margin-bottom: 0.6rem;">i. Buyer-side substitution</div>
+          <div style="font-family: 'Fraunces', serif; font-size: 1.05rem; line-height: 1.5; color: var(--cream); margin-bottom: 0.5rem;">
+            A buyer wants "a TV around $500." Both Sriram's and Mohit's TVs surface, ranked by match-fit. <em style="color: var(--moss); font-style: italic;">Higher fill rate per buyer.</em>
+          </div>
+        </div>
+        <div style="background: var(--forest); padding: 1.8rem 1.5rem;">
+          <div class="sect-tag" style="color: var(--moss); margin-bottom: 0.6rem;">ii. Pricing intelligence</div>
+          <div style="font-family: 'Fraunces', serif; font-size: 1.05rem; line-height: 1.5; color: var(--cream); margin-bottom: 0.5rem;">
+            Mohit lists his LG at $620. Sriram's comparable Samsung is $540. We warn Mohit he's 15% above the route's median. <em style="color: var(--moss); font-style: italic;">Better pricing → faster sale.</em>
+          </div>
+        </div>
+        <div style="background: var(--forest); padding: 1.8rem 1.5rem;">
+          <div class="sect-tag" style="color: var(--moss); margin-bottom: 0.6rem;">iii. Bundle suggestions</div>
+          <div style="font-family: 'Fraunces', serif; font-size: 1.05rem; line-height: 1.5; color: var(--cream); margin-bottom: 0.5rem;">
+            Two comparable sofas on the same Saturday AKL→CHC truck. Crown ops gets a bundle suggestion — pair them with two CHC buyers, fill the load. <em style="color: var(--moss); font-style: italic;">Better truck utilisation.</em>
+          </div>
+        </div>
+        <div style="background: var(--forest); padding: 1.8rem 1.5rem;">
+          <div class="sect-tag" style="color: var(--moss); margin-bottom: 0.6rem;">iv. Cross-direction routing</div>
+          <div style="font-family: 'Fraunces', serif; font-size: 1.05rem; line-height: 1.5; color: var(--cream); margin-bottom: 0.5rem;">
+            Someone moving CHC→AKL has a fridge listed in CHC. Mohit (AKL→CHC) wants a fridge in CHC. Crown's return run carries it back. <em style="color: var(--moss); font-style: italic;">Both moves get cheaper.</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- Route flow -->
+      <div class="route-diagram" style="margin-top: 3rem;">
+        <div class="sect-tag" style="margin-bottom: 1.5rem;">§ Route + capacity layer · Crown's existing daily runs</div>
+
+        <div class="route-line">
+          <div class="route-city">Auckland</div>
+          <div class="route-track"></div>
+          <div class="route-label">Sat 25 May · 60% full</div>
+        </div>
+        <div class="route-line" style="margin-top: -1rem; padding-left: 2rem; border-left: 1px dashed rgba(232,220,193,0.3); margin-left: 0.5rem;">
+          <div></div>
+          <div>
+            <div class="route-bundle">
+              <span class="pill-mini" style="background: rgba(31,138,149,0.2); border-color: rgba(31,138,149,0.4); color: var(--moss);">Sriram's sofa · $650</span>
+              <span class="pill-mini" style="background: rgba(31,138,149,0.2); border-color: rgba(31,138,149,0.4); color: var(--moss);">Mohit's TV · $620</span>
+              <span class="pill-mini" style="background: rgba(31,138,149,0.2); border-color: rgba(31,138,149,0.4); color: var(--moss);">+ 2 more</span>
+            </div>
+          </div>
+          <div></div>
+        </div>
+        <div class="route-line">
+          <div class="route-city">Christchurch</div>
+          <div class="route-track reverse"></div>
+          <div class="route-label">Mon 27 May · 40% full</div>
+        </div>
+        <div class="route-line" style="margin-top: -1rem; padding-left: 2rem; border-left: 1px dashed rgba(232,220,193,0.3); margin-left: 0.5rem;">
+          <div></div>
+          <div>
+            <div class="route-bundle">
+              <span class="pill-mini" style="background: rgba(91,168,179,0.2); border-color: rgba(91,168,179,0.4); color: var(--moss);">Return: Tom's fridge · $380</span>
+              <span class="pill-mini" style="background: rgba(91,168,179,0.2); border-color: rgba(91,168,179,0.4); color: var(--moss);">Capacity available</span>
+            </div>
+          </div>
+          <div></div>
+        </div>
+      </div>
+
+      <div class="section-foot">
+        <div class="principle">
+          <div class="l">The whole engine, one primitive</div>
+          <div class="v">Embedding similarity. The four behaviours above are query variants on the same vector index — not four separate systems.</div>
+        </div>
+        <div class="principle">
+          <div class="l">Geography is the cheap filter</div>
+          <div class="v">Vector queries are scoped by city + time-window first, similarity second. Avoids comparing TVs in Auckland to TVs in Wellington unless a route exists.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SCHEMA TEASER -->
+  <!-- ============================================================ -->
+  <section class="flow" id="schema" style="margin-top: 4rem;">
+    <div class="flow-num">
+      <span>§ 04 — Schema</span>
+      <span>Postgres + pgvector · Prisma</span>
+    </div>
+    <h2 class="flow-title">Fourteen tables. <em>One</em> extension.</h2>
+    <p class="flow-deck">Full schema, indexes, and migration notes live in the companion document. Here's the spine — every other table either describes a side of the marketplace, attaches metadata to listings, or records a state transition.</p>
+
+    <div class="schema-block">
+<span class="com">// The seven tables that matter most. Full schema in reloloop-schema.md.</span>
+
+<span class="kw">model</span> <span class="typ">User</span> {
+  <span class="at">id</span>            <span class="typ">String</span>   @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">email</span>         <span class="typ">String</span>   @<span class="at">unique</span>
+  <span class="at">name</span>          <span class="typ">String</span>?
+  <span class="at">moves</span>         <span class="typ">Move</span>[]
+  <span class="at">listings</span>      <span class="typ">Listing</span>[]
+  <span class="at">offers</span>        <span class="typ">Offer</span>[]
+}
+
+<span class="kw">model</span> <span class="typ">Move</span> {
+  <span class="at">id</span>            <span class="typ">String</span>   @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">userId</span>        <span class="typ">String</span>
+  <span class="at">fromCityId</span>    <span class="typ">String</span>?  <span class="com">// null for buyers without origin</span>
+  <span class="at">toCityId</span>      <span class="typ">String</span>
+  <span class="at">moveDate</span>      <span class="typ">DateTime</span>
+  <span class="at">role</span>          <span class="typ">MoveRole</span> <span class="com">// SELLER, BUYER, BOTH</span>
+  <span class="at">wants</span>         <span class="typ">String</span>[] <span class="com">// category ids the buyer is after</span>
+}
+
+<span class="kw">model</span> <span class="typ">Listing</span> {
+  <span class="at">id</span>            <span class="typ">String</span>   @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">moveId</span>        <span class="typ">String</span>
+  <span class="at">categoryId</span>    <span class="typ">String</span>
+  <span class="at">title</span>         <span class="typ">String</span>
+  <span class="at">condition</span>     <span class="typ">Condition</span>
+  <span class="at">priceCents</span>    <span class="typ">Int</span>
+  <span class="at">status</span>        <span class="typ">ListingStatus</span> <span class="com">// DRAFT, LIVE, RESERVED, SOLD</span>
+  <span class="at">photos</span>        <span class="typ">Photo</span>[]
+  <span class="at">embedding</span>     <span class="typ">ListingEmbedding</span>?
+}
+
+<span class="kw">model</span> <span class="typ">ListingEmbedding</span> {
+  <span class="at">listingId</span>     <span class="typ">String</span>   @<span class="at">id</span>
+  <span class="at">vector</span>        <span class="typ">Unsupported</span>(<span class="typ">"vector(768)"</span>) <span class="com">// pgvector</span>
+  <span class="at">model</span>         <span class="typ">String</span>   <span class="com">// e.g. "clip-vit-b-32"</span>
+  <span class="at">computedAt</span>    <span class="typ">DateTime</span>
+}
+
+<span class="kw">model</span> <span class="typ">DeliveryRoute</span> {
+  <span class="at">id</span>            <span class="typ">String</span>   @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">fromCityId</span>    <span class="typ">String</span>
+  <span class="at">toCityId</span>      <span class="typ">String</span>
+  <span class="at">runDate</span>       <span class="typ">DateTime</span>
+  <span class="at">capacityM3</span>    <span class="typ">Float</span>
+  <span class="at">allocatedM3</span>   <span class="typ">Float</span>    @<span class="at">default</span>(0)
+}
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Why pgvector, not a separate vector DB</div>
+        <div class="v">100k listings is well inside pgvector's HNSW comfort zone. Keeping vectors in the same Postgres instance means joins with route, listing, and city data run as a single query.</div>
+      </div>
+      <div class="principle">
+        <div class="l">Embedding is async</div>
+        <div class="v">Listing creation does not block on embedding. A BullMQ worker picks up new listings and computes embeddings within ~30s — listing is browseable without it, just doesn't get matched until it's ready.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- API + PIPELINE TEASER -->
+  <!-- ============================================================ -->
+  <section class="flow" id="api">
+    <div class="flow-num">
+      <span>§ 05 — Photo pipeline + APIs</span>
+      <span>Server-side · server-side · server-side</span>
+    </div>
+    <h2 class="flow-title">All AI runs <em>server-side</em>.</h2>
+    <p class="flow-deck">Hard-won lesson from prior mobile work: do not extract frames or run AI on the device. Upload the raw photos via tus to R2, let server workers handle Gemini vision and CLIP embedding. The client app stays small, fast, and crash-free across Android codec quirks.</p>
+
+    <div class="match-diagram">
+      <div class="sect-tag" style="margin-bottom: 1rem;">§ The capture pipeline · per listing</div>
+
+      <div class="embed-flow">
+        <div class="embed-card">
+          <div class="step">i. Client</div>
+          <div class="what">Capture &amp; upload</div>
+          <div class="desc">expo-camera or browser FileReader → tus resumable upload to R2. No frame extraction, no compression decisions.</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="embed-card">
+          <div class="step">ii. Worker</div>
+          <div class="what"><em>Gemini</em> vision + CLIP</div>
+          <div class="desc">BullMQ worker pulls from R2. Gemini extracts title, category, condition, dimensions. CLIP encodes the photo + text.</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="embed-card">
+          <div class="step">iii. Persist</div>
+          <div class="what">Postgres + pgvector</div>
+          <div class="desc">Auto-fill fields on listing, vector on ListingEmbedding, thumbnails on Photo. Listing flips to LIVE.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--paper); border: 1px solid var(--rule); padding: 2rem; margin-top: 2rem;">
+      <div class="sect-tag" style="margin-bottom: 1rem;">§ The handful of endpoints that drive the whole app</div>
+      <div style="display: grid; gap: 0; border-top: 1px solid var(--rule);">
+        <div style="display: grid; grid-template-columns: 110px 1fr 2fr; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--clay); font-weight: 600;">POST</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--forest);">/api/listings</span>
+          <span class="smol">Create draft. Returns listingId, presigned R2 upload URLs.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 110px 1fr 2fr; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--clay); font-weight: 600;">POST</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--forest);">/api/listings/:id/publish</span>
+          <span class="smol">Flip status DRAFT → LIVE. Triggers embedding worker.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 110px 1fr 2fr; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--clay); font-weight: 600;">GET</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--forest);">/api/feed</span>
+          <span class="smol">Personalised buyer feed. Filters: city, category, max_price, arrival_by.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 110px 1fr 2fr; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--clay); font-weight: 600;">GET</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--forest);">/api/listings/:id/comparables</span>
+          <span style="font-style: italic;" class="smol">Top-K cosine neighbors in same category &amp; route.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 110px 1fr 2fr; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--clay); font-weight: 600;">POST</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--forest);">/api/listings/:id/offer</span>
+          <span class="smol">Buyer makes an offer. Notifies seller in real time.</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 110px 1fr 2fr; gap: 1rem; padding: 0.7rem 0; align-items: baseline;">
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--clay); font-weight: 600;">POST</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--forest);">/api/bookings</span>
+          <span class="smol">Commit purchase. Atomically reserves DeliveryRoute capacity.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Stack — boring on purpose</div>
+        <div class="v">Next.js · Prisma · Postgres + pgvector · Auth.js (magic links) · BullMQ · Cloudflare R2 · tus.io. Every component is mature, well-documented, and easy to swap.</div>
+      </div>
+      <div class="principle">
+        <div class="l">No client-side AI</div>
+        <div class="v">All vision and embedding happens in the worker. The client uploads bytes. Lessons from prior mobile work — Android codec issues with on-device frame extraction caused weeks of pain. Don't repeat.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="doc-foot">
+  <div class="foot-inner">
+    <a href="#top" class="lockup">
+      <svg class="mark" viewBox="0 0 80 80" fill="none">
+        <path d="M12 70 L12 35 Q12 18 30 18 L42 18 L42 26 L30 26 Q22 26 22 35 L22 70 Z" fill="#E8DCC1"/>
+        <path d="M68 70 L68 35 Q68 18 50 18 L38 18 L38 26 L50 26 Q58 26 58 35 L58 70 Z" fill="#E8DCC1"/>
+        <path d="M40 18 L52 18 L56 30 L36 30 Z" fill="#5BA8B3"/>
+        <line x1="6" y1="72" x2="74" y2="72" stroke="#E8DCC1" stroke-width="3"/>
+      </svg>
+      <span class="word">relo<b>loop</b></span>
+    </a>
+    <span class="meta">App wireframe · Schema · Pipeline</span>
+    <span class="ver">v1 · May 2026</span>
+  </div>
+</footer>
+
+<script>
+  // Highlight active section in nav
+  const tabs = document.querySelectorAll('.head-tabs a');
+  const sections = ['#seller', '#buyer', '#match', '#schema', '#api'];
+  tabs.forEach(t => {
+    t.addEventListener('click', e => {
+      const href = t.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        const id = '#' + en.target.id;
+        tabs.forEach(t => t.classList.toggle('active', t.getAttribute('href') === id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => {
+    const el = document.querySelector(s);
+    if (el) observer.observe(el);
+  });
+</script>
+
+</body>
+</html>
