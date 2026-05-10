@@ -59,6 +59,8 @@ export function PhotoCaptureScreen({
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [isCreatingWalkthrough, setIsCreatingWalkthrough] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
     pending: 0,
     inFlight: 0,
@@ -66,35 +68,53 @@ export function PhotoCaptureScreen({
   });
 
   const flashOpacity = useRef(new Animated.Value(0)).current;
+  const askedPermissionRef = useRef(false);
+  const creatingWalkthroughRef = useRef(false);
+  const walkthroughRef = useRef<Walkthrough | null>(null);
 
-  // Permission: ask once when the screen mounts.
+  useEffect(() => {
+    walkthroughRef.current = walkthrough;
+  }, [walkthrough]);
+
+  // Permission: auto-request once, only while still undetermined. After an
+  // explicit denial we surface the empty state instead of looping prompts.
   useEffect(() => {
     if (!permission) return;
-    if (!permission.granted && permission.canAskAgain) {
-      void requestPermission();
-    }
+    if (askedPermissionRef.current) return;
+    if (permission.status !== "undetermined") return;
+    askedPermissionRef.current = true;
+    void requestPermission();
   }, [permission, requestPermission]);
 
-  // Create the walkthrough on mount.
-  useEffect(() => {
-    let cancelled = false;
-    createWalkthrough({ propertyId, type: walkthroughType })
-      .then((w) => {
-        if (!cancelled) setWalkthrough(w);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setWalkthroughError(
-            err instanceof Error
-              ? err.message
-              : "Could not start walkthrough. Check your connection.",
-          );
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
+  const startWalkthrough = useCallback(async () => {
+    if (creatingWalkthroughRef.current) return;
+    if (walkthroughRef.current) return;
+    creatingWalkthroughRef.current = true;
+    setIsCreatingWalkthrough(true);
+    setWalkthroughError(null);
+    try {
+      const w = await createWalkthrough({ propertyId, type: walkthroughType });
+      setWalkthrough(w);
+    } catch (err) {
+      setWalkthroughError(
+        err instanceof Error
+          ? err.message
+          : "Could not start walkthrough. Check your connection.",
+      );
+    } finally {
+      creatingWalkthroughRef.current = false;
+      setIsCreatingWalkthrough(false);
+    }
   }, [propertyId, walkthroughType]);
+
+  // Defer the POST until the user has actually granted camera permission so we
+  // don't litter the server with abandoned walkthroughs from people who back
+  // out at the permission prompt.
+  useEffect(() => {
+    if (!permission?.granted) return;
+    if (walkthrough) return;
+    void startWalkthrough();
+  }, [permission?.granted, walkthrough, startWalkthrough]);
 
   // Subscribe to upload progress for the optional Done overlay.
   useEffect(() => {
@@ -114,6 +134,7 @@ export function PhotoCaptureScreen({
   const onShutter = useCallback(async () => {
     if (isCapturing || isFinishing) return;
     if (!walkthrough) return;
+    if (!cameraReady) return;
     if (!cameraRef.current) return;
 
     setIsCapturing(true);
@@ -160,15 +181,60 @@ export function PhotoCaptureScreen({
     } finally {
       setIsCapturing(false);
     }
-  }, [isCapturing, isFinishing, walkthrough, triggerFlash]);
+  }, [isCapturing, isFinishing, cameraReady, walkthrough, triggerFlash]);
 
   const onDone = useCallback(async () => {
     if (!walkthrough || photos.length === 0 || isFinishing) return;
     setIsFinishing(true);
-    try {
-      await uploadQueue.waitForIdle(walkthrough.id);
+
+    const finalize = async () => {
       const completed = await completeWalkthrough(walkthrough.id);
       onComplete(completed);
+    };
+
+    try {
+      await uploadQueue.waitForIdle(walkthrough.id);
+      const status = uploadQueue.status(walkthrough.id);
+
+      if (status.failed > 0) {
+        const failed = status.failed;
+        Alert.alert(
+          `${failed} photo${failed === 1 ? "" : "s"} didn't upload`,
+          "Retry the failed uploads or finish without them.",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => setIsFinishing(false),
+            },
+            {
+              text: "Retry",
+              onPress: () => {
+                uploadQueue.retryFailed(walkthrough.id);
+                setIsFinishing(false);
+              },
+            },
+            {
+              text: "Finish anyway",
+              style: "destructive",
+              onPress: () => {
+                void finalize().catch((err) => {
+                  Alert.alert(
+                    "Finish failed",
+                    err instanceof Error
+                      ? err.message
+                      : "Could not finish walkthrough. Try again.",
+                  );
+                  setIsFinishing(false);
+                });
+              },
+            },
+          ],
+        );
+        return;
+      }
+
+      await finalize();
     } catch (err) {
       const message =
         err instanceof Error
@@ -179,8 +245,14 @@ export function PhotoCaptureScreen({
     }
   }, [walkthrough, photos.length, isFinishing, onComplete]);
 
+  const discardAndCancel = useCallback(() => {
+    if (walkthrough) uploadQueue.cancel(walkthrough.id);
+    onCancel();
+  }, [walkthrough, onCancel]);
+
   const onCancelPress = useCallback(() => {
     if (photos.length === 0) {
+      if (walkthrough) uploadQueue.cancel(walkthrough.id);
       onCancel();
       return;
     }
@@ -189,10 +261,10 @@ export function PhotoCaptureScreen({
       `You'll lose ${photos.length} photo${photos.length === 1 ? "" : "s"}.`,
       [
         { text: "Keep capturing", style: "cancel" },
-        { text: "Discard", style: "destructive", onPress: onCancel },
+        { text: "Discard", style: "destructive", onPress: discardAndCancel },
       ],
     );
-  }, [photos.length, onCancel]);
+  }, [photos.length, walkthrough, onCancel, discardAndCancel]);
 
   const recentThumbs = useMemo(() => photos.slice(-3), [photos]);
   const doneEnabled = photos.length >= 1 && !isFinishing && !!walkthrough;
@@ -222,6 +294,7 @@ export function PhotoCaptureScreen({
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         facing="back"
+        onCameraReady={() => setCameraReady(true)}
       />
 
       <Animated.View
@@ -256,6 +329,18 @@ export function PhotoCaptureScreen({
       {walkthroughError ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{walkthroughError}</Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={isCreatingWalkthrough}
+            onPress={() => {
+              void startWalkthrough();
+            }}
+            style={styles.errorRetry}
+          >
+            <Text style={styles.errorRetryText}>
+              {isCreatingWalkthrough ? "Retrying…" : "Retry"}
+            </Text>
+          </Pressable>
         </View>
       ) : null}
 
@@ -263,7 +348,9 @@ export function PhotoCaptureScreen({
         <ThumbnailStrip photos={recentThumbs} totalCount={photos.length} />
         <ShutterButton
           onPress={onShutter}
-          disabled={!walkthrough || isCapturing || isFinishing}
+          disabled={
+            !walkthrough || !cameraReady || isCapturing || isFinishing
+          }
           busy={isCapturing}
         />
         <DoneButton
@@ -516,10 +603,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
   errorText: {
     color: colors.paper,
     fontSize: 13,
+    flex: 1,
+  },
+  errorRetry: {
+    backgroundColor: "rgba(255,255,255,0.16)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  errorRetryText: {
+    color: colors.paper,
+    fontSize: 13,
+    fontWeight: "600",
   },
   bottomBar: {
     position: "absolute",

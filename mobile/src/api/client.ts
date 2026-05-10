@@ -1,10 +1,10 @@
 const DEFAULT_BASE_URL = "https://api.reloloop.co";
 
-const env = (globalThis as { process?: { env?: Record<string, string | undefined> } })
-  .process?.env;
-
+// Use static `process.env.EXPO_PUBLIC_*` access — Expo's babel-preset-expo only
+// inlines values at this exact dot-notation form. Any indirection collapses to
+// `undefined` in production bundles and silently routes everything to prod.
 export const API_BASE_URL = (
-  env?.EXPO_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL
 ).replace(/\/$/, "");
 
 export class ApiError extends Error {
