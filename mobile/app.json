@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "ReloLoop",
+    "slug": "reloloop",
+    "scheme": "reloloop",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "co.reloloop.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ReloLoop uses the camera to capture walkthrough photos against the host's reference shots."
+      }
+    },
+    "android": {
+      "package": "co.reloloop.app",
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ReloLoop uses the camera to capture walkthrough photos against the host's reference shots."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
