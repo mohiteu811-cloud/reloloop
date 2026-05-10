@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "ReloLoop Host",
+    "slug": "reloloop-host",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "co.reloloop.host",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ReloLoop needs camera access so hosts can capture walkthrough photos of the property."
+      }
+    },
+    "android": {
+      "package": "co.reloloop.host",
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow ReloLoop to access your camera to capture walkthrough photos."
+        }
+      ]
+    ]
+  }
+}
