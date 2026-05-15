@@ -4,9 +4,11 @@ Next.js 15 (App Router) + Prisma + BullMQ worker. Deploys as
 two Railway services from this same directory:
 
 - **web** — `npm install && npx prisma generate && npm run build`
-  then `npm run start`. Healthcheck: `/api/health`.
+  then `npm run db:deploy && npm run start`. Healthcheck:
+  `/api/health`.
 - **worker** — `npm install && npx prisma generate && npm run
-  build:worker` then `npm run start:worker`. No healthcheck.
+  build:worker` then `npm run start:worker`. No healthcheck. No
+  schema sync (web owns it).
 
 `npm install` (not `npm ci`) until we commit a `package-lock.json`;
 the first local install will generate one and we'll commit it back
@@ -17,7 +19,7 @@ Local dev:
 ```bash
 cp ../infra/.env.example .env       # Prisma CLI + Next.js both read .env
 npm install
-npx prisma db push                  # requires pgvector on the target DB
+npm run db:deploy                   # prisma db push + post-push.sql
 npm run dev                         # web on :3000
 npm run dev:worker                  # worker, in a second terminal
 ```
@@ -29,6 +31,24 @@ because they're declared in `prisma/schema.prisma` under
 `DATABASE_URL` must have `SUPERUSER` or `CREATE EXTENSION`
 privileges. On Railway Postgres, the default role does.
 
-The HNSW index on `ListingEmbedding.vector` is created via
-the raw SQL migration in
-`prisma/migrations/00000000000000_init_pgvector/migration.sql`.
+## Why `db:deploy` is two steps
+
+`prisma db push` syncs the Prisma schema to the database and
+does nothing else — it ignores `prisma/migrations/`. That's
+fine for our tables, but the HNSW index on
+`ListingEmbedding.vector` is raw SQL that `Unsupported("vector(768)")`
+can't express through Prisma's DSL.
+
+So `db:deploy` chains:
+
+1. `prisma db push --skip-generate` — tables, columns, indexes
+   Prisma understands, extensions from the datasource block.
+2. `prisma db execute --file prisma/post-push.sql` — the HNSW
+   index and any other raw SQL that needs to land after the
+   tables exist. Idempotent (CREATE INDEX IF NOT EXISTS) so it
+   runs cleanly on every deploy.
+
+When we eventually run `prisma migrate dev` locally to capture
+the schema as proper migration files, `db:deploy` collapses to
+`prisma migrate deploy` and `post-push.sql` folds into the first
+real migration.

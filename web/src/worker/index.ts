@@ -33,6 +33,13 @@ for (const w of workers) {
   w.on('failed', (job, err) => {
     console.error(`[worker] ${w.name} job ${job?.id} failed`, err);
   });
+  // BullMQ emits `error` on Redis disconnects and other runtime
+  // faults. An unhandled `error` event in Node crashes the
+  // process — swallow + log so a transient Redis blip doesn't
+  // take down all six queues.
+  w.on('error', (err) => {
+    console.error(`[worker] ${w.name} error`, err);
+  });
   w.on('ready', () => console.log(`[worker] ${w.name} ready`));
 }
 

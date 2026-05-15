@@ -11,7 +11,8 @@
     "dev:worker": "tsx watch src/worker/index.ts",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "db:deploy": "prisma db push --skip-generate && prisma db execute --file prisma/post-push.sql --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
