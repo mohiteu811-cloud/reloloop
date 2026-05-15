@@ -29,6 +29,33 @@ We use `npm install` (not `npm ci`) until a `package-lock.json`
 is committed. After the first local install on the repo, commit
 the lockfile and switch all build commands to `npm ci`.
 
+## Schema sync on deploy
+
+The `web` service runs `npx prisma db push --skip-generate`
+before booting Next.js. This applies the current `schema.prisma`
+to the database on every deploy — idempotent, additive-only by
+default (Prisma errors out on destructive changes unless you pass
+`--accept-data-loss`).
+
+We use `db push` rather than `prisma migrate deploy` because we
+don't have generated migration files yet — only the raw SQL
+migration that enables `pgcrypto` + `vector`. Once we run
+`prisma migrate dev` locally to capture table changes as proper
+migrations, swap the start command to:
+
+```
+npx prisma migrate deploy && npm run start
+```
+
+Until then, `db push` is the right tool: simpler, no migration
+files to maintain by hand, and it picks up extensions from the
+datasource block automatically.
+
+The **worker** service does NOT run schema sync — only the web
+service does, to avoid two parallel deploys racing on the same
+DDL. If you ever deploy worker-first to a fresh database, run
+`prisma db push` manually once before booting it.
+
 ## Services
 
 ### 1. `web` — Next.js 15 (App Router) + API routes
@@ -43,7 +70,7 @@ The repo-root `railway.json` is wired for this service:
     "buildCommand": "cd web && npm install && npx prisma generate && npm run build"
   },
   "deploy": {
-    "startCommand": "cd web && npm run start",
+    "startCommand": "cd web && npx prisma db push --skip-generate && npm run start",
     "healthcheckPath": "/api/health"
   }
 }
@@ -67,6 +94,8 @@ Start command:  cd web && npm run start:worker
 Healthcheck:    disabled (queue consumer, no HTTP)
 ```
 
+No `prisma db push` here — web owns schema sync.
+
 Queues consumed (stubs in M1, real handlers added per milestone):
 
 - `photo:postprocess` — sharp thumbnails + perceptual hash (M2)
@@ -86,12 +115,14 @@ railway run --service Postgres psql $DATABASE_URL -c \
 ```
 
 Prisma also declares these in `extensions = [pgcrypto, vector]`,
-so a fresh `prisma migrate dev` would create them — but doing it
-upfront prevents a chicken-and-egg with the first migration.
+so the first `prisma db push` on deploy will create them — but
+doing it upfront prevents a chicken-and-egg if the deploy role
+ever lacks `CREATE EXTENSION`.
 
 The HNSW index on `ListingEmbedding.vector` is created via a
 raw SQL migration (`web/prisma/migrations/...`) once the table
-exists.
+exists. That migration runs as part of `prisma db push` because
+it lives in the migrations directory.
 
 ### 4. `redis` — Railway Redis plugin
 
@@ -143,8 +174,9 @@ twice — once per environment — with distinct webhook IDs.
 5. Set the service-reference env vars (table above) on both.
 6. Paste secrets (Anthropic, Resend, R2, PayPal) from
    `infra/.env.example` into both services. Use the same values.
-7. Deploy. Confirm `web` boots with /api/health → 200, and the
-   worker logs `[worker] booted with 6 queues`.
+7. Deploy `web` first — its start command runs `prisma db push`
+   to create tables. Confirm /api/health → 200.
+8. Deploy `worker`. Confirm logs show `[worker] booted with 6 queues`.
 
 ## Migration from LivAround's setup
 
