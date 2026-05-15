@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createListingSchema } from '@/lib/listings';
@@ -67,9 +68,6 @@ export default async function NewListing({
 
     const parsed = createListingSchema.safeParse(candidate);
     if (!parsed.success) {
-      // Don't throw — throwing turns a validation miss into a 500.
-      // Redirect back to the form with the error in the query string
-      // so the page can show a banner and the user can fix it.
       const params = new URLSearchParams({
         error: 'invalid_listing',
         issues: parsed.error.issues
@@ -83,20 +81,42 @@ export default async function NewListing({
       where: { email: session.user!.email! },
     });
     const d = parsed.data;
-    const listing = await prisma.listing.create({
-      data: {
-        userId: user.id,
-        title: d.title,
-        description: d.description,
-        categoryId: d.categoryId,
-        condition: d.condition,
-        askingValueCents: d.askingValueCents,
-        originCityId: d.originCityId,
-        wantedCityId: d.wantedCityId,
-        availableUntil: new Date(d.availableUntilISO),
-        status: 'DRAFT',
-      },
-    });
+    let listing;
+    try {
+      listing = await prisma.listing.create({
+        data: {
+          userId: user.id,
+          title: d.title,
+          description: d.description,
+          categoryId: d.categoryId,
+          condition: d.condition,
+          askingValueCents: d.askingValueCents,
+          originCityId: d.originCityId,
+          wantedCityId: d.wantedCityId,
+          availableUntil: new Date(d.availableUntilISO),
+          status: 'DRAFT',
+        },
+      });
+    } catch (err) {
+      // P2003 = foreign-key violation (bogus categoryId, originCityId,
+      // or wantedCityId). Server Actions are callable HTTP endpoints,
+      // so a crafted form post can sneak past zod's "non-empty string"
+      // check with an ID that doesn't exist. Redirect back with a
+      // clear message instead of a 500.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003'
+      ) {
+        const params = new URLSearchParams({
+          error: 'invalid_reference',
+          issues:
+            'One of the dropdown selections (category or city) refers to ' +
+            'a deleted record. Refresh the page and try again.',
+        });
+        redirect(`/listings/new?${params.toString()}`);
+      }
+      throw err;
+    }
 
     redirect(`/listings/${listing.id}`);
   }

@@ -51,12 +51,17 @@ export async function POST(
     );
   }
 
+  // Deterministic jobId so BullMQ dedupes repeated clicks while a
+  // job is in flight — prevents avoidable Claude spend and the
+  // last-write-wins churn that two parallel jobs would cause on the
+  // same row. Once the in-flight job completes and rolls out of
+  // Redis (per removeOnComplete below), the same jobId becomes
+  // available again so a deliberate re-run is allowed.
   await listingAutofillQueue.add(
     'extract',
     { listingId: id },
     {
-      // Retry on transient failures (Anthropic rate-limit, network blip).
-      // Exponential backoff: 5s, 25s, 125s.
+      jobId: `extract:${id}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: { age: 60 * 60 * 24 * 7, count: 1000 },

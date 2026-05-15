@@ -4,17 +4,24 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
 // Triggers POST /api/listings/:id/extract and polls
-// GET /api/listings/:id until `valuationBreakdown` flips from
-// null to an object (worker has written results). Times out at
+// GET /api/listings/:id until `valuationBreakdown.computedAt`
+// changes from the baseline captured at render time. Times out at
 // 60s; the user can refresh manually if Claude is slow.
 export function ExtractButton({
   listingId,
   hasExtraction,
+  initialComputedAt,
   disabled,
   disabledReason,
 }: {
   listingId: string;
   hasExtraction: boolean;
+  // The computedAt timestamp present when this page was rendered
+  // server-side. Null when no extraction has run yet. Captured up
+  // front so a fast worker can't "win the race" against the first
+  // poll — we'd otherwise set the new value as the baseline and
+  // mistake completion for the steady state.
+  initialComputedAt: string | null;
   disabled?: boolean;
   disabledReason?: string;
 }) {
@@ -39,31 +46,23 @@ export function ExtractButton({
 
       setStatus('Claude is analyzing your photos…');
       const deadline = Date.now() + 60_000;
-      let baseline: string | null = hasExtraction ? null : 'none';
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 2500));
         const check = await fetch(`/api/listings/${listingId}`);
         if (!check.ok) continue;
-        const { listing } = (await check.json()) as {
-          listing: { valuationBreakdown: { computedAt?: string } | null };
+        const json = (await check.json()) as {
+          listing?: {
+            valuationBreakdown?: { computedAt?: string } | null;
+          };
         };
-        const cur = listing?.valuationBreakdown?.computedAt ?? null;
-        // First time: any non-null breakdown means done.
-        // Re-run: need to see a NEW computedAt timestamp.
-        if (cur && cur !== baseline) {
-          if (baseline === 'none' || !hasExtraction) {
-            setStatus(null);
-            startTransition(() => router.refresh());
-            return;
-          }
-          if (baseline && cur !== baseline) {
-            setStatus(null);
-            startTransition(() => router.refresh());
-            return;
-          }
-        }
-        if (baseline === null && hasExtraction) {
-          baseline = cur ?? null;
+        const cur = json.listing?.valuationBreakdown?.computedAt ?? null;
+        // First-time success (was null, now has value) OR re-run
+        // success (timestamp differs from baseline). Either way we
+        // refresh and exit.
+        if (cur && cur !== initialComputedAt) {
+          setStatus(null);
+          startTransition(() => router.refresh());
+          return;
         }
       }
       setStatus(null);

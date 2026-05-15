@@ -1,5 +1,6 @@
 import type { Processor } from 'bullmq';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
+import sharp from 'sharp';
 import { z } from 'zod';
 import {
   anthropic,
@@ -16,9 +17,6 @@ import {
 
 export type ListingAutofillJob = { listingId: string };
 
-// Defense in depth: the tool's input_schema constrains shape, but
-// we re-validate with zod before persisting so a model regression
-// or schema drift doesn't poison the DB.
 const extractionSchema = z.object({
   category: z.enum([
     'sofa',
@@ -48,16 +46,9 @@ const extractionSchema = z.object({
   retailEstimateRationale: z.string().min(1).max(500),
 });
 
-const CLAUDE_SUPPORTED_MEDIA = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-]);
-
-async function loadPhotoAsBase64(r2Key: string): Promise<{
+async function loadPhotoForClaude(r2Key: string): Promise<{
   data: string;
-  mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  mediaType: 'image/jpeg';
 }> {
   // Fetch from R2 directly via the S3 client. Avoids depending on
   // the bucket being publicly readable, and bypasses any Cloudflare
@@ -67,19 +58,30 @@ async function loadPhotoAsBase64(r2Key: string): Promise<{
   );
   if (!obj.Body) throw new Error(`r2 object body missing: ${r2Key}`);
   const buf = Buffer.from(await obj.Body.transformToByteArray());
-  const declaredType = obj.ContentType ?? 'image/jpeg';
-  if (!CLAUDE_SUPPORTED_MEDIA.has(declaredType)) {
-    throw new Error(
-      `unsupported_media_type: ${declaredType} for ${r2Key}`,
-    );
-  }
+
+  // Re-encode for Claude. We MUST do this for two reasons:
+  //   1. Anthropic's Messages endpoint has a 32MB request cap, and
+  //      base64 inflates by 4/3. Our upload cap is 15MB per photo ×
+  //      4 photos = 80MB base64 in the worst case — a guaranteed
+  //      413 request_too_large. Downscaling to a 1568px long edge
+  //      (Anthropic's recommended max for vision) + JPEG q85 keeps
+  //      each image under ~500KB base64, comfortably within budget.
+  //   2. EXIF-rotated photos: we want Claude to see the photo the
+  //      way the user sees it, so rotation must be baked in.
+  const compressed = await sharp(buf, { failOn: 'truncated' })
+    .rotate()
+    .resize({
+      width: 1568,
+      height: 1568,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+
   return {
-    data: buf.toString('base64'),
-    mediaType: declaredType as
-      | 'image/jpeg'
-      | 'image/png'
-      | 'image/webp'
-      | 'image/gif',
+    data: compressed.toString('base64'),
+    mediaType: 'image/jpeg',
   };
 }
 
@@ -88,9 +90,8 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
 ) => {
   const { listingId } = job.data;
 
-  // Take up to 4 photos per schema §3.1 step 2 ("Single Gemini call
-  // with all 4 photos"). Order by uploadedAt so the user's first
-  // upload is the lead image for the prompt.
+  // Take up to 4 photos per schema §3.1 step 2. Order by uploadedAt
+  // so the user's first upload is the lead image for the prompt.
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
     include: {
@@ -101,13 +102,22 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     console.warn(`[listing-autofill] listing ${listingId} not found, skipping`);
     return { skipped: true };
   }
+  // Status could have changed since enqueue (user published / withdrew
+  // between clicking "Run extraction" and the job picking up). Re-check
+  // here so we don't pay for a Claude call that can't persist.
+  if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
+    console.warn(
+      `[listing-autofill] ${listingId} skipped, status=${listing.status}`,
+    );
+    return { skipped: true, reason: 'status_changed_before_run' };
+  }
   if (listing.photos.length === 0) {
     throw new Error('no_photos');
   }
 
-  // 1. Load images as base64.
+  // 1. Load + downscale images for Claude.
   const images = await Promise.all(
-    listing.photos.map((p) => loadPhotoAsBase64(p.r2Key)),
+    listing.photos.map((p) => loadPhotoForClaude(p.r2Key)),
   );
 
   // 2. Call Claude with forced tool-use for structured output.
@@ -152,8 +162,7 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
   }
   const extracted = parsed.data;
 
-  // 4. Look up the matching ItemCategory (seeded by slug) so we can
-  // pull the depreciation curve for valuation.
+  // 4. Look up the matching ItemCategory (seeded by slug).
   const category = await prisma.itemCategory.findUnique({
     where: { slug: extracted.category },
   });
@@ -171,12 +180,16 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     depreciationCurve: category.depreciationCurve as unknown as DepreciationCurve,
   });
 
-  // 6. Persist results to the Listing row. askingValueCents resets
-  // to the new estimate — the user can edit it on the review screen
-  // (M3b). visibleDefects isn't persisted in v1 (no column); it
-  // surfaces in logs only and will appear in the review screen UI.
-  await prisma.listing.update({
-    where: { id: listingId },
+  // 6. Atomic status-gated persist. The Claude call took several
+  // seconds; the listing might have transitioned to LIVE/WITHDRAWN
+  // mid-call. updateMany with status predicate means we silently
+  // skip the write in that case rather than overwriting a published
+  // listing's title/category/price with stale AI output.
+  const result = await prisma.listing.updateMany({
+    where: {
+      id: listingId,
+      status: { in: ['DRAFT', 'PROCESSING'] },
+    },
     data: {
       categoryId: category.id,
       title: extracted.title,
@@ -193,6 +206,13 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
       valuationBreakdown: breakdown,
     },
   });
+
+  if (result.count === 0) {
+    console.warn(
+      `[listing-autofill] ${listingId} skipped persist: status changed during run`,
+    );
+    return { skipped: true, reason: 'status_changed_during_run' };
+  }
 
   console.log(`[listing-autofill] ${listingId} done`, {
     category: extracted.category,

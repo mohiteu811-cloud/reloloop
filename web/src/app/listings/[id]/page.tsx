@@ -8,9 +8,31 @@ import type { ValuationBreakdown } from '@/lib/valuation';
 
 export const dynamic = 'force-dynamic';
 
-// Statuses where the photo set and AI fields are mutable; mirrors
-// the API rules in /photos and /extract.
 const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
+
+// Defensive: Prisma's Json column types to `JsonValue`, not our
+// strict ValuationBreakdown. A partial write or schema drift could
+// produce an object missing fields. Return null when the shape is
+// wrong so the card simply doesn't render rather than crashing the
+// page during hydration.
+function parseBreakdown(raw: unknown): ValuationBreakdown | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (
+    typeof r.originalRetailCents !== 'number' ||
+    typeof r.estimatedValueCents !== 'number' ||
+    typeof r.depreciationRetention !== 'number' ||
+    typeof r.conditionMultiplier !== 'number' ||
+    typeof r.ageYears !== 'number' ||
+    typeof r.computedAt !== 'string' ||
+    typeof r.condition !== 'string' ||
+    typeof r.retailConfidence !== 'string' ||
+    typeof r.retailRationale !== 'string'
+  ) {
+    return null;
+  }
+  return raw as ValuationBreakdown;
+}
 
 export default async function ListingDetail({
   params,
@@ -43,7 +65,7 @@ export default async function ListingDetail({
     isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
   const canExtract =
     isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
-  const breakdown = listing.valuationBreakdown as ValuationBreakdown | null;
+  const breakdown = parseBreakdown(listing.valuationBreakdown);
 
   async function publish() {
     'use server';
@@ -146,6 +168,7 @@ export default async function ListingDetail({
             <ExtractButton
               listingId={listing.id}
               hasExtraction={!!breakdown}
+              initialComputedAt={breakdown?.computedAt ?? null}
               disabled={listing.photos.length === 0}
               disabledReason={
                 listing.photos.length === 0
