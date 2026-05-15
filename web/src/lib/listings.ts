@@ -23,6 +23,11 @@ function isValidCalendarISO(s: string): boolean {
   );
 }
 
+const calendarISO = z
+  .string()
+  .datetime()
+  .refine(isValidCalendarISO, { message: 'invalid_calendar_date' });
+
 // reloloop-schema.md §2.2 Listing model. M1 captures the user-editable
 // fields manually; M3 will replace most of these with Claude-extracted
 // values that the user can override on the review screen.
@@ -41,13 +46,32 @@ export const createListingSchema = z.object({
   originCityId: z.string().min(1),
   wantedCityId: z.string().min(1),
   wantedNotes: z.string().max(2000).optional(),
-  availableUntilISO: z
-    .string()
-    .datetime()
-    .refine(isValidCalendarISO, { message: 'invalid_calendar_date' }),
+  availableUntilISO: calendarISO,
 });
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 
-export const updateListingSchema = createListingSchema.partial();
+// Explicit PATCH schema, NOT derived from createListingSchema.partial().
+// The Prisma columns that allow NULL (`brand`, `model`, `description`,
+// dimensions, ageYears, wantedNotes) need to accept `null` on update
+// so clients can clear them — `.partial()` would only allow omission,
+// not clearing. Non-nullable columns stay strict.
+export const updateListingSchema = z.object({
+  title: z.string().min(1).max(80).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  categoryId: z.string().min(1).optional(),
+  condition: Condition.optional(),
+  brand: z.string().max(80).nullable().optional(),
+  model: z.string().max(80).nullable().optional(),
+  ageYears: z.number().min(0).max(100).nullable().optional(),
+  widthCm: z.number().int().min(0).max(1000).nullable().optional(),
+  depthCm: z.number().int().min(0).max(1000).nullable().optional(),
+  heightCm: z.number().int().min(0).max(1000).nullable().optional(),
+  askingValueCents: z.number().int().min(100).optional(),
+  originCityId: z.string().min(1).optional(),
+  wantedCityId: z.string().min(1).optional(),
+  wantedNotes: z.string().max(2000).nullable().optional(),
+  availableUntilISO: calendarISO.optional(),
+});
+
 export type UpdateListingInput = z.infer<typeof updateListingSchema>;

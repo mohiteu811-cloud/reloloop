@@ -10,11 +10,6 @@ export const dynamic = 'force-dynamic';
 
 const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
 
-// Defensive: Prisma's Json column types to `JsonValue`, not our
-// strict ValuationBreakdown. A partial write or schema drift could
-// produce an object missing fields. Return null when the shape is
-// wrong so the card simply doesn't render rather than crashing the
-// page during hydration.
 function parseBreakdown(raw: unknown): ValuationBreakdown | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -66,13 +61,23 @@ export default async function ListingDetail({
   const canExtract =
     isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
   const breakdown = parseBreakdown(listing.valuationBreakdown);
+  const hasPhotos = listing.photos.length > 0;
 
   async function publish() {
     'use server';
     const s = await auth();
     if (!s?.user?.email) redirect('/signin');
+    // Same photo-count guard as POST /api/listings/:id/publish so a
+    // stale tab can't promote an empty gallery to LIVE. updateMany
+    // with zero matches is a no-op; the page refresh below re-renders
+    // current state so the user sees why publish didn't happen.
     await prisma.listing.updateMany({
-      where: { id, user: { email: s.user.email }, status: 'DRAFT' },
+      where: {
+        id,
+        user: { email: s.user.email },
+        status: 'DRAFT',
+        photos: { some: {} },
+      },
       data: { status: 'LIVE', publishedAt: new Date() },
     });
     redirect(`/listings/${id}`);
@@ -169,11 +174,9 @@ export default async function ListingDetail({
               listingId={listing.id}
               hasExtraction={!!breakdown}
               initialComputedAt={breakdown?.computedAt ?? null}
-              disabled={listing.photos.length === 0}
+              disabled={!hasPhotos}
               disabledReason={
-                listing.photos.length === 0
-                  ? 'Upload at least one photo first.'
-                  : undefined
+                hasPhotos ? undefined : 'Upload at least one photo first.'
               }
             />
           )}
@@ -182,13 +185,19 @@ export default async function ListingDetail({
               <form action={publish}>
                 <button
                   type="submit"
+                  disabled={!hasPhotos}
+                  title={
+                    hasPhotos
+                      ? undefined
+                      : 'Upload at least one photo before publishing.'
+                  }
                   style={{
                     padding: '10px 20px',
-                    background: '#0a7',
+                    background: hasPhotos ? '#0a7' : '#888',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 6,
-                    cursor: 'pointer',
+                    cursor: hasPhotos ? 'pointer' : 'not-allowed',
                   }}
                 >
                   Publish

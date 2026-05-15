@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { prisma, withSerializableRetry } from '@/lib/prisma';
-import { r2, r2Bucket, r2PublicUrl } from '@/lib/r2';
+import { r2, r2Bucket, r2PublicUrlFor } from '@/lib/r2';
 import { photoPostprocessQueue } from '@/lib/queues';
 
 export const runtime = 'nodejs';
@@ -18,12 +18,6 @@ const confirmSchema = z.object({
     .max(15 * 1024 * 1024),
 });
 
-// POST /api/listings/:id/photos
-// Confirms a client-side R2 upload. Atomic: status check + photo
-// upsert run inside a serializable transaction so a concurrent
-// publish can't slip a row into a frozen listing, and a retried
-// confirm (mobile network blip after upload-success) is a no-op
-// instead of a duplicate row + duplicate processing job.
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -52,8 +46,17 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_key' }, { status: 422 });
   }
 
-  // Verify the upload actually landed in R2 before creating the
-  // Photo row. Prevents crafted confirms with never-uploaded keys.
+  // Build the public URL up front; this throws if R2_PUBLIC_BASE_URL
+  // is unset so a misconfigured deploy can't persist broken URLs.
+  let publicUrl: string;
+  try {
+    publicUrl = r2PublicUrlFor(parsed.data.r2Key);
+  } catch (err) {
+    console.error('[photo:confirm]', err);
+    return NextResponse.json({ error: 'r2_misconfigured' }, { status: 503 });
+  }
+
+  // Verify the upload actually landed in R2 before creating the row.
   try {
     await r2.send(
       new HeadObjectCommand({
@@ -106,7 +109,7 @@ export async function POST(
           create: {
             listingId: id,
             r2Key: parsed.data.r2Key,
-            url: `${r2PublicUrl}/${parsed.data.r2Key}`,
+            url: publicUrl,
             bytes: parsed.data.bytes,
           },
           update: {},
@@ -130,28 +133,23 @@ export async function POST(
     );
   }
 
-  // Deterministic jobId keyed on photoId so a retried confirm
-  // doesn't create a duplicate postprocess job. Short retention
-  // (60s on completion, 5min on failure) bounds the dedupe window
-  // to the typical retry burst while letting a deliberate manual
-  // re-process succeed after that. The jobId uses `-` not `:` —
-  // BullMQ 5.x rejects `:` in queue keys.
+  // Deterministic jobId keyed on photoId. removeOnComplete: true /
+  // removeOnFail: true evict eagerly (not via age-based lazy sweep)
+  // so a retried confirm doesn't see a sticky completed jobId on a
+  // low-traffic queue. Failure history lives in worker stdout.
   await photoPostprocessQueue.add(
     'process',
     { photoId: outcome.photo!.id },
     {
       jobId: `photo-${outcome.photo!.id}`,
-      removeOnComplete: { age: 60, count: 1000 },
-      removeOnFail: { age: 60 * 5, count: 1000 },
+      removeOnComplete: true,
+      removeOnFail: true,
     },
   );
 
   return NextResponse.json({ photo: outcome.photo }, { status: 201 });
 }
 
-// GET /api/listings/:id/photos
-// Same visibility rule as GET /api/listings/:id: owner sees any
-// status, non-owners only see LIVE. DB-only.
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },

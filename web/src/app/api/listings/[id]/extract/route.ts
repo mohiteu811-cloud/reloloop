@@ -7,10 +7,7 @@ export const runtime = 'nodejs';
 
 // POST /api/listings/:id/extract
 // Enqueues a `listing-autofill` job. Owner-only, requires at
-// least one photo, only valid in DRAFT / PROCESSING. The worker
-// writes results back to the Listing row asynchronously — the
-// client polls GET /api/listings/:id to detect completion (the
-// `valuationBreakdown` field flips from null to an object).
+// least one photo, only valid in DRAFT / PROCESSING.
 export async function POST(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -51,18 +48,12 @@ export async function POST(
     );
   }
 
-  // Deterministic jobId so BullMQ dedupes rapid double-clicks while
-  // a job is in flight. Two important constraints:
-  //   1. BullMQ 5.x reserves `:` in queue keys (same rule that
-  //      crashed the worker boot a few commits back), so we use `-`
-  //      as the separator here too.
-  //   2. BullMQ ignores adds with an existing jobId in ANY state
-  //      (waiting, active, completed, failed). With long retention,
-  //      a successful extraction would block re-runs for the entire
-  //      retention window. Shortened to 60s on success / 5min on
-  //      failure so a deliberate re-run after the user sees bad AI
-  //      output is enqueueable within a minute. Job-level debug
-  //      history is short — detailed logging stays in worker stdout.
+  // Deterministic jobId dedupes rapid double-clicks while a job is
+  // in flight. removeOnComplete: true / removeOnFail: true evict
+  // eagerly on job lifecycle events, not via age-based lazy sweeps
+  // (which never trigger on a low-traffic queue and would keep the
+  // jobId stuck indefinitely, silently blocking re-runs). Detailed
+  // failure history stays in worker stdout.
   await listingAutofillQueue.add(
     'extract',
     { listingId: id },
@@ -70,8 +61,8 @@ export async function POST(
       jobId: `extract-${id}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
-      removeOnComplete: { age: 60, count: 1000 },
-      removeOnFail: { age: 60 * 5, count: 1000 },
+      removeOnComplete: true,
+      removeOnFail: true,
     },
   );
 

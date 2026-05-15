@@ -1,7 +1,7 @@
 import type { Processor } from 'bullmq';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
-import { r2, r2Bucket, r2PublicUrl } from '../../lib/r2';
+import { r2, r2Bucket, r2PublicUrlFor } from '../../lib/r2';
 import { prisma } from '../../lib/prisma';
 
 export type PhotoPostprocessJob = { photoId: string };
@@ -9,8 +9,6 @@ export type PhotoPostprocessJob = { photoId: string };
 // Carryover-equivalent of LivAround's image-postprocess worker:
 // download original, generate a 480px WebP thumbnail (honoring
 // EXIF rotation), upload back to R2, persist dimensions + thumb URL.
-// Perceptual hash (for dedup) is deferred until we have enough
-// listing volume to need dedup; the column stays nullable.
 export const photoPostprocessProcessor: Processor<PhotoPostprocessJob> = async (job) => {
   const { photoId } = job.data;
 
@@ -29,11 +27,8 @@ export const photoPostprocessProcessor: Processor<PhotoPostprocessJob> = async (
   }
   const buffer = Buffer.from(await obj.Body.transformToByteArray());
 
-  // 2. Apply EXIF rotation to a buffer first — sharp's `metadata()`
-  // reads from the source and ignores pipeline transforms, so we
-  // need an already-rotated buffer to get correct portrait/landscape
-  // dimensions. Without this, an iPhone portrait photo would persist
-  // swapped width/height even though the thumb is correctly oriented.
+  // 2. Apply EXIF rotation to a buffer first so `metadata` reflects
+  // the auto-oriented dimensions.
   const { data: rotatedData, info: rotatedInfo } = await sharp(buffer, {
     failOn: 'truncated',
   })
@@ -57,11 +52,13 @@ export const photoPostprocessProcessor: Processor<PhotoPostprocessJob> = async (
     }),
   );
 
-  // 5. Persist post-rotation dimensions + thumb URL.
+  // 5. Persist post-rotation dimensions + thumb URL. r2PublicUrlFor
+  // throws if R2_PUBLIC_BASE_URL is unset so we never silently
+  // write a broken `/key` URL into the DB.
   await prisma.photo.update({
     where: { id: photoId },
     data: {
-      thumbUrl: `${r2PublicUrl}/${thumbKey}`,
+      thumbUrl: r2PublicUrlFor(thumbKey),
       width: rotatedInfo.width,
       height: rotatedInfo.height,
       bytes: buffer.length,
