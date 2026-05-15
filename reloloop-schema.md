@@ -958,8 +958,20 @@ The whole photo-capture pipeline is reusable as-is:
 - tus.io resumable upload to R2
 - BullMQ `photo:postprocess` worker for sharp thumbnails + pHash
 - BullMQ `listing:autofill` worker calling Gemini 2.5 Flash
+- The in-app messaging primitives (conversation/message models, websocket fan-out, unread counts) — LivAround uses these for host↔guest chat; we use them for the post-acceptance swap conversation
 
 The Gemini prompt is different (LivAround's was for room walkthroughs; ours is for individual items), but the worker plumbing is identical.
+
+**Reuse strategy: fork-then-extract.** We copy the relevant directories out of LivAround as our LivinLoop starting point — photo pipeline, BullMQ worker scaffolding, Gemini call wiring, messaging primitives — strip the LivAround-specific feature code, and bolt the swap-specific pieces on top. No monorepo, no private npm packages in v1.
+
+The rationale: private packages only pay off once the shared code is stable. During the pilot, versioning + release pipelines + cross-repo PR dances become friction on the critical path. Fork-then-extract gives us velocity now and keeps the door open — once a module has gone ~6 months without diverging between the two apps, we lift it into a private package then. Doing it the other way around (guessing the seams upfront) usually means the package API doesn't fit LivinLoop's real needs and we refactor twice.
+
+The known cost: a bugfix in LivAround's photo pipeline won't automatically reach LivinLoop. Two cheap mitigations:
+
+- **Provenance headers.** Every file copied from LivAround gets a one-line comment at the top: `// carryover from LivAround:<path> @ <short-sha>`. Lets future-us run a quick `git diff` against the upstream file to see what's drifted.
+- **`CARRYOVER.md` at the repo root.** A flat list of every directory/file we copied across, with the source SHA, so the diff exercise is one command away. Update it whenever we pull a fix across.
+
+When something has been copied verbatim *and* changed in lockstep in both repos two or three times, that's the signal to promote it to a private `@livinloop/*` package on GitHub Packages — at that point the API is real and the release overhead is justified.
 
 ### 7.2 What's net-new
 
