@@ -13,7 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "db:deploy": "sh -c 'prisma db push --skip-generate ${PRISMA_ACCEPT_DATA_LOSS:+--accept-data-loss}' && prisma db execute --file prisma/post-push.sql --schema prisma/schema.prisma && prisma db seed"
+    "db:deploy": "sh scripts/db-deploy.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

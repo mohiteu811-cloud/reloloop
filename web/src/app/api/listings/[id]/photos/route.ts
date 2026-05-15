@@ -48,17 +48,12 @@ export async function POST(
     );
   }
 
-  // Defense in depth: the r2Key must live under the listing's prefix
-  // so a crafted confirm can't attach an existing R2 object from
-  // another listing.
   if (!parsed.data.r2Key.startsWith(`listings/${id}/`)) {
     return NextResponse.json({ error: 'invalid_key' }, { status: 422 });
   }
 
   // Verify the upload actually landed in R2 before creating the
-  // Photo row. Without this, a crafted confirm with a never-uploaded
-  // key creates a row + enqueues a postprocess job that fails on
-  // GetObject, leaving broken listing media + queue churn.
+  // Photo row. Prevents crafted confirms with never-uploaded keys.
   try {
     await r2.send(
       new HeadObjectCommand({
@@ -77,8 +72,6 @@ export async function POST(
         { status: 404 },
       );
     }
-    // Any other error (network, perms) is a server fault — surface
-    // generically.
     console.error('[photo:confirm] HeadObject failed', err);
     return NextResponse.json({ error: 'r2_unavailable' }, { status: 503 });
   }
@@ -89,10 +82,6 @@ export async function POST(
     | { kind: 'forbidden' }
     | { kind: 'invalid_status'; currentStatus: string };
 
-  // Serializable interactive txn so the status check + upsert are
-  // atomic. Retry on P2034 (serialization conflict) because Prisma
-  // expects the application to handle that class at this isolation
-  // level; without retry, two healthy concurrent confirms can 500.
   const outcome = await withSerializableRetry<Outcome>(() =>
     prisma.$transaction(
       async (tx): Promise<Outcome> => {
@@ -141,12 +130,19 @@ export async function POST(
     );
   }
 
+  // Deterministic jobId keyed on photoId so a retried confirm
+  // doesn't create a duplicate postprocess job. Short retention
+  // (60s on completion, 5min on failure) bounds the dedupe window
+  // to the typical retry burst while letting a deliberate manual
+  // re-process succeed after that. The jobId uses `-` not `:` —
+  // BullMQ 5.x rejects `:` in queue keys.
   await photoPostprocessQueue.add(
     'process',
     { photoId: outcome.photo!.id },
     {
-      removeOnComplete: { age: 60 * 60 * 24 * 7, count: 1000 },
-      removeOnFail: { age: 60 * 60 * 24 * 30, count: 5000 },
+      jobId: `photo-${outcome.photo!.id}`,
+      removeOnComplete: { age: 60, count: 1000 },
+      removeOnFail: { age: 60 * 5, count: 1000 },
     },
   );
 
@@ -155,10 +151,7 @@ export async function POST(
 
 // GET /api/listings/:id/photos
 // Same visibility rule as GET /api/listings/:id: owner sees any
-// status, non-owners only see LIVE. DB-only; doesn't touch Redis
-// or R2, so this keeps working even if queue infra is unreachable
-// (lib/redis no longer throws at module load, so the queue import
-// at the top of this file is non-fatal too).
+// status, non-owners only see LIVE. DB-only.
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
