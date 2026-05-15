@@ -8,7 +8,7 @@
     "start": "next start",
     "build:worker": "tsc -p tsconfig.worker.json",
     "start:worker": "node dist/worker/index.js",
-    "dev:worker": "tsx watch src/worker/index.ts",
+    "dev:worker": "tsx --env-file=.env watch src/worker/index.ts",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -32,8 +32,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
