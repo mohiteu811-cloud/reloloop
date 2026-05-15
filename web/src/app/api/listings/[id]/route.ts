@@ -50,16 +50,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const { id } = await ctx.params;
-  const existing = await prisma.listing.findUnique({
-    where: { id },
-    select: { user: { select: { email: true } } },
-  });
-  if (!existing) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  if (existing.user.email !== session.user.email) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-  }
 
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+  }
   const parsed = updateListingSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -86,6 +83,21 @@ export async function PATCH(
   if (d.wantedNotes !== undefined) data.wantedNotes = d.wantedNotes;
   if (d.availableUntilISO !== undefined) data.availableUntil = new Date(d.availableUntilISO);
 
-  const updated = await prisma.listing.update({ where: { id }, data });
+  // Atomic update gated by ownership: returns count=0 if the row
+  // doesn't exist or belongs to another user. We then read once to
+  // distinguish 404 from 403 for a useful response.
+  const result = await prisma.listing.updateMany({
+    where: { id, user: { email: session.user.email } },
+    data,
+  });
+  if (result.count === 0) {
+    const exists = await prisma.listing.findUnique({ where: { id }, select: { id: true } });
+    return NextResponse.json(
+      { error: exists ? 'forbidden' : 'not_found' },
+      { status: exists ? 403 : 404 },
+    );
+  }
+
+  const updated = await prisma.listing.findUnique({ where: { id } });
   return NextResponse.json({ listing: updated });
 }

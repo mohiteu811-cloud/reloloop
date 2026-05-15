@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { createListingSchema } from '@/lib/listings';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,27 +18,53 @@ export default async function NewListing() {
     'use server';
     const session = await auth();
     if (!session?.user?.email) throw new Error('unauthorized');
+
+    // Server Actions are callable HTTP endpoints — don't trust
+    // FormData. Validate everything through the same zod schema
+    // the API route uses, so a crafted POST can't bypass HTML
+    // bounds (negative prices, missing required fields, etc.).
+    const dollarsRaw = Number(formData.get('askingValueDollars') ?? NaN);
+    const dateRaw = String(formData.get('availableUntil') ?? '');
+    const candidate = {
+      title: String(formData.get('title') ?? '').trim(),
+      description: (() => {
+        const v = String(formData.get('description') ?? '').trim();
+        return v.length > 0 ? v : undefined;
+      })(),
+      categoryId: String(formData.get('categoryId') ?? ''),
+      condition: String(formData.get('condition') ?? ''),
+      askingValueCents: Number.isFinite(dollarsRaw)
+        ? Math.round(dollarsRaw * 100)
+        : NaN,
+      originCityId: String(formData.get('originCityId') ?? ''),
+      wantedCityId: String(formData.get('wantedCityId') ?? ''),
+      // <input type="date"> gives YYYY-MM-DD. Coerce to ISO datetime
+      // (UTC midnight) so the schema's z.string().datetime() accepts it.
+      availableUntilISO: dateRaw ? new Date(dateRaw).toISOString() : '',
+    };
+
+    const parsed = createListingSchema.safeParse(candidate);
+    if (!parsed.success) {
+      throw new Error(
+        `invalid_listing: ${parsed.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`,
+      );
+    }
+
     const user = await prisma.user.findUniqueOrThrow({
       where: { email: session.user.email },
     });
-
+    const d = parsed.data;
     const listing = await prisma.listing.create({
       data: {
         userId: user.id,
-        title: String(formData.get('title') ?? '').trim(),
-        description: String(formData.get('description') ?? '').trim() || null,
-        categoryId: String(formData.get('categoryId')),
-        condition: String(formData.get('condition')) as
-          | 'LIKE_NEW'
-          | 'GOOD'
-          | 'USED'
-          | 'WORN',
-        askingValueCents: Math.round(
-          Number(formData.get('askingValueDollars') ?? 0) * 100,
-        ),
-        originCityId: String(formData.get('originCityId')),
-        wantedCityId: String(formData.get('wantedCityId')),
-        availableUntil: new Date(String(formData.get('availableUntil'))),
+        title: d.title,
+        description: d.description,
+        categoryId: d.categoryId,
+        condition: d.condition,
+        askingValueCents: d.askingValueCents,
+        originCityId: d.originCityId,
+        wantedCityId: d.wantedCityId,
+        availableUntil: new Date(d.availableUntilISO),
         status: 'DRAFT',
       },
     });

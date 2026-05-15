@@ -13,28 +13,40 @@ export async function POST(
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const { id } = await ctx.params;
-  const listing = await prisma.listing.findUnique({
-    where: { id },
-    include: { user: { select: { email: true } } },
+
+  // Single atomic conditional write: only updates if the row
+  // exists, the caller owns it, AND it's currently DRAFT. No
+  // read-then-write race — a concurrent transition can't slip
+  // between the check and the update.
+  // M1: DRAFT → LIVE directly. M3 inserts PROCESSING in between
+  // for AI extraction; M4 gates LIVE on the embedding landing.
+  const result = await prisma.listing.updateMany({
+    where: {
+      id,
+      user: { email: session.user.email },
+      status: 'DRAFT',
+    },
+    data: { status: 'LIVE', publishedAt: new Date() },
   });
-  if (!listing) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  if (listing.user.email !== session.user.email) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-  }
-  if (listing.status !== 'DRAFT') {
+
+  if (result.count === 0) {
+    // Disambiguate between 404, 403, and 409 with a single read.
+    const existing = await prisma.listing.findUnique({
+      where: { id },
+      select: { status: true, user: { select: { email: true } } },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+    if (existing.user.email !== session.user.email) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+    }
     return NextResponse.json(
-      { error: 'invalid_status', currentStatus: listing.status },
+      { error: 'invalid_status', currentStatus: existing.status },
       { status: 409 },
     );
   }
 
-  // M1: no AI extraction, no embedding. Move straight DRAFT → LIVE.
-  // M3 adds PROCESSING between DRAFT and LIVE; M4 adds the embed
-  // step that flips PROCESSING → LIVE once the CLIP vector lands.
-  const updated = await prisma.listing.update({
-    where: { id },
-    data: { status: 'LIVE', publishedAt: new Date() },
-  });
-
+  const updated = await prisma.listing.findUnique({ where: { id } });
   return NextResponse.json({ listing: updated });
 }
