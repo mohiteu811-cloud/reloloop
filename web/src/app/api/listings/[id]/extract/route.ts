@@ -51,21 +51,27 @@ export async function POST(
     );
   }
 
-  // Deterministic jobId so BullMQ dedupes repeated clicks while a
-  // job is in flight — prevents avoidable Claude spend and the
-  // last-write-wins churn that two parallel jobs would cause on the
-  // same row. Once the in-flight job completes and rolls out of
-  // Redis (per removeOnComplete below), the same jobId becomes
-  // available again so a deliberate re-run is allowed.
+  // Deterministic jobId so BullMQ dedupes rapid double-clicks while
+  // a job is in flight. Two important constraints:
+  //   1. BullMQ 5.x reserves `:` in queue keys (same rule that
+  //      crashed the worker boot a few commits back), so we use `-`
+  //      as the separator here too.
+  //   2. BullMQ ignores adds with an existing jobId in ANY state
+  //      (waiting, active, completed, failed). With long retention,
+  //      a successful extraction would block re-runs for the entire
+  //      retention window. Shortened to 60s on success / 5min on
+  //      failure so a deliberate re-run after the user sees bad AI
+  //      output is enqueueable within a minute. Job-level debug
+  //      history is short — detailed logging stays in worker stdout.
   await listingAutofillQueue.add(
     'extract',
     { listingId: id },
     {
-      jobId: `extract:${id}`,
+      jobId: `extract-${id}`,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
-      removeOnComplete: { age: 60 * 60 * 24 * 7, count: 1000 },
-      removeOnFail: { age: 60 * 60 * 24 * 30, count: 5000 },
+      removeOnComplete: { age: 60, count: 1000 },
+      removeOnFail: { age: 60 * 5, count: 1000 },
     },
   );
 

@@ -60,9 +60,11 @@ seed lives outside the schema entirely.
 
 So `db:deploy` chains:
 
-1. `prisma db push --skip-generate --accept-data-loss` — tables,
-   columns, indexes Prisma understands; extensions from the
-   datasource block.
+1. `prisma db push --skip-generate [--accept-data-loss]` —
+   tables, columns, indexes Prisma understands; extensions
+   from the datasource block. The `--accept-data-loss` flag
+   is appended only when `PRISMA_ACCEPT_DATA_LOSS=true` is set
+   in the environment (see below).
 2. `prisma db execute --file prisma/post-push.sql` — the HNSW
    index and any other raw SQL that needs to land after the
    tables exist. Idempotent (CREATE INDEX IF NOT EXISTS) so it
@@ -75,23 +77,26 @@ the schema as proper migration files, `db:deploy` collapses to
 `prisma migrate deploy` and `post-push.sql` folds into the first
 real migration.
 
-### About `--accept-data-loss`
+### `PRISMA_ACCEPT_DATA_LOSS` — destructive change opt-in
 
 Prisma `db push` refuses by default any change it deems
-"potentially destructive" — including additive changes like a
-new `@@unique` constraint, because the constraint *could* fail
-if duplicates already exist. During M1–M4 the schema is still
-in flux and our tables either have no data or only test data,
-so `--accept-data-loss` is the pragmatic flag.
+"potentially destructive" (column drops, type narrowings, new
+unique constraints on populated tables). Deploys then fail with
+*Use the --accept-data-loss flag*.
 
-**Risk:** it also accepts genuinely destructive changes (column
-drops, renames-as-drop-and-add). We accept that risk because
-the alternative is hand-running `prisma db push --accept-data-
-loss` after each deploy, which defeats automation.
+Default: the flag is **NOT** passed. A would-be destructive
+schema edit blocks the deploy until a human reviews it.
 
-**Sunset plan:** once we generate real migrations via
-`prisma migrate dev`, swap `db:deploy` to
-`prisma migrate deploy && prisma db execute ... && prisma db seed`.
-`migrate deploy` applies the recorded SQL exactly as written
-locally, so any destructive change is reviewed in PR before it
-ever reaches prod.
+To intentionally apply a known-safe destructive change (e.g. a
+new `@@unique` on an empty table, or a real column rename you've
+verified is safe), set in Railway:
+
+```
+PRISMA_ACCEPT_DATA_LOSS=true
+```
+
+Redeploy. **Unset it immediately after the deploy succeeds** so
+the next accidental schema typo doesn't silently destroy live
+data. Long-term we'll swap to `prisma migrate deploy` (which
+applies recorded SQL exactly as written and surfaces destructive
+changes in PR review) and retire this lever.
