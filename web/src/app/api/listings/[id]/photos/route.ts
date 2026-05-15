@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { prisma, withSerializableRetry } from '@/lib/prisma';
 import { r2PublicUrl } from '@/lib/r2';
 import { photoPostprocessQueue } from '@/lib/queues';
 
@@ -60,41 +60,47 @@ export async function POST(
     | { kind: 'forbidden' }
     | { kind: 'invalid_status'; currentStatus: string };
 
-  const outcome = await prisma.$transaction(
-    async (tx): Promise<Outcome> => {
-      const listing = await tx.listing.findUnique({
-        where: { id },
-        select: {
-          status: true,
-          user: { select: { email: true } },
-        },
-      });
-      if (!listing) return { kind: 'not_found' };
-      if (listing.user.email !== session.user!.email) {
-        return { kind: 'forbidden' };
-      }
-      if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
-        return { kind: 'invalid_status', currentStatus: listing.status };
-      }
-      const photo = await tx.photo.upsert({
-        where: {
-          listingId_r2Key: { listingId: id, r2Key: parsed.data.r2Key },
-        },
-        create: {
-          listingId: id,
-          r2Key: parsed.data.r2Key,
-          url: `${r2PublicUrl}/${parsed.data.r2Key}`,
-          bytes: parsed.data.bytes,
-          // sortOrder stays at default 0; gallery order falls through
-          // to uploadedAt asc as the deterministic tiebreaker. We
-          // only set sortOrder explicitly if/when we add a manual
-          // reorder UI — then race-prone count() is avoided entirely.
-        },
-        update: {},
-      });
-      return { kind: 'ok', photo };
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  // Serializable interactive txn so the status check + upsert are
+  // atomic. Retry on P2034 (serialization conflict) because Prisma
+  // expects the application to handle that class at this isolation
+  // level; without retry, two healthy concurrent confirms can 500.
+  const outcome = await withSerializableRetry<Outcome>(() =>
+    prisma.$transaction(
+      async (tx): Promise<Outcome> => {
+        const listing = await tx.listing.findUnique({
+          where: { id },
+          select: {
+            status: true,
+            user: { select: { email: true } },
+          },
+        });
+        if (!listing) return { kind: 'not_found' };
+        if (listing.user.email !== session.user!.email) {
+          return { kind: 'forbidden' };
+        }
+        if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
+          return { kind: 'invalid_status', currentStatus: listing.status };
+        }
+        const photo = await tx.photo.upsert({
+          where: {
+            listingId_r2Key: { listingId: id, r2Key: parsed.data.r2Key },
+          },
+          create: {
+            listingId: id,
+            r2Key: parsed.data.r2Key,
+            url: `${r2PublicUrl}/${parsed.data.r2Key}`,
+            bytes: parsed.data.bytes,
+            // sortOrder stays at default 0; gallery order falls
+            // through to uploadedAt asc as the deterministic
+            // tiebreaker. Avoids the race a count()-derived
+            // sortOrder would create under parallel uploads.
+          },
+          update: {},
+        });
+        return { kind: 'ok', photo };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    ),
   );
 
   if (outcome.kind === 'not_found') {

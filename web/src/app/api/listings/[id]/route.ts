@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { updateListingSchema } from '@/lib/listings';
@@ -95,17 +96,40 @@ export async function PATCH(
 
   // Atomic update gated by ownership: returns count=0 if the row
   // doesn't exist or belongs to another user. We then read once to
-  // distinguish 404 from 403 for a useful response.
-  const result = await prisma.listing.updateMany({
-    where: { id, user: { email: session.user.email } },
-    data,
-  });
-  if (result.count === 0) {
-    const exists = await prisma.listing.findUnique({ where: { id }, select: { id: true } });
-    return NextResponse.json(
-      { error: exists ? 'forbidden' : 'not_found' },
-      { status: exists ? 403 : 404 },
-    );
+  // distinguish 404 from 403 for a useful response. P2003
+  // (foreign-key violation) is caught and mapped to 422 like the
+  // POST handler does — PATCH accepts categoryId/originCityId/
+  // wantedCityId too, and bad IDs are a client error not a server
+  // fault.
+  try {
+    const result = await prisma.listing.updateMany({
+      where: { id, user: { email: session.user.email } },
+      data,
+    });
+    if (result.count === 0) {
+      const exists = await prisma.listing.findUnique({
+        where: { id },
+        select: { id: true },
+      });
+      return NextResponse.json(
+        { error: exists ? 'forbidden' : 'not_found' },
+        { status: exists ? 403 : 404 },
+      );
+    }
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2003'
+    ) {
+      return NextResponse.json(
+        {
+          error: 'invalid_reference',
+          field: (err.meta as { field_name?: string } | undefined)?.field_name,
+        },
+        { status: 422 },
+      );
+    }
+    throw err;
   }
 
   const updated = await prisma.listing.findUnique({ where: { id } });

@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 // Photos are mutable while a listing is being prepared. Once it's
 // LIVE/PROPOSED/LOCKED/SWAPPED/WITHDRAWN the photo set is frozen —
 // matching the upload/confirm endpoints' rule.
-const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING'] as const);
+const MUTABLE_LISTING_STATUSES = ['DRAFT', 'PROCESSING'] as const;
 
 // DELETE /api/listings/:id/photos/:photoId
 export async function DELETE(
@@ -22,8 +22,11 @@ export async function DELETE(
   }
   const { id, photoId } = await ctx.params;
 
-  // Need r2Key + listing.status before we delete the row so we can
-  // (a) gate on listing status and (b) unlink R2 after.
+  // Read r2Key (and listing status, for error disambiguation) up
+  // front so we can unlink R2 after the row is gone. We still do
+  // the actual delete as an atomic conditional write below so a
+  // concurrent publish between the read and the delete can't strip
+  // photos from a now-frozen listing.
   const photo = await prisma.photo.findUnique({
     where: { id: photoId },
     select: {
@@ -43,18 +46,40 @@ export async function DELETE(
   if (photo.listing.user.email !== session.user.email) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
-  if (!MUTABLE_LISTING_STATUSES.has(photo.listing.status as 'DRAFT' | 'PROCESSING')) {
+
+  // Atomic conditional delete: only removes the row if it still
+  // belongs to a mutable-status listing owned by this user. If a
+  // publish/transition committed between the read above and this
+  // statement, count===0 and we 409.
+  const result = await prisma.photo.deleteMany({
+    where: {
+      id: photoId,
+      listingId: id,
+      listing: {
+        user: { email: session.user.email },
+        status: { in: [...MUTABLE_LISTING_STATUSES] },
+      },
+    },
+  });
+  if (result.count === 0) {
+    // Re-read to surface the current status in the error so the
+    // client knows whether to retry or give up.
+    const current = await prisma.photo.findUnique({
+      where: { id: photoId },
+      select: { listing: { select: { status: true } } },
+    });
     return NextResponse.json(
-      { error: 'invalid_status', currentStatus: photo.listing.status },
+      {
+        error: 'invalid_status',
+        currentStatus: current?.listing.status ?? photo.listing.status,
+      },
       { status: 409 },
     );
   }
 
-  // DB delete first — source of truth. R2 cleanup is best-effort:
-  // if it fails, the orphaned object falls out via lifecycle policy
-  // rather than leaving the row pointing at deleted bytes.
-  await prisma.photo.delete({ where: { id: photoId } });
-
+  // R2 cleanup is best-effort: if it fails, the orphaned object
+  // falls out via lifecycle policy rather than leaving the row
+  // pointing at deleted bytes.
   await r2
     .send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: photo.r2Key }))
     .catch((err) => {
@@ -64,7 +89,6 @@ export async function DELETE(
         err,
       });
     });
-  // Best-effort thumb cleanup.
   await r2
     .send(
       new DeleteObjectCommand({
