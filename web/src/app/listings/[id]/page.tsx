@@ -26,21 +26,42 @@ export default async function ListingDetail({
   if (!listing) notFound();
 
   const isOwner = listing.user.email === session.user.email;
+  // Non-owners can only see LIVE listings. Return 404 (not 403) so
+  // listing IDs aren't probeable from outside the owner context.
+  if (!isOwner && listing.status !== 'LIVE') notFound();
 
+  // Server Actions are callable HTTP endpoints — don't rely on the
+  // `isOwner` UI conditional below to gate them. Re-check auth,
+  // ownership, AND the source-status precondition inside each
+  // action so a stale form post or replay can't change state.
   async function publish() {
     'use server';
-    await prisma.listing.update({
-      where: { id },
+    const s = await auth();
+    if (!s?.user?.email) throw new Error('unauthorized');
+    const result = await prisma.listing.updateMany({
+      where: { id, user: { email: s.user.email }, status: 'DRAFT' },
       data: { status: 'LIVE', publishedAt: new Date() },
     });
+    if (result.count === 0) {
+      throw new Error('publish_blocked: not owner or not in DRAFT');
+    }
   }
 
   async function withdraw() {
     'use server';
-    await prisma.listing.update({
-      where: { id },
+    const s = await auth();
+    if (!s?.user?.email) throw new Error('unauthorized');
+    const result = await prisma.listing.updateMany({
+      where: {
+        id,
+        user: { email: s.user.email },
+        status: { in: ['DRAFT', 'LIVE'] },
+      },
       data: { status: 'WITHDRAWN' },
     });
+    if (result.count === 0) {
+      throw new Error('withdraw_blocked: not owner or not in DRAFT/LIVE');
+    }
   }
 
   return (

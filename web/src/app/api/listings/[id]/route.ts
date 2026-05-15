@@ -10,6 +10,7 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params;
+  const session = await auth();
   const listing = await prisma.listing.findUnique({
     where: { id },
     include: {
@@ -17,10 +18,26 @@ export async function GET(
       originCity: true,
       wantedCity: true,
       photos: true,
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, email: true } },
     },
   });
   if (!listing) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+
+  // Visibility: owner sees any status; everyone else only sees LIVE.
+  // Return 404 (not 403) on hidden listings so IDs aren't probeable.
+  const isOwner =
+    !!session?.user?.email && listing.user.email === session.user.email;
+  if (!isOwner && listing.status !== 'LIVE') {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
+
+  // Strip owner-only fields when the viewer isn't the owner.
+  if (!isOwner) {
+    const { user, ...rest } = listing;
+    return NextResponse.json({
+      listing: { ...rest, user: { id: user.id, name: user.name } },
+    });
+  }
   return NextResponse.json({ listing });
 }
 
