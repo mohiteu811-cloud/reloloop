@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -17,8 +18,11 @@ const confirmSchema = z.object({
 });
 
 // POST /api/listings/:id/photos
-// Confirms a client-side R2 upload by creating the Photo row and
-// enqueueing `photo:postprocess` (sharp thumbnail + dimensions).
+// Confirms a client-side R2 upload. Atomic: status check + photo
+// upsert run inside a serializable transaction so a concurrent
+// publish can't slip a row into a frozen listing, and a retried
+// confirm (mobile network blip after upload-success) is a no-op
+// instead of a duplicate row + duplicate processing job.
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -27,22 +31,7 @@ export async function POST(
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
-
   const { id } = await ctx.params;
-  const listing = await prisma.listing.findUnique({
-    where: { id },
-    select: { status: true, user: { select: { email: true } } },
-  });
-  if (!listing) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  if (listing.user.email !== session.user.email) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-  }
-  if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
-    return NextResponse.json(
-      { error: 'invalid_status', currentStatus: listing.status },
-      { status: 409 },
-    );
-  }
 
   let body: unknown;
   try {
@@ -65,24 +54,67 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_key' }, { status: 422 });
   }
 
-  const existingCount = await prisma.photo.count({ where: { listingId: id } });
+  type Outcome =
+    | { kind: 'ok'; photo: Awaited<ReturnType<typeof prisma.photo.findUnique>> }
+    | { kind: 'not_found' }
+    | { kind: 'forbidden' }
+    | { kind: 'invalid_status'; currentStatus: string };
 
-  const photo = await prisma.photo.create({
-    data: {
-      listingId: id,
-      r2Key: parsed.data.r2Key,
-      url: `${r2PublicUrl}/${parsed.data.r2Key}`,
-      bytes: parsed.data.bytes,
-      sortOrder: existingCount,
+  const outcome = await prisma.$transaction(
+    async (tx): Promise<Outcome> => {
+      const listing = await tx.listing.findUnique({
+        where: { id },
+        select: {
+          status: true,
+          user: { select: { email: true } },
+        },
+      });
+      if (!listing) return { kind: 'not_found' };
+      if (listing.user.email !== session.user!.email) {
+        return { kind: 'forbidden' };
+      }
+      if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
+        return { kind: 'invalid_status', currentStatus: listing.status };
+      }
+      const photo = await tx.photo.upsert({
+        where: {
+          listingId_r2Key: { listingId: id, r2Key: parsed.data.r2Key },
+        },
+        create: {
+          listingId: id,
+          r2Key: parsed.data.r2Key,
+          url: `${r2PublicUrl}/${parsed.data.r2Key}`,
+          bytes: parsed.data.bytes,
+          // sortOrder stays at default 0; gallery order falls through
+          // to uploadedAt asc as the deterministic tiebreaker. We
+          // only set sortOrder explicitly if/when we add a manual
+          // reorder UI — then race-prone count() is avoided entirely.
+        },
+        update: {},
+      });
+      return { kind: 'ok', photo };
     },
-  });
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 
-  // Fire-and-forget enqueue. The worker fills in thumbUrl + width
-  // + height. Photo row is usable for ordering / listing card art
-  // even before postprocess runs.
-  await photoPostprocessQueue.add('process', { photoId: photo.id });
+  if (outcome.kind === 'not_found') {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
+  if (outcome.kind === 'forbidden') {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  if (outcome.kind === 'invalid_status') {
+    return NextResponse.json(
+      { error: 'invalid_status', currentStatus: outcome.currentStatus },
+      { status: 409 },
+    );
+  }
 
-  return NextResponse.json({ photo }, { status: 201 });
+  // Worker handler is internally idempotent (overwrites thumb + dims),
+  // so re-enqueueing on retry is wasteful but correct.
+  await photoPostprocessQueue.add('process', { photoId: outcome.photo!.id });
+
+  return NextResponse.json({ photo: outcome.photo }, { status: 201 });
 }
 
 // GET /api/listings/:id/photos
@@ -108,7 +140,10 @@ export async function GET(
 
   const photos = await prisma.photo.findMany({
     where: { listingId: id },
-    orderBy: { sortOrder: 'asc' },
+    // sortOrder is the manual-override (defaults to 0 for all photos
+    // until a reorder UI lands); uploadedAt is the deterministic
+    // tiebreaker so the gallery stays stable.
+    orderBy: [{ sortOrder: 'asc' }, { uploadedAt: 'asc' }],
   });
   return NextResponse.json({ photos });
 }

@@ -225,6 +225,10 @@ model Photo {
 
   uploadedAt DateTime @default(now())
 
+  // Confirm endpoint upserts on this compound key so a retried
+  // POST /photos (mobile timeout, network blip) doesn't create a
+  // duplicate row pointing at the same R2 object.
+  @@unique([listingId, r2Key])
   @@index([listingId])
 }
 

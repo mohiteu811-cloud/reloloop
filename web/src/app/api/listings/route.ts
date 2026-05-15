@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { createListingSchema } from '@/lib/listings';
@@ -30,29 +31,48 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const d = parsed.data;
-  const listing = await prisma.listing.create({
-    data: {
-      userId: user.id,
-      title: d.title,
-      description: d.description,
-      categoryId: d.categoryId,
-      condition: d.condition,
-      brand: d.brand,
-      model: d.model,
-      ageYears: d.ageYears,
-      widthCm: d.widthCm,
-      depthCm: d.depthCm,
-      heightCm: d.heightCm,
-      askingValueCents: d.askingValueCents,
-      originCityId: d.originCityId,
-      wantedCityId: d.wantedCityId,
-      wantedNotes: d.wantedNotes,
-      availableUntil: new Date(d.availableUntilISO),
-      status: 'DRAFT',
-    },
-  });
-
-  return NextResponse.json({ listing }, { status: 201 });
+  try {
+    const listing = await prisma.listing.create({
+      data: {
+        userId: user.id,
+        title: d.title,
+        description: d.description,
+        categoryId: d.categoryId,
+        condition: d.condition,
+        brand: d.brand,
+        model: d.model,
+        ageYears: d.ageYears,
+        widthCm: d.widthCm,
+        depthCm: d.depthCm,
+        heightCm: d.heightCm,
+        askingValueCents: d.askingValueCents,
+        originCityId: d.originCityId,
+        wantedCityId: d.wantedCityId,
+        wantedNotes: d.wantedNotes,
+        availableUntil: new Date(d.availableUntilISO),
+        status: 'DRAFT',
+      },
+    });
+    return NextResponse.json({ listing }, { status: 201 });
+  } catch (err) {
+    // P2003 = foreign-key constraint failure (bogus categoryId,
+    // originCityId, or wantedCityId). zod can't catch this because
+    // it doesn't know which IDs are valid — only the DB does.
+    // Surface as 422 instead of leaking a 500.
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2003'
+    ) {
+      return NextResponse.json(
+        {
+          error: 'invalid_reference',
+          field: (err.meta as { field_name?: string } | undefined)?.field_name,
+        },
+        { status: 422 },
+      );
+    }
+    throw err;
+  }
 }
 
 export async function GET() {

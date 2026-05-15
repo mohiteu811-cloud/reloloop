@@ -6,6 +6,11 @@ import { r2, r2Bucket } from '@/lib/r2';
 
 export const runtime = 'nodejs';
 
+// Photos are mutable while a listing is being prepared. Once it's
+// LIVE/PROPOSED/LOCKED/SWAPPED/WITHDRAWN the photo set is frozen —
+// matching the upload/confirm endpoints' rule.
+const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING'] as const);
+
 // DELETE /api/listings/:id/photos/:photoId
 export async function DELETE(
   _req: NextRequest,
@@ -17,13 +22,19 @@ export async function DELETE(
   }
   const { id, photoId } = await ctx.params;
 
-  // Need the r2Key before deleting the row so we can unlink R2 too.
+  // Need r2Key + listing.status before we delete the row so we can
+  // (a) gate on listing status and (b) unlink R2 after.
   const photo = await prisma.photo.findUnique({
     where: { id: photoId },
     select: {
       r2Key: true,
       listingId: true,
-      listing: { select: { user: { select: { email: true } } } },
+      listing: {
+        select: {
+          status: true,
+          user: { select: { email: true } },
+        },
+      },
     },
   });
   if (!photo || photo.listingId !== id) {
@@ -31,6 +42,12 @@ export async function DELETE(
   }
   if (photo.listing.user.email !== session.user.email) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  if (!MUTABLE_LISTING_STATUSES.has(photo.listing.status as 'DRAFT' | 'PROCESSING')) {
+    return NextResponse.json(
+      { error: 'invalid_status', currentStatus: photo.listing.status },
+      { status: 409 },
+    );
   }
 
   // DB delete first — source of truth. R2 cleanup is best-effort:
