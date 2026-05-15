@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { HeadObjectCommand } from '@aws-sdk/client-s3';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { prisma, withSerializableRetry } from '@/lib/prisma';
-import { r2PublicUrl } from '@/lib/r2';
+import { r2, r2Bucket, r2PublicUrl } from '@/lib/r2';
 import { photoPostprocessQueue } from '@/lib/queues';
 
 export const runtime = 'nodejs';
@@ -54,6 +55,34 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_key' }, { status: 422 });
   }
 
+  // Verify the upload actually landed in R2 before creating the
+  // Photo row. Without this, a crafted confirm with a never-uploaded
+  // key creates a row + enqueues a postprocess job that fails on
+  // GetObject, leaving broken listing media + queue churn.
+  try {
+    await r2.send(
+      new HeadObjectCommand({
+        Bucket: r2Bucket,
+        Key: parsed.data.r2Key,
+      }),
+    );
+  } catch (err) {
+    const name = err instanceof Error ? err.name : '';
+    if (name === 'NotFound' || name === 'NoSuchKey') {
+      return NextResponse.json(
+        {
+          error: 'object_not_found',
+          message: 'No upload found at the supplied r2Key.',
+        },
+        { status: 404 },
+      );
+    }
+    // Any other error (network, perms) is a server fault — surface
+    // generically.
+    console.error('[photo:confirm] HeadObject failed', err);
+    return NextResponse.json({ error: 'r2_unavailable' }, { status: 503 });
+  }
+
   type Outcome =
     | { kind: 'ok'; photo: Awaited<ReturnType<typeof prisma.photo.findUnique>> }
     | { kind: 'not_found' }
@@ -90,10 +119,6 @@ export async function POST(
             r2Key: parsed.data.r2Key,
             url: `${r2PublicUrl}/${parsed.data.r2Key}`,
             bytes: parsed.data.bytes,
-            // sortOrder stays at default 0; gallery order falls
-            // through to uploadedAt asc as the deterministic
-            // tiebreaker. Avoids the race a count()-derived
-            // sortOrder would create under parallel uploads.
           },
           update: {},
         });
@@ -116,13 +141,6 @@ export async function POST(
     );
   }
 
-  // Worker handler is internally idempotent (overwrites thumb + dims),
-  // so re-enqueueing on retry is wasteful but correct.
-  //
-  // removeOnComplete/removeOnFail bound Redis memory: completed jobs
-  // evict after 7d / 1000 most-recent; failed after 30d / 5000 so we
-  // keep enough history to debug a recent regression but don't grow
-  // unbounded.
   await photoPostprocessQueue.add(
     'process',
     { photoId: outcome.photo!.id },
@@ -137,7 +155,10 @@ export async function POST(
 
 // GET /api/listings/:id/photos
 // Same visibility rule as GET /api/listings/:id: owner sees any
-// status, non-owners only see LIVE.
+// status, non-owners only see LIVE. DB-only; doesn't touch Redis
+// or R2, so this keeps working even if queue infra is unreachable
+// (lib/redis no longer throws at module load, so the queue import
+// at the top of this file is non-fatal too).
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -158,9 +179,6 @@ export async function GET(
 
   const photos = await prisma.photo.findMany({
     where: { listingId: id },
-    // sortOrder is the manual-override (defaults to 0 for all photos
-    // until a reorder UI lands); uploadedAt is the deterministic
-    // tiebreaker so the gallery stays stable.
     orderBy: [{ sortOrder: 'asc' }, { uploadedAt: 'asc' }],
   });
   return NextResponse.json({ photos });
