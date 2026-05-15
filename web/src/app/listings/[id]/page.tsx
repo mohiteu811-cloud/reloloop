@@ -2,8 +2,12 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { PhotoSection } from './photo-section';
 
 export const dynamic = 'force-dynamic';
+
+// Statuses where the photo set is mutable; mirrors the API rule.
+const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
 
 export default async function ListingDetail({
   params,
@@ -21,6 +25,10 @@ export default async function ListingDetail({
       originCity: true,
       wantedCity: true,
       user: { select: { email: true, name: true } },
+      photos: {
+        orderBy: [{ sortOrder: 'asc' }, { uploadedAt: 'asc' }],
+        select: { id: true, url: true, thumbUrl: true },
+      },
     },
   });
   if (!listing) notFound();
@@ -29,6 +37,9 @@ export default async function ListingDetail({
   // Non-owners can only see LIVE listings. Return 404 (not 403) so
   // listing IDs aren't probeable from outside the owner context.
   if (!isOwner && listing.status !== 'LIVE') notFound();
+
+  const canEditPhotos =
+    isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
 
   // Server Actions are callable HTTP endpoints — don't rely on the
   // `isOwner` UI conditional below to gate them. Re-check auth and
@@ -95,6 +106,13 @@ export default async function ListingDetail({
       {listing.description && (
         <p style={{ marginTop: 24, lineHeight: 1.5 }}>{listing.description}</p>
       )}
+
+      <PhotoSection
+        listingId={listing.id}
+        photos={listing.photos}
+        canEdit={canEditPhotos}
+      />
+
       {isOwner && (
         <div style={{ marginTop: 32, display: 'flex', gap: 12 }}>
           {listing.status === 'DRAFT' && (
