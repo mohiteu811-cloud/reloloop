@@ -25,6 +25,10 @@ App code lives in `web/`. Both the `web` and `worker` services
 build from the same directory and the same `package.json`; they
 differ only in their build and start commands.
 
+We use `npm install` (not `npm ci`) until a `package-lock.json`
+is committed. After the first local install on the repo, commit
+the lockfile and switch all build commands to `npm ci`.
+
 ## Services
 
 ### 1. `web` — Next.js 15 (App Router) + API routes
@@ -36,7 +40,7 @@ The repo-root `railway.json` is wired for this service:
   "build": {
     "builder": "NIXPACKS",
     "nixpacksConfigPath": "nixpacks.toml",
-    "buildCommand": "cd web && npm ci && npx prisma generate && npm run build"
+    "buildCommand": "cd web && npm install && npx prisma generate && npm run build"
   },
   "deploy": {
     "startCommand": "cd web && npm run start",
@@ -46,7 +50,8 @@ The repo-root `railway.json` is wired for this service:
 ```
 
 `/api/health` pings Postgres via Prisma; if `DATABASE_URL` is
-misconfigured the healthcheck fails loudly during deploy.
+misconfigured the healthcheck fails (with a generic `{ status:
+"error" }` body — driver details stay in server logs).
 
 Domain: `app.livinloop.co` (web + API share a host in v1 since
 we're a Next.js monolith).
@@ -57,7 +62,7 @@ Same repo, different start command. Override per-service in the
 Railway dashboard (Settings → Build/Deploy):
 
 ```
-Build command:  cd web && npm ci && npx prisma generate && npm run build:worker
+Build command:  cd web && npm install && npx prisma generate && npm run build:worker
 Start command:  cd web && npm run start:worker
 Healthcheck:    disabled (queue consumer, no HTTP)
 ```

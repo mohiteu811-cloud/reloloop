@@ -9,9 +9,9 @@ export async function GET() {
     await prisma.$queryRaw`SELECT 1`;
     return NextResponse.json({ status: 'ok', service: 'web' });
   } catch (err) {
-    return NextResponse.json(
-      { status: 'error', error: err instanceof Error ? err.message : String(err) },
-      { status: 503 },
-    );
+    // Public endpoint — don't leak driver/connection details.
+    // Detail stays in server logs for Railway / Sentry to pick up.
+    console.error('[health] db check failed', err);
+    return NextResponse.json({ status: 'error' }, { status: 503 });
   }
 }

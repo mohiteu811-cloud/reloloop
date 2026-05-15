@@ -3,19 +3,23 @@
 Next.js 15 (App Router) + Prisma + BullMQ worker. Deploys as
 two Railway services from this same directory:
 
-- **web** — `npm ci && npx prisma generate && npm run build`
+- **web** — `npm install && npx prisma generate && npm run build`
   then `npm run start`. Healthcheck: `/api/health`.
-- **worker** — `npm ci && npx prisma generate && npm run
+- **worker** — `npm install && npx prisma generate && npm run
   build:worker` then `npm run start:worker`. No healthcheck.
+
+`npm install` (not `npm ci`) until we commit a `package-lock.json`;
+the first local install will generate one and we'll commit it back
+so later deploys can use `npm ci` for reproducibility.
 
 Local dev:
 
 ```bash
-cp ../infra/.env.example .env.local
+cp ../infra/.env.example .env       # Prisma CLI + Next.js both read .env
 npm install
-npx prisma db push          # requires pgvector on the target DB
-npm run dev                 # web on :3000
-npm run dev:worker          # worker, in a second terminal
+npx prisma db push                  # requires pgvector on the target DB
+npm run dev                         # web on :3000
+npm run dev:worker                  # worker, in a second terminal
 ```
 
 The DB needs `pgcrypto` and `vector` extensions enabled before

@@ -9,8 +9,10 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
   extensions = [pgcrypto, vector]
+  // directUrl is only needed when DATABASE_URL points at a pooler
+  // (e.g. PgBouncer). Railway Postgres is direct, so we omit it.
+  // Add `directUrl = env("DIRECT_URL")` here if we ever pool.
 }
 
 // ============================================================
