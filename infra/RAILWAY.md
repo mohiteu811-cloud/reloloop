@@ -12,7 +12,10 @@ separate worker service added because LivinLoop is queue-heavy.
 │  │   web      │   │  worker    │   │  postgres          │    │
 │  │ Next.js 15 │──▶│ BullMQ     │──▶│  pgvector enabled  │    │
 │  │ + API      │   │ consumers  │   │                    │    │
-│  └─────┬──────┘   └─────┬──────┘   └────────────────────┘    │
+│  │ railway.   │   │ railway.   │   └────────────────────┘    │
+│  │ json       │   │ worker.    │                              │
+│  │            │   │ json       │                              │
+│  └─────┬──────┘   └─────┬──────┘                              │
 │        │                │                                    │
 │        ▼                ▼                                    │
 │  ┌────────────────────────────┐                              │
@@ -23,16 +26,31 @@ separate worker service added because LivinLoop is queue-heavy.
 
 App code lives in `web/`. Both the `web` and `worker` services
 build from the same directory and the same `package.json`; they
-differ only in their build and start commands.
+differ only in their build and start commands, captured in
+**separate config-as-code files per service** — see below.
 
 We use `npm install` (not `npm ci`) until a `package-lock.json`
 is committed. After the first local install on the repo, commit
 the lockfile and switch all build commands to `npm ci`.
 
+## Config-as-code: one file per service
+
+Railway's config-file values **override** anything set in the
+dashboard. So we can't share a single `railway.json` between web
+and worker — the worker would inherit web's start command and
+`/api/health` healthcheck. Instead, each service gets its own
+file and you set the **Config-as-Code Path** in Service Settings
+to point at it:
+
+| Service | Config file            | Set this in Service Settings → Config-as-Code Path |
+|---------|------------------------|----------------------------------------------------|
+| web     | `railway.json`         | `railway.json` (the default — nothing to change)   |
+| worker  | `railway.worker.json`  | `railway.worker.json`                              |
+
 ## Schema sync on deploy
 
 The `web` service runs `npm run db:deploy` before booting Next.js.
-That script is two steps, in order:
+That script is three steps, in order:
 
 1. `prisma db push --skip-generate` — syncs schema.prisma to the
    database. Idempotent, additive-only by default (errors on
@@ -44,8 +62,10 @@ That script is two steps, in order:
    can't express. Today that's just the HNSW index on
    `ListingEmbedding.vector`. Idempotent
    (`CREATE INDEX IF NOT EXISTS`).
+3. `prisma db seed` — upserts the cities + categories.
+   Idempotent.
 
-We use this two-step rather than `prisma migrate deploy` because
+We use this three-step rather than `prisma migrate deploy` because
 we don't have generated migration files yet — only the raw SQL
 in `prisma/migrations/00000000000000_init_pgvector/migration.sql`,
 which is documentation today (`db push` ignores it). Once we run
@@ -53,7 +73,7 @@ which is documentation today (`db push` ignores it). Once we run
 migrations, swap the script to:
 
 ```
-prisma migrate deploy
+prisma migrate deploy && prisma db seed
 ```
 
 and fold `post-push.sql` into the first real migration.
@@ -67,7 +87,7 @@ DDL. If you ever deploy worker-first to a fresh database, run
 
 ### 1. `web` — Next.js 15 (App Router) + API routes
 
-The repo-root `railway.json` is wired for this service:
+Uses `railway.json` (repo root):
 
 ```json
 {
@@ -92,16 +112,23 @@ we're a Next.js monolith).
 
 ### 2. `worker` — BullMQ consumers
 
-Same repo, different start command. Override per-service in the
-Railway dashboard (Settings → Build/Deploy):
+Uses `railway.worker.json`:
 
-```
-Build command:  cd web && npm install && npx prisma generate && npm run build:worker
-Start command:  cd web && npm run start:worker
-Healthcheck:    disabled (queue consumer, no HTTP)
+```json
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacksConfigPath": "nixpacks.toml",
+    "buildCommand": "cd web && npm install && npx prisma generate && npm run build:worker"
+  },
+  "deploy": {
+    "startCommand": "cd web && npm run start:worker"
+  }
+}
 ```
 
-No `prisma db push` here — web owns schema sync.
+No healthcheck (queue consumer, no HTTP). No `prisma db push` —
+web owns schema sync.
 
 Queues consumed (stubs in M1, real handlers added per milestone):
 
@@ -175,13 +202,14 @@ twice — once per environment — with distinct webhook IDs.
 3. Point both `web` and `worker` services at the GitHub repo
    `mohiteu811-cloud/reloloop`, branch
    `claude/mobile-app-photo-analysis-JssHT` (or `main` after merge).
-4. In Settings for **worker**, override Build/Start to the worker
-   commands above and disable the healthcheck.
+4. In **Worker → Settings → Config-as-Code Path**, set
+   `railway.worker.json`. (Web stays on the default
+   `railway.json`.)
 5. Set the service-reference env vars (table above) on both.
 6. Paste secrets (Anthropic, Resend, R2, PayPal) from
    `infra/.env.example` into both services. Use the same values.
 7. Deploy `web` first — its start command runs `npm run db:deploy`
-   to create tables and the HNSW index. Confirm /api/health → 200.
+   to create tables, indexes, and seed. Confirm /api/health → 200.
 8. Deploy `worker`. Confirm logs show `[worker] booted with 6 queues`.
 
 ## Migration from LivAround's setup
