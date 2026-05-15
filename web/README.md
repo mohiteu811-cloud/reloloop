@@ -60,8 +60,9 @@ seed lives outside the schema entirely.
 
 So `db:deploy` chains:
 
-1. `prisma db push --skip-generate` — tables, columns, indexes
-   Prisma understands; extensions from the datasource block.
+1. `prisma db push --skip-generate --accept-data-loss` — tables,
+   columns, indexes Prisma understands; extensions from the
+   datasource block.
 2. `prisma db execute --file prisma/post-push.sql` — the HNSW
    index and any other raw SQL that needs to land after the
    tables exist. Idempotent (CREATE INDEX IF NOT EXISTS) so it
@@ -71,5 +72,26 @@ So `db:deploy` chains:
 
 When we eventually run `prisma migrate dev` locally to capture
 the schema as proper migration files, `db:deploy` collapses to
-`prisma migrate deploy && prisma db seed` and `post-push.sql`
-folds into the first real migration.
+`prisma migrate deploy` and `post-push.sql` folds into the first
+real migration.
+
+### About `--accept-data-loss`
+
+Prisma `db push` refuses by default any change it deems
+"potentially destructive" — including additive changes like a
+new `@@unique` constraint, because the constraint *could* fail
+if duplicates already exist. During M1–M4 the schema is still
+in flux and our tables either have no data or only test data,
+so `--accept-data-loss` is the pragmatic flag.
+
+**Risk:** it also accepts genuinely destructive changes (column
+drops, renames-as-drop-and-add). We accept that risk because
+the alternative is hand-running `prisma db push --accept-data-
+loss` after each deploy, which defeats automation.
+
+**Sunset plan:** once we generate real migrations via
+`prisma migrate dev`, swap `db:deploy` to
+`prisma migrate deploy && prisma db execute ... && prisma db seed`.
+`migrate deploy` applies the recorded SQL exactly as written
+locally, so any destructive change is reviewed in PR before it
+ever reaches prod.
