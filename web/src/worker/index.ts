@@ -3,17 +3,18 @@ import { redisConnection, bullmqPrefix } from '../lib/redis';
 import { prisma } from '../lib/prisma';
 import { photoPostprocessProcessor } from './jobs/photo-postprocess';
 
-// Queue names per reloloop-schema.md §7.1. M2 wires the real
-// photo:postprocess handler (sharp + thumbnails); the rest stay
-// as no-op stubs until their milestones (M3 Claude extraction,
-// M4 embeddings + matching, M6 fee timeout).
+// Queue names per reloloop-schema.md §7.1, with `:` swapped for `-`
+// because BullMQ 5.x reserves `:` (it's the Redis key separator;
+// putting it in a queue name corrupts the key structure that
+// BullMQ builds internally). Schema doc labels ("photo:postprocess")
+// are fine — they're docs, not runtime identifiers.
 const queueNames = [
-  'photo:postprocess',
-  'listing:autofill',
-  'listing:embed',
-  'match:compute',
-  'match:nightly',
-  'fee:gate-timeout',
+  'photo-postprocess',
+  'listing-autofill',
+  'listing-embed',
+  'match-compute',
+  'match-nightly',
+  'fee-gate-timeout',
 ] as const;
 
 type QueueName = (typeof queueNames)[number];
@@ -24,12 +25,12 @@ const stubProcessor: Processor = async (job) => {
 };
 
 const handlers: Record<QueueName, Processor> = {
-  'photo:postprocess': photoPostprocessProcessor as Processor,
-  'listing:autofill': stubProcessor,
-  'listing:embed': stubProcessor,
-  'match:compute': stubProcessor,
-  'match:nightly': stubProcessor,
-  'fee:gate-timeout': stubProcessor,
+  'photo-postprocess': photoPostprocessProcessor as Processor,
+  'listing-autofill': stubProcessor,
+  'listing-embed': stubProcessor,
+  'match-compute': stubProcessor,
+  'match-nightly': stubProcessor,
+  'fee-gate-timeout': stubProcessor,
 };
 
 const workers = queueNames.map(
