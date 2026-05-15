@@ -1,7 +1,7 @@
 # LivinLoop on Railway
 
 One Railway project, four services. Mirrors LivAround's deployment
-pattern (`nixpacks.toml` + `railway.json` + `start.sh`), with a
+pattern (`nixpacks.toml` + `railway.json` + start command), with a
 separate worker service added because LivinLoop is queue-heavy.
 
 ```
@@ -21,82 +21,83 @@ separate worker service added because LivinLoop is queue-heavy.
 └──────────────────────────────────────────────────────────────┘
 ```
 
+App code lives in `web/`. Both the `web` and `worker` services
+build from the same directory and the same `package.json`; they
+differ only in their build and start commands.
+
 ## Services
 
 ### 1. `web` — Next.js 15 (App Router) + API routes
 
-`railway.json` (root, same shape as LivAround):
+The repo-root `railway.json` is wired for this service:
 
 ```json
 {
-  "$schema": "https://railway.app/railway-schema.json",
   "build": {
     "builder": "NIXPACKS",
     "nixpacksConfigPath": "nixpacks.toml",
-    "buildCommand": "npm install && npx prisma generate && npm run build"
+    "buildCommand": "cd web && npm ci && npx prisma generate && npm run build"
   },
   "deploy": {
-    "startCommand": "npm run start",
+    "startCommand": "cd web && npm run start",
     "healthcheckPath": "/api/health"
   }
 }
 ```
 
-Domain: `api.livinloop.co` (or `app.livinloop.co` if web+API share
-a host, which is the v1 default since we're a Next.js monolith).
+`/api/health` pings Postgres via Prisma; if `DATABASE_URL` is
+misconfigured the healthcheck fails loudly during deploy.
 
-Env vars: everything in `infra/.env.example` except `BULLMQ_PREFIX`
-is only needed if the worker reads it differently.
+Domain: `app.livinloop.co` (web + API share a host in v1 since
+we're a Next.js monolith).
 
 ### 2. `worker` — BullMQ consumers
 
-Same repo, different start command. Picks up jobs from Redis and
-runs:
-
-- `photo:postprocess` — sharp thumbnails + perceptual hash + Photo rows
-- `listing:autofill` — Claude vision extraction → valuation breakdown
-- `listing:embed` — Replicate CLIP call → ListingEmbedding row → flip to LIVE
-- `match:compute` — pgvector query → SwapMatch rows → notify
-- `match:nightly` — full recompute (cron, 02:00 NZST)
-- `fee:gate-timeout` — cancel + refund unpaid acceptances after 7 days
-
-`railway.json` (per-service override — set in Railway dashboard,
-not in the file, since both services share the repo):
+Same repo, different start command. Override per-service in the
+Railway dashboard (Settings → Build/Deploy):
 
 ```
-Build command:  npm install && npx prisma generate && npm run build:worker
-Start command:  node dist/worker/index.js
-Healthcheck:    disabled (it's a queue consumer)
+Build command:  cd web && npm ci && npx prisma generate && npm run build:worker
+Start command:  cd web && npm run start:worker
+Healthcheck:    disabled (queue consumer, no HTTP)
 ```
+
+Queues consumed (stubs in M1, real handlers added per milestone):
+
+- `photo:postprocess` — sharp thumbnails + perceptual hash (M2)
+- `listing:autofill` — Claude vision extraction + valuation (M3)
+- `listing:embed` — Replicate CLIP → ListingEmbedding (M4)
+- `match:compute` — pgvector query → SwapMatch rows (M4)
+- `match:nightly` — cron, 02:00 NZST full recompute (M4)
+- `fee:gate-timeout` — cron, refund unpaid acceptances after 7 days (M6)
 
 ### 3. `postgres` — Railway Postgres plugin
 
 After provisioning, connect via Railway CLI and enable extensions:
 
 ```bash
-railway run --service postgres psql $DATABASE_URL -c \
+railway run --service Postgres psql $DATABASE_URL -c \
   "CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
-The HNSW index on `ListingEmbedding.vector` is created via a raw
-SQL migration once the table exists:
+Prisma also declares these in `extensions = [pgcrypto, vector]`,
+so a fresh `prisma migrate dev` would create them — but doing it
+upfront prevents a chicken-and-egg with the first migration.
 
-```sql
-CREATE INDEX listing_embedding_hnsw
-  ON "ListingEmbedding"
-  USING hnsw (vector vector_cosine_ops)
-  WITH (m = 16, ef_construction = 64);
-```
+The HNSW index on `ListingEmbedding.vector` is created via a
+raw SQL migration (`web/prisma/migrations/...`) once the table
+exists.
 
 ### 4. `redis` — Railway Redis plugin
 
 No config beyond the plugin defaults. BullMQ uses `REDIS_URL`
-directly.
+directly. The worker registers queues under the prefix from
+`BULLMQ_PREFIX` (defaults to `livinloop`).
 
 ## Cross-service env wiring
 
-Railway service-reference syntax (set these in the dashboard, not
-the file, so they auto-update when plugins rotate creds):
+Set these in the Railway dashboard via service-reference syntax
+(not in env files) so they auto-update when plugins rotate creds:
 
 | Service  | Var               | Reference                              |
 |----------|-------------------|----------------------------------------|
@@ -106,7 +107,8 @@ the file, so they auto-update when plugins rotate creds):
 | worker   | `REDIS_URL`       | `${{Redis.REDIS_URL}}`                 |
 
 Everything else (Anthropic, Replicate, PayPal, Resend, R2) is
-shared identically across web and worker — copy the same values.
+shared identically across web and worker — copy the same values
+from `infra/.env.example`.
 
 ## Environments
 
@@ -120,6 +122,25 @@ sandbox app credentials; `production` uses `PAYPAL_MODE=live`
 with live credentials. The Orders v2 webhook is registered
 twice — once per environment — with distinct webhook IDs.
 
+## First-deploy checklist
+
+1. Add the **Redis** plugin to the project (Postgres is already up).
+2. Enable extensions on Postgres (one-time):
+   ```bash
+   railway run --service Postgres psql $DATABASE_URL -c \
+     "CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS vector;"
+   ```
+3. Point both `web` and `worker` services at the GitHub repo
+   `mohiteu811-cloud/reloloop`, branch
+   `claude/mobile-app-photo-analysis-JssHT` (or `main` after merge).
+4. In Settings for **worker**, override Build/Start to the worker
+   commands above and disable the healthcheck.
+5. Set the service-reference env vars (table above) on both.
+6. Paste secrets (Anthropic, Resend, R2, PayPal) from
+   `infra/.env.example` into both services. Use the same values.
+7. Deploy. Confirm `web` boots with /api/health → 200, and the
+   worker logs `[worker] booted with 6 queues`.
+
 ## Migration from LivAround's setup
 
 What we **don't** copy across:
@@ -128,9 +149,9 @@ What we **don't** copy across:
 - LivAround's Stripe and Razorpay env vars (PayPal-only in v1)
 - LivAround's Google Cloud Speech/Translate (no voice in v1)
 - LivAround's iCal/Booking.com integrations
-- LivAround's `PAYMENTS_ENABLED` master flag — replaced by
-  the per-feature `FEES_ENABLED` flag, scoped to the swap-fee
-  gate so M5 can ship before M6
+- LivAround's `PAYMENTS_ENABLED` master flag — replaced by the
+  per-feature `FEES_ENABLED` flag, scoped to the swap-fee gate so
+  M5 can ship before M6
 
 What we **do** copy:
 
