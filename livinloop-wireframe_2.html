@@ -1,0 +1,2838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>livinloop — app wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================
+     LIVINLOOP DESIGN SYSTEM — Horizon tokens + .ll-* extension
+     ===================================================== */
+  :root {
+    --ink: #0B2A3B;
+    --brand-50: #EEF4FF;
+    --brand-100: #DBE7FE;
+    --brand-200: #BCD0FD;
+    --brand-300: #93B2FB;
+    --brand-400: #6389F7;
+    --brand-500: #3E68F0;
+    --brand-600: #2563EB;
+    --brand-700: #1E4FBF;
+    --brand-800: #1E408F;
+    --sun-50: #FFF7E6;
+    --sun-100: #FFEBBF;
+    --sun-300: #FFC866;
+    --sun-500: #FFB547;
+    --sun-700: #B5781E;
+    --coral-50: #FFF1ED;
+    --coral-300: #FF9B7E;
+    --coral-500: #FF7A59;
+    --coral-700: #B8472C;
+    --slate-700: #32547A;
+    --slate-600: #4D6C8E;
+    --slate-500: #6C88A5;
+    --slate-400: #91A6BE;
+    --slate-300: #B6C4D3;
+    --slate-200: #E2EAF1;
+    --slate-100: #EEF2F7;
+    --slate-50: #F5F8FB;
+    --sand: #FAFBFD;
+    --paper: #FFFFFF;
+    --success: #10B981;
+    --success-bg: #DCFCE7;
+    --success-fg: #047857;
+
+    --loop-outer: var(--sun-500);
+    --loop-inner: var(--brand-400);
+    --loop-accent: var(--brand-600);
+    --loop-gradient: linear-gradient(135deg, var(--sun-500) 0%, var(--brand-400) 100%);
+    --loop-tile: var(--ink);
+    --loop-spin: 2.4s;
+
+    --shadow-xs: 0 1px 1px rgba(11,42,59,0.04), 0 1px 2px rgba(11,42,59,0.05);
+    --shadow-sm: 0 1px 2px rgba(11,42,59,0.05), 0 2px 6px rgba(11,42,59,0.06);
+    --shadow-md: 0 4px 12px rgba(11,42,59,0.08), 0 2px 4px rgba(11,42,59,0.05);
+    --shadow-lg: 0 16px 40px rgba(11,42,59,0.12), 0 4px 12px rgba(11,42,59,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--sand);
+    color: var(--ink);
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--brand-600); color: #fff; }
+
+  /* =====================================================
+     HEADER
+     ===================================================== */
+  header.doc-head {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250,251,253,0.92);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid var(--slate-200);
+    padding: 14px 32px;
+  }
+  .head-inner {
+    max-width: 1600px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+  }
+  .ll-lockup {
+    display: flex; align-items: center; gap: 12px;
+    text-decoration: none;
+  }
+  .ll-mark svg { display: block; }
+  .ll-wordmark {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .ll-wordmark .loop { color: var(--brand-600); }
+  .head-tabs {
+    display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+  }
+  .head-tabs a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--slate-500);
+    text-decoration: none;
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
+    transition: color 180ms cubic-bezier(0.22,1,0.36,1), border-color 180ms cubic-bezier(0.22,1,0.36,1);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .head-tabs a:hover, .head-tabs a.active {
+    color: var(--brand-600);
+    border-bottom-color: var(--brand-600);
+  }
+  .head-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--slate-500);
+    padding: 6px 12px;
+    border: 1px solid var(--slate-200);
+    border-radius: 999px;
+    background: var(--paper);
+  }
+  @media (max-width: 1000px) {
+    .head-inner { grid-template-columns: auto auto; }
+    .head-tabs { display: none; }
+  }
+
+  /* =====================================================
+     MAIN
+     ===================================================== */
+  main {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 64px 32px 96px;
+  }
+
+  /* HERO */
+  .hero {
+    margin-bottom: 96px;
+    border-bottom: 1px solid var(--slate-200);
+    padding-bottom: 64px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--brand-600);
+    font-weight: 500;
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--brand-600);
+  }
+  h1.hero-title {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: clamp(48px, 7vw, 80px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    margin-bottom: 32px;
+    max-width: 18ch;
+  }
+  h1.hero-title .loop { color: var(--brand-600); }
+  .hero-deck {
+    font-size: clamp(17px, 1.4vw, 20px);
+    line-height: 1.55;
+    color: var(--slate-700);
+    max-width: 62ch;
+    margin-bottom: 40px;
+  }
+  .hero-deck strong { color: var(--ink); font-weight: 600; }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 720px) { .hero-stats { grid-template-columns: repeat(2, 1fr); } }
+  .hero-stat {
+    background: var(--paper);
+    border: 1px solid var(--slate-200);
+    padding: 22px 22px 20px;
+    border-radius: 14px;
+  }
+  .hero-stat .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 12px;
+  }
+  .hero-stat .figure {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 2.4vw, 36px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .hero-stat .figure .loop { color: var(--brand-600); }
+  .hero-stat .note {
+    font-size: 13px;
+    color: var(--slate-700);
+    line-height: 1.45;
+  }
+
+  /* SECTION */
+  section.flow {
+    margin-bottom: 112px;
+    scroll-margin-top: 100px;
+  }
+  .flow-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--slate-500);
+    border-top: 1px solid var(--slate-200);
+    padding-top: 14px;
+    margin-bottom: 22px;
+    display: flex; justify-content: space-between;
+    font-weight: 500;
+  }
+  .flow-num span:last-child { color: var(--brand-600); }
+  h2.flow-title {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: clamp(36px, 5vw, 60px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin-bottom: 22px;
+    max-width: 22ch;
+  }
+  h2.flow-title .loop { color: var(--brand-600); }
+  .flow-deck {
+    font-size: clamp(16px, 1.3vw, 18px);
+    line-height: 1.55;
+    color: var(--slate-700);
+    max-width: 62ch;
+    margin-bottom: 48px;
+  }
+  .flow-deck strong { color: var(--ink); font-weight: 600; }
+
+  /* =====================================================
+     SCREENS ROW
+     ===================================================== */
+  .screens-row {
+    display: flex;
+    gap: 28px;
+    overflow-x: auto;
+    padding: 12px 0 40px;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: var(--brand-400) var(--slate-100);
+  }
+  .screens-row::-webkit-scrollbar { height: 8px; }
+  .screens-row::-webkit-scrollbar-track { background: var(--slate-100); border-radius: 999px; }
+  .screens-row::-webkit-scrollbar-thumb { background: var(--brand-400); border-radius: 999px; }
+
+  /* PHONE FRAME */
+  .phone-block {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    width: 320px;
+  }
+  .phone-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+    font-weight: 500;
+  }
+  .phone-num span:last-child { color: var(--brand-600); }
+  .phone {
+    width: 320px;
+    height: 680px;
+    background: var(--paper);
+    border: 1px solid var(--slate-200);
+    border-radius: 28px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-md);
+  }
+  .phone-caption {
+    margin-top: 16px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--slate-700);
+  }
+  .phone-caption strong { color: var(--ink); font-weight: 600; }
+
+  /* PHONE — TOPBAR */
+  .pt {
+    flex-shrink: 0;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--slate-200);
+    display: flex; align-items: center; gap: 10px;
+    background: var(--paper);
+  }
+  .pt-back {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--slate-100);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--slate-700);
+    flex-shrink: 0;
+  }
+  .pt-back svg { width: 14px; height: 14px; }
+  .pt-word {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    flex: 1;
+  }
+  .pt-word .loop { color: var(--brand-600); }
+  .pt-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--slate-500);
+    font-weight: 500;
+  }
+  .pt-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--slate-700);
+    flex-shrink: 0;
+  }
+  .pt-icon svg { width: 16px; height: 16px; }
+
+  /* PHONE — BODY */
+  .pb {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    background: var(--paper);
+  }
+  .pb.pad-tight { padding: 12px 16px; }
+  .pb.no-pad { padding: 0; }
+  .pb.ink-bg { background: var(--ink); color: var(--paper); }
+  .pb.sand-bg { background: var(--sand); }
+
+  .sect-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--brand-600);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .pb h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .pb h3 .loop { color: var(--brand-600); }
+  .pb.ink-bg h3 { color: var(--paper); }
+  .pb.ink-bg h3 .loop { color: var(--sun-500); }
+  .pb p.lead {
+    font-size: 13.5px;
+    color: var(--slate-700);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .pb.ink-bg p.lead { color: rgba(255,255,255,0.7); }
+
+  /* =====================================================
+     LL-* COMPONENTS
+     ===================================================== */
+  .ll-spinner {
+    --size: 56px;
+    width: var(--size); height: var(--size);
+    position: relative;
+    display: inline-block;
+  }
+  .ll-spinner svg {
+    width: 100%; height: 100%;
+    animation: ll-spin var(--loop-spin) linear infinite;
+  }
+  .ll-spinner .ll-inner-orbit {
+    animation: ll-spin-rev var(--loop-spin) linear infinite;
+    transform-origin: center;
+  }
+  @keyframes ll-spin     { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes ll-spin-rev { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+
+  .ll-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 999px;
+    line-height: 1;
+  }
+  .ll-pill::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .ll-pill.in-loop {
+    background: rgba(99,137,247,0.16);
+    color: var(--brand-700);
+  }
+  .ll-pill.in-loop::before {
+    background: var(--brand-600);
+    box-shadow: 0 0 0 0 rgba(37,99,235,0.4);
+    animation: ll-pulse 1.8s ease-out infinite;
+  }
+  .ll-pill.dispatched { background: rgba(255,181,71,0.20); color: var(--sun-700); }
+  .ll-pill.closed    { background: rgba(16,185,129,0.16); color: var(--success-fg); }
+  .ll-pill.flagged   { background: rgba(255,122,89,0.16); color: var(--coral-700); }
+  .ll-pill.neutral   { background: var(--slate-100); color: var(--slate-700); }
+  @keyframes ll-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(37,99,235,0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+  }
+
+  .ll-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px 3px 3px;
+    background: var(--slate-100);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    color: var(--slate-700);
+  }
+  .ll-chip .ll-chip-icon {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--ink);
+    flex-shrink: 0;
+  }
+  .ll-chip .ll-chip-icon svg { width: 11px; height: 11px; }
+
+  .ll-ai {
+    border: 1px solid rgba(255,181,71,0.45);
+    background: var(--sun-50);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .ll-ai .ll-ai-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--sun-700);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .ll-ai .ll-ai-body {
+    font-size: 13px; font-weight: 500;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .ll-ai .ll-ai-body strong { color: var(--brand-700); }
+
+  .ll-toast {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 999px;
+    padding: 9px 16px 9px 11px;
+    box-shadow: var(--shadow-md);
+  }
+  .ll-toast .check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--success);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .ll-toast .check svg { width: 12px; height: 12px; }
+  .ll-toast .msg { font-size: 12.5px; font-weight: 500; }
+  .ll-toast .msg .loop { color: var(--sun-500); }
+
+  .ll-progress {
+    background: var(--slate-100);
+    height: 6px;
+    border-radius: 999px;
+    overflow: visible;
+    position: relative;
+  }
+  .ll-progress .ll-progress-fill {
+    height: 100%;
+    background: var(--loop-gradient);
+    border-radius: 999px;
+    position: relative;
+    transition: width 280ms cubic-bezier(0.22,1,0.36,1);
+  }
+  .ll-progress .ll-progress-fill::after {
+    content: '';
+    position: absolute;
+    right: -3px; top: 50%; transform: translateY(-50%);
+    width: 10px; height: 10px;
+    background: var(--brand-400);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px var(--paper);
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 180ms cubic-bezier(0.22,1,0.36,1), color 180ms cubic-bezier(0.22,1,0.36,1);
+  }
+  .btn.primary {
+    background: var(--ink);
+    color: var(--paper);
+    width: 100%;
+  }
+  .btn.primary:hover { background: var(--brand-700); }
+  .btn.brand {
+    background: var(--brand-600);
+    color: var(--paper);
+    width: 100%;
+  }
+  .btn.secondary {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--slate-200);
+    width: 100%;
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--slate-700);
+    padding: 10px 0;
+  }
+  .btn.sun {
+    background: var(--ink);
+    color: var(--sun-500);
+    width: 100%;
+  }
+
+  /* CARDS */
+  .card-mini {
+    background: var(--paper);
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .card-mini.sand-fill { background: var(--sand); }
+  .card-mini.accent {
+    border: 1.5px solid var(--brand-600);
+    background: var(--brand-50);
+  }
+  .card-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .card-mini-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 4px;
+  }
+  .card-mini-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .card-mini-price {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .card-mini-price .loop { color: var(--brand-600); }
+  .card-foot-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* IMAGE PLACEHOLDER */
+  .item-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background:
+      repeating-linear-gradient(135deg, transparent 0 12px, rgba(11,42,59,0.04) 12px 13px),
+      var(--slate-100);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--slate-500);
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .item-img svg { width: 38%; height: 38%; opacity: 0.55; }
+  .item-img .tag {
+    position: absolute; top: 8px; left: 8px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .item-img.sq { aspect-ratio: 1/1; }
+
+  /* DASH STATS */
+  .dash-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .dash-stat {
+    background: var(--paper);
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .dash-stat .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .dash-stat .v {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  .dash-stat .v .loop { color: var(--brand-600); }
+
+  /* TAB BAR */
+  .tabbar {
+    border-top: 1px solid var(--slate-200);
+    background: var(--paper);
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 8px 0 10px;
+  }
+  .tabbar .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--slate-500);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 500;
+  }
+  .tabbar .tab svg { width: 18px; height: 18px; }
+  .tabbar .tab.active { color: var(--brand-600); }
+  .tabbar .tab.fab {
+    color: transparent;
+    height: 0;
+    margin-top: -10px;
+  }
+  .tabbar .tab.fab .fab-circle {
+    width: 44px; height: 44px;
+    background: var(--ink);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    box-shadow: var(--shadow-md);
+    color: var(--sun-500);
+  }
+  .tabbar .tab.fab svg { width: 22px; height: 22px; color: var(--sun-500); }
+
+  /* CAMERA */
+  .camera-view {
+    background: #000;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    color: var(--paper);
+  }
+  .camera-view .viewfinder {
+    flex: 1;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(99,137,247,0.18) 0%, transparent 60%),
+      #000;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .camera-view .viewfinder::before {
+    content: '';
+    position: absolute;
+    width: 70%; height: 55%;
+    border: 1px dashed rgba(255,255,255,0.35);
+    border-radius: 4px;
+  }
+  .camera-view .viewfinder svg {
+    width: 55%; height: 55%; opacity: 0.4;
+    color: var(--paper);
+  }
+  .camera-view .top-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 12px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+  }
+  .camera-view .x {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--paper);
+  }
+  .camera-view .hint {
+    position: absolute;
+    bottom: 96px;
+    left: 50%; transform: translateX(-50%);
+    font-size: 13px; font-weight: 500;
+    text-align: center;
+    color: var(--paper);
+    background: rgba(0,0,0,0.6);
+    padding: 6px 12px;
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    max-width: 80%;
+    white-space: nowrap;
+  }
+  .camera-view .hint .loop { color: var(--sun-500); }
+  .camera-view .controls {
+    padding: 16px 20px 22px;
+    background: rgba(0,0,0,0.6);
+    display: flex; justify-content: space-between; align-items: center;
+    position: relative;
+  }
+  .camera-view .shutter {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 3px solid #000;
+    box-shadow: 0 0 0 3px var(--paper);
+  }
+  .camera-view .controls .side-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    display: grid; place-items: center;
+    color: var(--paper);
+  }
+  .camera-view .photo-count {
+    position: absolute;
+    top: -22px; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--sun-500);
+    font-weight: 600;
+  }
+
+  /* PROCESSING */
+  .processing {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    background: var(--sand);
+  }
+  .processing h4 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    margin: 24px 0 10px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .processing h4 .loop { color: var(--brand-600); }
+  .processing p {
+    font-size: 13.5px;
+    color: var(--slate-700);
+    margin-bottom: 24px;
+    max-width: 26ch;
+    line-height: 1.5;
+  }
+  .processing .steps {
+    text-align: left;
+    width: 100%;
+    border-top: 1px solid var(--slate-200);
+    padding-top: 14px;
+  }
+  .processing .step {
+    padding: 5px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--slate-500);
+    display: flex; gap: 8px; align-items: center;
+    font-weight: 500;
+  }
+  .processing .step.done { color: var(--success-fg); }
+  .processing .step.done::before {
+    content: '✓'; color: var(--success); font-weight: bold;
+    font-size: 11px;
+  }
+  .processing .step.current {
+    color: var(--ink);
+  }
+  .processing .step.current::before {
+    content: '◇'; color: var(--brand-600);
+  }
+  .processing .step.pending::before {
+    content: '○'; color: var(--slate-300);
+  }
+
+  /* AUTOFILL REVIEW */
+  .autofill-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--slate-100);
+    align-items: center;
+  }
+  .autofill-row:last-child { border-bottom: none; }
+  .autofill-row .ai-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--sun-700);
+    background: rgba(255,181,71,0.20);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .autofill-row .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--slate-500);
+    font-weight: 500;
+  }
+  .autofill-row .val {
+    font-size: 13px; color: var(--ink); font-weight: 600;
+    text-align: right;
+  }
+
+  /* VALUATION BREAKDOWN */
+  .val-table {
+    background: var(--sand);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .val-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 5px 0;
+    align-items: baseline;
+    font-size: 12.5px;
+  }
+  .val-row .l {
+    color: var(--slate-700);
+  }
+  .val-row .v {
+    color: var(--ink); font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .val-row.minus .v { color: var(--coral-700); }
+  .val-row.divider {
+    border-top: 1px solid var(--slate-200);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+  .val-row.final .l { font-weight: 600; color: var(--ink); }
+  .val-row.final .v {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--brand-600);
+    letter-spacing: -0.02em;
+  }
+
+  /* ASKING VALUE INPUT */
+  .asking-input {
+    background: var(--paper);
+    border: 2px solid var(--brand-600);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .asking-input .label-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .asking-input .label-row .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brand-600);
+    font-weight: 600;
+  }
+  .asking-input .label-row .pencil {
+    color: var(--brand-600);
+    font-size: 13px;
+  }
+  .asking-input .input-line {
+    display: flex; align-items: baseline; gap: 4px;
+  }
+  .asking-input .currency {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--slate-500);
+    font-weight: 500;
+  }
+  .asking-input .amount {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* MATCH ROW */
+  .match-row {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--slate-100);
+    align-items: stretch;
+    cursor: pointer;
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-row .thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    background:
+      repeating-linear-gradient(135deg, transparent 0 10px, rgba(11,42,59,0.04) 10px 11px),
+      var(--slate-100);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--slate-500);
+  }
+  .match-row .thumb svg { width: 50%; opacity: 0.55; }
+  .match-row .info { flex: 1; min-width: 0; }
+  .match-row .info .t {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; font-weight: 600;
+    line-height: 1.2;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+  }
+  .match-row .info .m {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--slate-500);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .match-row .info .row-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .match-row .info .p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; font-weight: 700;
+    color: var(--brand-600);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .match-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--ink);
+    color: var(--sun-500);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .match-score::before {
+    content: '∞'; font-size: 12px; line-height: 0.5;
+  }
+
+  /* SIDE BY SIDE COMPARE */
+  .compare-pair {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .compare-pair .swap-arrow {
+    color: var(--brand-600);
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .compare-side {
+    background: var(--sand);
+    border: 1px solid var(--slate-200);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .compare-side .who {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .compare-side .what {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.25;
+    margin-bottom: 4px;
+  }
+  .compare-side .where {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 6px;
+  }
+  .compare-side .price {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brand-600);
+    letter-spacing: -0.02em;
+  }
+
+  /* TIMELINE — CONVERSATION COORDINATION */
+  .timeline-mini {
+    border-top: 1px solid var(--slate-200);
+    padding-top: 12px;
+    margin-top: 12px;
+  }
+  .tl-row {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 10px;
+    padding: 6px 0;
+    align-items: flex-start;
+  }
+  .tl-row .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--slate-300);
+    margin-top: 6px;
+  }
+  .tl-row.done .dot { background: var(--success); }
+  .tl-row.current .dot {
+    background: var(--brand-600);
+    box-shadow: 0 0 0 0 rgba(37,99,235,0.4);
+    animation: ll-pulse 1.8s ease-out infinite;
+  }
+  .tl-row .body {
+    font-size: 12.5px;
+    color: var(--slate-700);
+    line-height: 1.4;
+  }
+  .tl-row .body strong {
+    color: var(--ink);
+    font-weight: 600;
+    display: block;
+    font-size: 13px;
+    margin-bottom: 1px;
+  }
+
+  /* CHAT BUBBLES */
+  .bubble {
+    padding: 8px 12px;
+    border-radius: 14px;
+    max-width: 78%;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+  .bubble.them {
+    background: var(--slate-100);
+    color: var(--ink);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble.you {
+    background: var(--brand-600);
+    color: var(--paper);
+    border-bottom-right-radius: 4px;
+    margin-left: auto;
+  }
+  .bubble-ts {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--slate-400);
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  /* INBOX ROW */
+  .inbox-row {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--slate-100);
+    align-items: flex-start;
+    cursor: pointer;
+  }
+  .inbox-row:last-child { border-bottom: none; }
+  .inbox-row.unread {
+    background: var(--brand-50);
+    margin: 0 -16px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border-bottom: none;
+  }
+  .inbox-row .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--brand-100);
+    display: grid; place-items: center;
+    color: var(--brand-700);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .inbox-row .ir-info { min-width: 0; }
+  .inbox-row .ir-info .t {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 2px;
+    letter-spacing: -0.005em;
+  }
+  .inbox-row .ir-info .preview {
+    font-size: 11.5px;
+    color: var(--slate-700);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* =====================================================
+     DEEP SECTION (INK BG)
+     ===================================================== */
+  .deep-section {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 0;
+    margin: 80px -32px;
+    position: relative;
+  }
+  .deep-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .deep-section .flow-num {
+    border-top-color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.5);
+  }
+  .deep-section .flow-num span:last-child { color: var(--sun-500); }
+  .deep-section h2.flow-title { color: var(--paper); }
+  .deep-section h2.flow-title .loop { color: var(--sun-500); }
+  .deep-section .flow-deck { color: rgba(255,255,255,0.7); }
+  .deep-section .flow-deck strong { color: var(--paper); }
+  .deep-section .sect-tag { color: var(--sun-500); }
+
+  /* EMBED FLOW DIAGRAM */
+  .embed-flow {
+    display: grid;
+    grid-template-columns: 1fr 32px 1fr 32px 1fr;
+    gap: 20px;
+    align-items: stretch;
+    margin: 32px 0;
+  }
+  @media (max-width: 900px) {
+    .embed-flow { grid-template-columns: 1fr; gap: 12px; }
+    .embed-flow .arrow { display: none; }
+  }
+  .embed-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 20px 18px;
+  }
+  .embed-card .step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--sun-500);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .embed-card .what {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    line-height: 1.15;
+  }
+  .embed-card .what .loop { color: var(--sun-500); }
+  .embed-card .desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+  }
+  .embed-card .vec-preview {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--brand-400);
+    margin-top: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .arrow {
+    color: var(--sun-500);
+    font-size: 24px;
+    align-self: center;
+    text-align: center;
+    font-weight: 300;
+  }
+
+  /* SWAP MATCH EXAMPLE */
+  .swap-example {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 32px;
+    margin: 32px 0;
+  }
+  .swap-pair {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr;
+    gap: 20px;
+    align-items: center;
+    margin-top: 20px;
+  }
+  @media (max-width: 800px) {
+    .swap-pair { grid-template-columns: 1fr; gap: 14px; }
+    .swap-pair .swap-center { order: 1; }
+  }
+  .swap-side {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .swap-side .who-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .swap-side .who-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+  }
+  .swap-side .route {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--sun-500);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .swap-side .item-row {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .swap-side .item-row .name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--paper);
+    margin-bottom: 3px;
+  }
+  .swap-side .item-row .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+  }
+  .swap-side .item-row .price {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brand-400);
+    letter-spacing: -0.025em;
+    margin-top: 6px;
+    line-height: 1;
+  }
+
+  .swap-center {
+    text-align: center;
+  }
+  .swap-center .score-big {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--sun-500);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .swap-center .score-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .swap-center .delta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.4;
+  }
+  .swap-center .delta strong { color: var(--paper); }
+
+  /* COMPOSITE BREAKDOWN */
+  .composite-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+  }
+  @media (max-width: 720px) { .composite-grid { grid-template-columns: 1fr; } }
+  .composite-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 18px 16px;
+  }
+  .composite-card .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .composite-card .v {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--paper);
+    letter-spacing: -0.025em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .composite-card .v .loop { color: var(--sun-500); }
+  .composite-card .desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.45;
+  }
+
+  /* SCHEMA BLOCK */
+  .schema-block {
+    background: #051624;
+    color: var(--paper);
+    padding: 28px 32px;
+    margin: 32px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .schema-block .kw { color: var(--brand-400); }
+  .schema-block .typ { color: var(--sun-500); }
+  .schema-block .com { color: rgba(255,255,255,0.4); font-style: italic; }
+  .schema-block .at { color: var(--paper); }
+  .schema-block .str { color: var(--coral-300); }
+
+  /* API LIST */
+  .api-list {
+    background: var(--paper);
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 24px 0;
+  }
+  .api-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 2fr;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--slate-100);
+    align-items: baseline;
+  }
+  .api-row:last-child { border-bottom: none; }
+  .api-row .method {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--brand-600);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .api-row .method.get { color: var(--success-fg); }
+  .api-row .method.patch { color: var(--sun-700); }
+  .api-row .path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .api-row .desc {
+    font-size: 13px;
+    color: var(--slate-700);
+    line-height: 1.45;
+  }
+
+  /* SECTION FOOT — PRINCIPLES */
+  .section-foot {
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--slate-200);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+  @media (max-width: 720px) { .section-foot { grid-template-columns: 1fr; } }
+  .section-foot .principle {
+    border-top: 1px solid var(--slate-200);
+    padding-top: 14px;
+  }
+  .section-foot .principle .l {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--brand-600);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .section-foot .principle .v {
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .deep-section .section-foot { border-top-color: rgba(255,255,255,0.12); }
+  .deep-section .section-foot .principle { border-top-color: rgba(255,255,255,0.12); }
+  .deep-section .section-foot .principle .l { color: var(--sun-500); }
+  .deep-section .section-foot .principle .v { color: var(--paper); }
+
+  /* FOOTER */
+  footer.doc-foot {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 48px 32px;
+    margin-top: 64px;
+  }
+  .foot-inner {
+    max-width: 1600px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 32px;
+    align-items: center;
+  }
+  @media (max-width: 720px) {
+    .foot-inner { grid-template-columns: 1fr; text-align: center; }
+  }
+  footer.doc-foot .ll-wordmark { color: var(--paper); }
+  footer.doc-foot .ll-wordmark .loop { color: var(--brand-400); }
+  footer.doc-foot .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    font-weight: 500;
+  }
+
+  /* UTILS */
+  .row { display: flex; gap: 6px; align-items: center; }
+  .row.between { justify-content: space-between; }
+  .row.wrap { flex-wrap: wrap; }
+  .smol {
+    font-size: 12px;
+    color: var(--slate-700);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==============================================================
+     LIVINLOOP MARK — INLINE SVG (reusable defs)
+     ============================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="ll-mark" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="16" fill="#0B2A3B"/>
+      <circle cx="32" cy="32" r="16" fill="none" stroke="#6389F7" stroke-width="1.05" opacity="0.63"/>
+      <circle cx="32" cy="32" r="22" fill="none" stroke="#FFB547" stroke-width="1.4" opacity="0.9"/>
+      <path d="M22 30 L 32 22 L 42 30 L 42 40 L 22 40 Z" fill="#FFFFFF"/>
+      <rect x="29" y="34" width="6" height="6" fill="#0B2A3B"/>
+      <circle cx="32" cy="10" r="3.5" fill="#FFB547"/>
+      <circle cx="51" cy="40" r="3" fill="#FF7A59"/>
+      <circle cx="13" cy="40" r="3" fill="#6389F7"/>
+    </symbol>
+    <!-- Furniture/item icons -->
+    <symbol id="icn-sofa" viewBox="0 0 64 64" fill="none">
+      <rect x="6" y="22" width="52" height="28" stroke="currentColor" stroke-width="2"/>
+      <path d="M10 36 L54 36" stroke="currentColor" stroke-width="2"/>
+      <path d="M14 50 L14 56 M50 50 L50 56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icn-fridge" viewBox="0 0 64 64" fill="none">
+      <rect x="14" y="6" width="36" height="52" stroke="currentColor" stroke-width="2"/>
+      <path d="M14 24 L50 24" stroke="currentColor" stroke-width="2"/>
+      <circle cx="22" cy="15" r="1.4" fill="currentColor"/>
+      <circle cx="22" cy="38" r="1.4" fill="currentColor"/>
+    </symbol>
+    <symbol id="icn-tv" viewBox="0 0 64 64" fill="none">
+      <rect x="6" y="14" width="52" height="34" stroke="currentColor" stroke-width="2"/>
+      <path d="M20 54 L44 54" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icn-camera" viewBox="0 0 64 64" fill="none">
+      <rect x="6" y="18" width="52" height="36" rx="4" stroke="currentColor" stroke-width="2"/>
+      <circle cx="32" cy="36" r="10" stroke="currentColor" stroke-width="2"/>
+      <path d="M22 18 L26 12 L38 12 L42 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="doc-head">
+  <div class="head-inner">
+    <a href="#top" class="ll-lockup">
+      <span class="ll-mark"><svg width="28" height="28"><use href="#ll-mark"/></svg></span>
+      <span class="ll-wordmark">livin<span class="loop">loop</span></span>
+    </a>
+    <nav class="head-tabs">
+      <a href="#lister">§ 01 — Lister</a>
+      <a href="#recipient">§ 02 — Recipient</a>
+      <a href="#engine">§ 03 — Engine</a>
+      <a href="#schema">§ 04 — Schema</a>
+      <a href="#api">§ 05 — Pipeline</a>
+    </nav>
+    <span class="head-meta">App wireframe · v1</span>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- =============== HERO =============== -->
+  <section class="hero">
+    <div class="eyebrow">App wireframe + interaction model</div>
+    <h1 class="hero-title">Looping your life. Your <span class="loop">things</span>.</h1>
+    <p class="hero-deck">A walk-through of the LivinLoop app — how listers create a swap-ready listing in under four minutes, how matches surface in real time, and how two people in two cities close the loop with a single agreed exchange. <strong>No platform money flow.</strong> No truck crosses cities. Two items find new homes simultaneously.</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="label">Lister flow</div>
+        <div class="figure"><span class="loop">9</span> screens</div>
+        <div class="note">Capture, AI extract, valuation, publish, propose</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Recipient flow</div>
+        <div class="figure"><span class="loop">6</span> screens</div>
+        <div class="note">Proposal review, accept, coordinate, swap done</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Core models</div>
+        <div class="figure"><span class="loop">13</span> tables</div>
+        <div class="note">Postgres + pgvector. Two-sided listings.</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Matching</div>
+        <div class="figure"><span class="loop">768</span>-dim</div>
+        <div class="note">CLIP embeddings · cosine over category + value + geo</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== §01 LISTER FLOW =============== -->
+  <section class="flow" id="lister">
+    <div class="flow-num">
+      <span>§ 01 — Lister flow</span>
+      <span>Sriram · IKEA SÖDERHAMN · Auckland → Christchurch</span>
+    </div>
+    <h2 class="flow-title">From photos to <span class="loop">live</span> in four minutes.</h2>
+    <p class="flow-deck">Sriram is moving Auckland → Christchurch. He has an IKEA SÖDERHAMN couch he bought new two years ago for $2,099. Shipping it costs more than the couch is worth, so he opens LivinLoop and lists it. The whole flow is photo-first — point the camera, the AI handles the rest.</p>
+
+    <div class="screens-row">
+
+      <!-- S1 — DASHBOARD -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 01</span><span>Dashboard</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">livin<span class="loop">loop</span></span>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M2 4 L14 4 M2 8 L14 8 M2 12 L14 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ Hi, Sriram</div>
+            <h3>Auckland → <span class="loop">Christchurch</span></h3>
+            <p class="lead">Move date · 24 days away</p>
+
+            <div class="dash-stats">
+              <div class="dash-stat"><div class="l">Listings live</div><div class="v"><span class="loop">2</span></div></div>
+              <div class="dash-stat"><div class="l">Possible swaps</div><div class="v">14</div></div>
+              <div class="dash-stat"><div class="l">Proposals</div><div class="v"><span class="loop">3</span></div></div>
+              <div class="dash-stat"><div class="l">Closed</div><div class="v">0</div></div>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 8px;">Your listings</div>
+
+            <div class="card-mini">
+              <div class="card-head-row">
+                <div>
+                  <div class="card-mini-meta">Sofa · Like new</div>
+                  <div class="card-mini-title">IKEA SÖDERHAMN, 3-seat</div>
+                </div>
+                <div class="card-mini-price">$1,238</div>
+              </div>
+              <div class="card-foot-row">
+                <span class="ll-pill in-loop">3 proposals</span>
+                <span class="ll-pill neutral">8 watching</span>
+              </div>
+            </div>
+
+            <div class="card-mini">
+              <div class="card-head-row">
+                <div>
+                  <div class="card-mini-meta">TV · Like new</div>
+                  <div class="card-mini-title">Samsung 55" QLED</div>
+                </div>
+                <div class="card-mini-price">$640</div>
+              </div>
+              <div class="card-foot-row">
+                <span class="ll-pill neutral">4 watching</span>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab active">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 12 L12 4 L21 12 M5 10 L5 20 L19 20 L19 10" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Home</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M16 16 L20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span>Match</span>
+            </div>
+            <div class="tab fab">
+              <div class="fab-circle">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 5 L12 19 M5 12 L19 12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6 L20 6 L20 16 L13 16 L9 20 L9 16 L4 16 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              <span>Inbox</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20 Q5 14 12 14 Q19 14 19 20" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Me</span>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Dashboard.</strong> Move route at the top — every screen reads from this. Listings show their proposal count using the <em>in-loop</em> pill with its pulsing dot — the visual signal the loop is moving.</p>
+      </div>
+
+      <!-- S2 — CAMERA -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 02</span><span>Capture</span></div>
+        <div class="phone">
+          <div class="camera-view">
+            <div class="top-overlay">
+              <div class="x">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 3 L13 13 M13 3 L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="ll-pill in-loop" style="background: rgba(255,255,255,0.15); color: var(--paper);">Photo 1 of 4</span>
+              <div style="width:28px;"></div>
+            </div>
+
+            <div class="viewfinder">
+              <svg width="120" height="120"><use href="#icn-sofa" stroke="white"/></svg>
+              <div class="hint">Frame the whole <span class="loop">couch</span>, step back if needed</div>
+            </div>
+
+            <div class="controls">
+              <div class="photo-count">Tap to capture · long-press for video</div>
+              <div class="side-btn">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="3" width="12" height="10" stroke="currentColor" stroke-width="1.4"/>
+                  <circle cx="6" cy="7" r="1" fill="currentColor"/>
+                  <path d="M3 12 L7 8 L10 11 L13 8" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="shutter"></div>
+              <div class="side-btn">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M9 1 L4 9 L8 9 L7 15 L12 7 L8 7 Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Capture.</strong> Native camera, contextual prompts. Up to 4 photos — different angles help the AI identify the brand and assess condition. Sun-colored hint copy reinforces the "loop" language naturally.</p>
+      </div>
+
+      <!-- S3 — PROCESSING -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 03</span><span>Processing</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="pt-word">New listing</span>
+            <div class="pt-meta">2 / 5</div>
+          </div>
+          <div style="padding: 0 16px; padding-top: 8px;">
+            <div class="ll-progress">
+              <div class="ll-progress-fill" style="width: 40%;"></div>
+            </div>
+          </div>
+          <div class="processing">
+            <div class="ll-spinner" style="--size: 72px;">
+              <svg viewBox="0 0 64 64" fill="none">
+                <circle class="ll-inner-orbit" cx="32" cy="32" r="16"
+                        stroke="var(--loop-inner)" stroke-width="2.4"
+                        stroke-dasharray="60 40" stroke-linecap="round" fill="none"/>
+                <circle cx="32" cy="32" r="22"
+                        stroke="var(--loop-outer)" stroke-width="2.4"
+                        stroke-dasharray="90 50" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <h4>Reading your <span class="loop">photos</span>…</h4>
+            <p>We're identifying the brand, age, and condition — then estimating what it's worth today.</p>
+            <div class="steps">
+              <div class="step done">Photos uploaded</div>
+              <div class="step done">Identified · IKEA SÖDERHAMN</div>
+              <div class="step current">Estimating condition</div>
+              <div class="step pending">Computing value</div>
+              <div class="step pending">Finding matches</div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Processing.</strong> The double-orbit spinner is the brand made motion — outer sun ring and inner sky ring counter-rotating. Server-side AI work; client just polls.</p>
+      </div>
+
+      <!-- S4 — AI REVIEW -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 04</span><span>AI review</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="pt-word">New listing</span>
+            <div class="pt-meta">3 / 5</div>
+          </div>
+          <div style="padding: 0 16px; padding-top: 8px;">
+            <div class="ll-progress"><div class="ll-progress-fill" style="width: 60%;"></div></div>
+          </div>
+          <div class="pb pad-tight">
+            <div class="sect-tag">§ Review before publishing</div>
+            <h3>What we <span class="loop">see</span>.</h3>
+
+            <div class="item-img">
+              <svg viewBox="0 0 64 64" fill="none"><use href="#icn-sofa" stroke="currentColor"/></svg>
+            </div>
+
+            <div style="border-top: 1px solid var(--slate-200); border-bottom: 1px solid var(--slate-200); padding: 4px 0; margin-bottom: 12px;">
+              <div class="autofill-row">
+                <span class="ai-tag">AI</span>
+                <span class="label">Brand</span>
+                <span class="val">IKEA</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-tag">AI</span>
+                <span class="label">Model</span>
+                <span class="val">SÖDERHAMN</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-tag">AI</span>
+                <span class="label">Title</span>
+                <span class="val" style="font-size: 11.5px;">3-seat couch · grey</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-tag">AI</span>
+                <span class="label">Condition</span>
+                <span class="val">Like new</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-tag">AI</span>
+                <span class="label">Age</span>
+                <span class="val">2 yrs</span>
+              </div>
+              <div class="autofill-row">
+                <span class="ai-tag">AI</span>
+                <span class="label">Size</span>
+                <span class="val" style="font-size: 11.5px;">210 × 92 × 83cm</span>
+              </div>
+            </div>
+
+            <button class="btn primary">Looks right →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>AI review.</strong> Every machine-extracted field carries the sun-tinted "AI" tag — Horizon's existing convention for AI surfaces. All editable. Trust is built by showing what's machine-derived, not hiding it.</p>
+      </div>
+
+      <!-- S5 — VALUATION BREAKDOWN -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 05</span><span>Valuation</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="pt-word">Set your value</span>
+            <div class="pt-meta">4 / 5</div>
+          </div>
+          <div style="padding: 0 16px; padding-top: 8px;">
+            <div class="ll-progress"><div class="ll-progress-fill" style="width: 80%;"></div></div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ How we got there</div>
+            <h3>Worth <span class="loop">$1,238</span> today.</h3>
+
+            <div class="val-table">
+              <div class="val-row">
+                <span class="l">Retail when new</span>
+                <span class="v">$2,099</span>
+              </div>
+              <div class="val-row">
+                <span class="l">Age · 2 yrs</span>
+                <span class="v">59% retention</span>
+              </div>
+              <div class="val-row minus">
+                <span class="l">Depreciation</span>
+                <span class="v">−$861</span>
+              </div>
+              <div class="val-row">
+                <span class="l">Condition · Like new</span>
+                <span class="v">×1.00</span>
+              </div>
+              <div class="val-row divider final">
+                <span class="l">Estimated value</span>
+                <span class="v">$1,238</span>
+              </div>
+            </div>
+
+            <div class="ll-ai">
+              <div class="ll-ai-label">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M8 5 L8 9 M8 11 L8 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                Suggestion
+              </div>
+              <div class="ll-ai-body">For a faster match, listings within <strong>10%</strong> of their estimated value tend to swap within a week.</div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Valuation breakdown.</strong> Transparent math. The retail price, depreciation, and condition multiplier all shown so the value isn't a black-box number. AI suggestion card uses the sun-tinted Horizon convention.</p>
+      </div>
+
+      <!-- S6 — ASKING VALUE -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 06</span><span>Your asking</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="pt-word">Asking value</span>
+            <div class="pt-meta">5 / 5</div>
+          </div>
+          <div style="padding: 0 16px; padding-top: 8px;">
+            <div class="ll-progress"><div class="ll-progress-fill" style="width: 100%;"></div></div>
+          </div>
+          <div class="pb">
+            <div class="sect-tag">§ What you'll call it</div>
+            <h3>Set your <span class="loop">asking</span>.</h3>
+            <p class="lead">This is what'll appear to swap partners. Most listers stay close to the estimate — wider gaps slow matches.</p>
+
+            <div class="asking-input">
+              <div class="label-row">
+                <span class="l">Your asking</span>
+                <span class="pencil">✎</span>
+              </div>
+              <div class="input-line">
+                <span class="currency">NZ$</span>
+                <span class="amount">1,238</span>
+              </div>
+            </div>
+
+            <div style="margin: 14px 0 8px;">
+              <div class="row between" style="font-size: 12px; color: var(--slate-700); margin-bottom: 4px;">
+                <span>Match tolerance · ±20%</span>
+                <span class="mono" style="font-family: 'JetBrains Mono', monospace; color: var(--brand-600); font-weight: 600;">$990 — $1,486</span>
+              </div>
+              <div class="ll-progress">
+                <div class="ll-progress-fill" style="width: 50%; left: 25%; position: absolute;"></div>
+              </div>
+            </div>
+
+            <div class="card-mini sand-fill">
+              <div class="row between">
+                <span class="smol"><strong>14 listings</strong> within range right now</span>
+                <span class="ll-pill in-loop">live</span>
+              </div>
+            </div>
+
+            <button class="btn primary" style="margin-top: 10px;">Publish →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Asking value.</strong> The user sets their own asking — defaulting to AI estimate. Match tolerance band shown so the lister sees they aren't pricing themselves out. Live count of comparable listings makes the upside concrete.</p>
+      </div>
+
+      <!-- S7 — PUBLISHED + matches -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 07</span><span>Published</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">livin<span class="loop">loop</span></span>
+            <span class="pt-meta">Live</span>
+          </div>
+          <div class="pb sand-bg">
+            <div style="padding: 8px 0 12px; text-align: center;">
+              <span class="ll-toast">
+                <span class="check">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8 L7 12 L13 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="msg">You've <span class="loop">looped.</span></span>
+              </span>
+            </div>
+
+            <h3 style="font-size: 18px; margin-top: 4px;">Your couch is <span class="loop">live</span>.</h3>
+            <p class="lead">14 possible swap partners. The strongest 3 are below — tap to see them side by side.</p>
+
+            <div class="sect-tag">Top matches</div>
+
+            <div class="match-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none"><use href="#icn-sofa" stroke="currentColor"/></svg>
+              </div>
+              <div class="info">
+                <div class="t">West Elm Andes</div>
+                <div class="m">Sarah · CHC → AKL</div>
+                <div class="row-foot">
+                  <span class="p">$1,320</span>
+                  <span class="match-score">91%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="match-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none"><use href="#icn-sofa" stroke="currentColor"/></svg>
+              </div>
+              <div class="info">
+                <div class="t">Freedom Jagger 3-seat</div>
+                <div class="m">Marcus · CHC → AKL</div>
+                <div class="row-foot">
+                  <span class="p">$1,180</span>
+                  <span class="match-score">87%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="match-row">
+              <div class="thumb">
+                <svg viewBox="0 0 64 64" fill="none"><use href="#icn-sofa" stroke="currentColor"/></svg>
+              </div>
+              <div class="info">
+                <div class="t">IKEA KIVIK, 3-seat</div>
+                <div class="m">Lena · Auckland</div>
+                <div class="row-foot">
+                  <span class="p">$1,290</span>
+                  <span class="match-score">84%</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn secondary" style="margin-top: 8px;">See all 14 →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Published — looped.</strong> The "you've looped" toast lands the brand moment. Matches sorted by composite score (semantic × value × geo). Score badges in the loop's signature ink+sun colour combo.</p>
+      </div>
+
+      <!-- S8 — MATCH DETAIL (proposal target) -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 08</span><span>Match · propose</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="pt-word">Match</span>
+            <span class="match-score" style="font-size: 9.5px;">91%</span>
+          </div>
+          <div class="pb pad-tight">
+            <div class="compare-pair">
+              <div class="compare-side">
+                <div class="who">You · Sriram</div>
+                <div class="what">IKEA SÖDERHAMN</div>
+                <div class="where">Auckland</div>
+                <div class="price">$1,238</div>
+              </div>
+              <span class="swap-arrow">⇄</span>
+              <div class="compare-side" style="background: var(--brand-50); border-color: var(--brand-200);">
+                <div class="who">Sarah</div>
+                <div class="what">West Elm Andes</div>
+                <div class="where">Christchurch</div>
+                <div class="price">$1,320</div>
+              </div>
+            </div>
+
+            <div class="card-mini sand-fill">
+              <div class="row between">
+                <span class="smol"><strong>Bilateral inter-city.</strong> Sarah moves CHC→AKL the same week.</span>
+              </div>
+            </div>
+
+            <div class="sect-tag" style="margin-top: 12px;">Add a message · optional</div>
+
+            <div style="background: var(--paper); border: 1.5px solid var(--slate-200); border-radius: 10px; padding: 10px 12px; min-height: 90px; font-size: 12.5px; color: var(--slate-500); line-height: 1.5;">
+              Hey Sarah — yours looks perfect for our Christchurch place. Happy to swap straight up. When are you in CHC?
+            </div>
+
+            <div class="card-mini sand-fill" style="margin-top: 10px;">
+              <div class="smol">
+                <strong>How swaps work.</strong> A swap is item-for-item. If you decide you want to do anything else off-platform, that's between the two of you — we don't process payments.
+              </div>
+            </div>
+
+            <button class="btn sun" style="margin-top: 10px;">Propose swap to Sarah →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Match detail.</strong> Side-by-side. Bilateral inter-city framing surfaced. A free-text message starts the human conversation. The "how swaps work" note states the no-platform-money rule plainly. CTA in ink + sun.</p>
+      </div>
+
+      <!-- S9 — PROPOSAL SENT -->
+      <div class="phone-block">
+        <div class="phone-num"><span>L · 09</span><span>Proposal sent</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">Proposal sent</span>
+            <span class="ll-pill dispatched">Dispatched</span>
+          </div>
+          <div class="pb sand-bg">
+            <div style="padding: 16px 0 8px; text-align: center;">
+              <div class="ll-spinner" style="--size: 60px;">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <circle class="ll-inner-orbit" cx="32" cy="32" r="16"
+                          stroke="var(--loop-inner)" stroke-width="2.4"
+                          stroke-dasharray="60 40" stroke-linecap="round" fill="none"/>
+                  <circle cx="32" cy="32" r="22"
+                          stroke="var(--loop-outer)" stroke-width="2.4"
+                          stroke-dasharray="90 50" stroke-linecap="round" fill="none"/>
+                </svg>
+              </div>
+              <h3 style="margin-top: 14px;">Sent to <span class="loop">Sarah</span>.</h3>
+              <p class="lead" style="text-align: center; max-width: 26ch; margin-left: auto; margin-right: auto;">She has 72 hours to respond. We'll buzz you the moment she does.</p>
+            </div>
+
+            <div class="card-mini">
+              <div class="card-mini-meta">Your proposal</div>
+              <div style="font-size: 12.5px; color: var(--ink); line-height: 1.5; margin: 4px 0;">
+                Swap your <strong>IKEA SÖDERHAMN</strong> for Sarah's <strong>West Elm Andes</strong>.
+              </div>
+              <div class="row between" style="margin-top: 6px;">
+                <span class="ll-pill dispatched">Awaiting response</span>
+                <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--slate-500); letter-spacing: 0.14em;">Expires in 71h</span>
+              </div>
+            </div>
+
+            <div class="card-mini sand-fill">
+              <div class="card-mini-meta">While you wait</div>
+              <div style="font-size: 12.5px; color: var(--slate-700); line-height: 1.5; margin-top: 4px;">
+                Your couch is paused from new matches until Sarah responds. Sarah's couch stays open — she can decline if she finds a better swap first.
+              </div>
+            </div>
+
+            <button class="btn secondary" style="margin-top: 12px;">View other matches</button>
+            <button class="btn ghost">Withdraw proposal</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Proposal sent.</strong> The orbit spinner runs in the body — the loop is in motion. <em>Dispatched</em> pill (sun-coloured). Expiry timer is mono-typed. The asymmetric reservation explained plainly.</p>
+      </div>
+
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Principle — Show the math</div>
+        <div class="v">AI valuation isn't a number, it's a derivation. Retail price, depreciation, condition multiplier — each one visible. If a user disagrees, they edit. Black-box estimates are the fastest way to break trust.</div>
+      </div>
+      <div class="principle">
+        <div class="l">Principle — Asymmetric reservation</div>
+        <div class="v">Proposing reserves <em>your</em> listing, not the recipient's. Prevents DoS attacks on inventory. Recipient stays liquid until they accept; the first accept atomically closes the door for all others.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== §02 RECIPIENT FLOW =============== -->
+  <section class="flow" id="recipient">
+    <div class="flow-num">
+      <span>§ 02 — Recipient flow</span>
+      <span>Sarah · CHC → AKL · receiving Sriram's proposal</span>
+    </div>
+    <h2 class="flow-title">From proposal to <span class="loop">looped</span>.</h2>
+    <p class="flow-deck">Sarah is moving Christchurch → Auckland in the same window. Her West Elm couch is listed at $1,320. Sriram's proposal lands in her inbox while she's making coffee. The rest of the flow is the close of the loop — accept, coordinate pickup, confirm completion. Two items, two cities, one simultaneous exchange.</p>
+
+    <div class="screens-row">
+
+      <!-- R1 — INBOX WITH NEW PROPOSAL -->
+      <div class="phone-block">
+        <div class="phone-num"><span>R · 01</span><span>Inbox</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">Inbox</span>
+            <span class="ll-pill flagged">2 new</span>
+          </div>
+          <div class="pb pad-tight">
+            <div class="sect-tag">§ Proposals &amp; conversations</div>
+
+            <div class="inbox-row unread">
+              <div class="avatar">SR</div>
+              <div class="ir-info">
+                <div class="t">Sriram wants to swap</div>
+                <div class="preview">Your West Elm Andes ⇄ his IKEA SÖDERHAMN…</div>
+                <div class="row" style="gap: 6px;">
+                  <span class="ll-pill in-loop">New · 91% match</span>
+                  <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--slate-500); letter-spacing: 0.14em; margin-left: 6px;">8 min ago</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="inbox-row">
+              <div class="avatar">MK</div>
+              <div class="ir-info">
+                <div class="t">Mia proposed a swap</div>
+                <div class="preview">Your couch ⇄ her Plyroom 2-seat…</div>
+                <div class="row" style="gap: 6px;">
+                  <span class="ll-pill dispatched">Awaiting</span>
+                  <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--slate-500); letter-spacing: 0.14em; margin-left: 6px;">Yesterday</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="inbox-row">
+              <div class="avatar">JD</div>
+              <div class="ir-info">
+                <div class="t">Jin sent you a message</div>
+                <div class="preview">"Hi! Wondering when you'd be free…"</div>
+                <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--slate-500); letter-spacing: 0.14em;">2d</span>
+              </div>
+            </div>
+
+            <div class="inbox-row">
+              <div class="avatar">PT</div>
+              <div class="ir-info">
+                <div class="t">Match alert · 2 new</div>
+                <div class="preview">Two new IKEA SÖDERHAMN listings…</div>
+                <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--slate-500); letter-spacing: 0.14em;">3d</span>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 12 L12 4 L21 12 M5 10 L5 20 L19 20 L19 10" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Home</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M16 16 L20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span>Match</span>
+            </div>
+            <div class="tab fab">
+              <div class="fab-circle">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 5 L12 19 M5 12 L19 12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="tab active">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6 L20 6 L20 16 L13 16 L9 20 L9 16 L4 16 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              <span>Inbox</span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20 Q5 14 12 14 Q19 14 19 20" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Me</span>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Inbox.</strong> Unread proposals get the brand-50 highlight. New / Awaiting / Match alert pills carry the loop's status language. The brightest, most-actionable item rises to the top.</p>
+      </div>
+
+      <!-- R2 — PROPOSAL DETAIL -->
+      <div class="phone-block">
+        <div class="phone-num"><span>R · 02</span><span>Proposal · detail</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <span class="pt-word">Sriram's proposal</span>
+            <span class="match-score" style="font-size: 9.5px;">91%</span>
+          </div>
+          <div class="pb pad-tight">
+
+            <div class="compare-pair">
+              <div class="compare-side" style="background: var(--brand-50); border-color: var(--brand-200);">
+                <div class="who">Sriram</div>
+                <div class="what">IKEA SÖDERHAMN</div>
+                <div class="where">Auckland</div>
+                <div class="price">$1,238</div>
+              </div>
+              <span class="swap-arrow">⇄</span>
+              <div class="compare-side">
+                <div class="who">You</div>
+                <div class="what">West Elm Andes</div>
+                <div class="where">Christchurch</div>
+                <div class="price">$1,320</div>
+              </div>
+            </div>
+
+            <div class="card-mini accent">
+              <div class="card-mini-meta">Sriram's message</div>
+              <div style="font-size: 13px; color: var(--ink); line-height: 1.45; margin: 4px 0;">
+                "Hey Sarah — yours looks perfect for our new place in Christchurch. Happy to swap straight up. When are you in CHC?"
+              </div>
+              <div class="row" style="gap: 6px; margin-top: 8px;">
+                <span class="ll-pill neutral">Bilateral · same week</span>
+                <span class="ll-pill neutral">91% match</span>
+              </div>
+            </div>
+
+            <div class="ll-ai">
+              <div class="ll-ai-label">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M5 8 L7 10 L11 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Looks solid
+              </div>
+              <div class="ll-ai-body">Sriram has a verified email and 0 declined proposals. The couches are <strong>91% semantically similar</strong> — both 3-seat, light grey, similar lines.</div>
+            </div>
+
+            <button class="btn brand" style="margin-top: 4px;">Accept the swap →</button>
+            <div class="row" style="gap: 6px; margin-top: 8px;">
+              <button class="btn secondary" style="flex: 1;">Counter</button>
+              <button class="btn ghost" style="flex: 1;">Decline</button>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Proposal review.</strong> Sarah sees the full picture — both items, his offer language, the AI safety check, three responses (accept, counter, decline). Brand-blue CTA reserved for the loop-closing action.</p>
+      </div>
+
+      <!-- R3 — ACCEPTED — LOOP CLOSING -->
+      <div class="phone-block">
+        <div class="phone-num"><span>R · 03</span><span>Accepted</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">Loop closing</span>
+            <span class="ll-pill in-loop">In motion</span>
+          </div>
+          <div class="pb sand-bg">
+
+            <div style="text-align: center; padding: 14px 0 8px;">
+              <div class="ll-spinner" style="--size: 64px;">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <circle class="ll-inner-orbit" cx="32" cy="32" r="16"
+                          stroke="var(--loop-inner)" stroke-width="2.4"
+                          stroke-dasharray="60 40" stroke-linecap="round" fill="none"/>
+                  <circle cx="32" cy="32" r="22"
+                          stroke="var(--loop-outer)" stroke-width="2.4"
+                          stroke-dasharray="90 50" stroke-linecap="round" fill="none"/>
+                </svg>
+              </div>
+              <h3 style="margin-top: 12px; font-size: 20px;">It's a <span class="loop">swap</span>.</h3>
+              <p class="lead" style="text-align: center; max-width: 26ch; margin-left: auto; margin-right: auto;">You and Sriram are connected. Coordinate pickups in the conversation.</p>
+            </div>
+
+            <div class="card-mini">
+              <div class="card-mini-meta">Sriram · Auckland</div>
+              <div class="row" style="gap: 8px; margin-top: 6px;">
+                <div class="avatar" style="width: 32px; height: 32px; background: var(--brand-100); color: var(--brand-700); border-radius: 50%; display: grid; place-items: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;">SR</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 600; color: var(--ink);">Sriram K.</div>
+                  <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: var(--slate-500);">Verified · joined Mar 2026</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="timeline-mini">
+              <div class="tl-row done">
+                <span class="dot"></span>
+                <div class="body"><strong>Proposal accepted</strong>11:42 am · today</div>
+              </div>
+              <div class="tl-row current">
+                <span class="dot"></span>
+                <div class="body"><strong>Coordinate pickup</strong>Both of you · in the conversation</div>
+              </div>
+              <div class="tl-row">
+                <span class="dot"></span>
+                <div class="body"><strong>Pickups happen</strong>Each picks up from the other's city</div>
+              </div>
+              <div class="tl-row">
+                <span class="dot"></span>
+                <div class="body"><strong>Both confirm complete</strong>Loop is closed</div>
+              </div>
+            </div>
+
+            <button class="btn primary" style="margin-top: 14px;">Open conversation →</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Loop closing.</strong> Acceptance creates the conversation and starts the coordination timeline. <em>In motion</em> pill pulses. Four-stage progress — accepted, coordinate, pickup, complete.</p>
+      </div>
+
+      <!-- R4 — CONVERSATION -->
+      <div class="phone-block">
+        <div class="phone-num"><span>R · 04</span><span>Conversation</span></div>
+        <div class="phone">
+          <div class="pt">
+            <div class="pt-back">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M10 3 L5 8 L10 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="row" style="gap: 8px; flex: 1;">
+              <div class="avatar" style="width: 24px; height: 24px; background: var(--brand-100); color: var(--brand-700); border-radius: 50%; display: grid; place-items: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 600;">SR</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--ink); letter-spacing: -0.005em;">Sriram</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 8.5px; letter-spacing: 0.14em; color: var(--slate-500);">Auckland · online</div>
+              </div>
+            </div>
+            <div class="pt-icon">
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M3 8 L8 13 L13 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="8" cy="5" r="1" fill="currentColor"/>
+              </svg>
+            </div>
+          </div>
+          <div class="pb sand-bg" style="padding: 12px 14px;">
+            <div class="card-mini" style="margin-bottom: 14px;">
+              <div class="card-mini-meta">Swap in progress</div>
+              <div style="font-size: 12px; color: var(--ink); margin-top: 2px;">
+                SÖDERHAMN ⇄ Andes
+              </div>
+              <div class="row" style="margin-top: 6px;">
+                <span class="ll-pill in-loop">In motion</span>
+              </div>
+            </div>
+
+            <div class="bubble-ts">11:48 am</div>
+            <div class="bubble them">Hi! Just accepted 🎉 my partner picks up Saturday in CHC if that works?</div>
+            <div class="bubble you">Sat works. 2pm? I'll be at the unit before then. 16A Albert Park.</div>
+
+            <div class="bubble-ts">11:53 am</div>
+            <div class="bubble them">Perfect. I'll send my AKL address — pickup whenever from Sun.</div>
+
+            <div class="ll-ai" style="margin-top: 8px;">
+              <div class="ll-ai-label">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M8 5 L8 9 M8 11 L8 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                Reminder
+              </div>
+              <div class="ll-ai-body" style="font-size: 12px;">Tap <strong>Confirm pickup</strong> below once your partner has collected. Both confirms close the loop.</div>
+            </div>
+
+            <div style="margin-top: 12px;">
+              <button class="btn primary">Confirm pickup happened</button>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Conversation.</strong> Header carries swap-in-progress context. Chat in brand-blue (yours) vs slate-100 (theirs). AI reminder card prompts the dual-confirm step that closes the loop in the schema.</p>
+      </div>
+
+      <!-- R5 — PICKUP CONFIRMED, WAITING ON OTHER -->
+      <div class="phone-block">
+        <div class="phone-num"><span>R · 05</span><span>Pickup confirmed</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">Closing the loop</span>
+            <span class="ll-pill in-loop">50%</span>
+          </div>
+          <div class="pb sand-bg">
+
+            <div style="padding: 8px 0 16px;">
+              <div class="ll-progress" style="height: 8px;">
+                <div class="ll-progress-fill" style="width: 75%;"></div>
+              </div>
+              <div class="row between" style="margin-top: 6px;">
+                <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--slate-500); text-transform: uppercase; font-weight: 500;">Step 3 of 4</span>
+                <span class="mono" style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--brand-600); text-transform: uppercase; font-weight: 600;">Almost there</span>
+              </div>
+            </div>
+
+            <h3>Yours <span class="loop">picked up</span>.</h3>
+            <p class="lead">You confirmed the Andes was picked up. Waiting on Sriram to confirm he's got your couch too.</p>
+
+            <div class="timeline-mini" style="border-top: none; padding-top: 0;">
+              <div class="tl-row done">
+                <span class="dot"></span>
+                <div class="body"><strong>Proposal accepted</strong>11:42 am Tue</div>
+              </div>
+              <div class="tl-row done">
+                <span class="dot"></span>
+                <div class="body"><strong>Coordinated pickup</strong>Sat 2pm CHC · Sun 10am AKL</div>
+              </div>
+              <div class="tl-row done">
+                <span class="dot"></span>
+                <div class="body"><strong>You confirmed</strong>Andes collected · 2:14 pm Sat</div>
+              </div>
+              <div class="tl-row current">
+                <span class="dot"></span>
+                <div class="body"><strong>Waiting on Sriram</strong>He's confirming the SÖDERHAMN pickup</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Halfway.</strong> Sun-to-sky gradient progress bar with the sky-blue trailing dot — the canonical loop-progress component. Dual-confirm semantics on the timeline. The loop closes only when both parties tap their confirm.</p>
+      </div>
+
+      <!-- R6 — LOOPED -->
+      <div class="phone-block">
+        <div class="phone-num"><span>R · 06</span><span>Looped.</span></div>
+        <div class="phone">
+          <div class="pt">
+            <span class="ll-mark"><svg width="22" height="22"><use href="#ll-mark"/></svg></span>
+            <span class="pt-word">livin<span class="loop">loop</span></span>
+            <span class="ll-pill closed">Looped</span>
+          </div>
+          <div class="pb ink-bg" style="background: var(--ink); color: var(--paper);">
+
+            <div style="padding: 24px 0 16px; text-align: center;">
+              <span class="ll-mark"><svg width="80" height="80"><use href="#ll-mark"/></svg></span>
+              <h3 style="color: var(--paper); margin-top: 18px; font-size: 28px;">Looped.</h3>
+              <p style="color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 6px; max-width: 28ch; margin-left: auto; margin-right: auto; line-height: 1.5;">Two items. Two cities. One simultaneous handover. The loop is closed.</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div class="row between">
+                <div>
+                  <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--sun-500); text-transform: uppercase; font-weight: 600;">You gave</div>
+                  <div style="font-size: 14px; font-weight: 600; color: var(--paper); margin-top: 2px;">West Elm Andes</div>
+                </div>
+                <span style="color: var(--sun-500); font-size: 16px;">→</span>
+                <div style="text-align: right;">
+                  <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--sun-500); text-transform: uppercase; font-weight: 600;">For</div>
+                  <div style="font-size: 14px; font-weight: 600; color: var(--paper); margin-top: 2px;">IKEA SÖDERHAMN</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: rgba(255,181,71,0.10); border: 1px solid rgba(255,181,71,0.30); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: 0.14em; color: var(--sun-500); text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Saved from landfill</div>
+              <div style="font-size: 13px; color: var(--paper); line-height: 1.5;">≈ <strong>240kg CO₂</strong> avoided. Two couches found new homes instead of being replaced new.</div>
+            </div>
+
+            <button class="btn brand" style="background: var(--sun-500); color: var(--ink);">Rate Sriram</button>
+            <button class="btn ghost" style="color: rgba(255,255,255,0.6);">Back to home</button>
+          </div>
+        </div>
+        <p class="phone-caption"><strong>Looped.</strong> The closing moment lands on the dark ink surface — the mark at full presence, the swap summary, the CO₂ counter as the receipt of impact. <em>Closed</em> pill in the header. The whole brand pays off here.</p>
+      </div>
+
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Principle — Both pickups, both confirms</div>
+        <div class="v">A swap isn't half-done when one side picks up. The completion semantics are dual-confirm — both parties tap "got it" before the loop registers as closed. Mismatched confirms surface in ops for review.</div>
+      </div>
+      <div class="principle">
+        <div class="l">Principle — Loop's brand moment is the close</div>
+        <div class="v">"Looped." is the most powerful word in the system. It appears once per swap, on the final screen, in the loop-sun color, after both confirms. Saying it everywhere drains its meaning. Saying it here makes it earn its keep.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== §03 ENGINE DEEP DIVE =============== -->
+  <div class="deep-section" id="engine">
+    <div class="deep-inner">
+      <div class="flow-num">
+        <span>§ 03 — The matching engine</span>
+        <span>Same primitive · adapted for two-sided listings</span>
+      </div>
+      <h2 class="flow-title">How <span class="loop">comparable</span> becomes matched.</h2>
+      <p class="flow-deck">One primitive: a 768-dim vector embedding of every listing's photos + text, queried with cosine similarity. Layered with two filters specific to swaps — value within tolerance, geography bilateral or same-city. The composite ranks who gets surfaced first.</p>
+
+      <div class="embed-flow">
+        <div class="embed-card">
+          <div class="step">i. Capture</div>
+          <div class="what">Photos + AI <span class="loop">extract</span></div>
+          <div class="desc">Up to 4 photos, Gemini extracts brand, model, condition, dimensions, original retail. User-confirmed asking value.</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="embed-card">
+          <div class="step">ii. Encode</div>
+          <div class="what">CLIP image + text</div>
+          <div class="desc">Mean-pooled image vectors concatenated with text encoder over title + brand + condition. L2-normalised. 768-dim.</div>
+          <div class="vec-preview">[0.24, -0.41, 0.07, 0.88, 0.11, …]</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="embed-card">
+          <div class="step">iii. Store + match</div>
+          <div class="what">pgvector + filters</div>
+          <div class="desc">HNSW index in Postgres. Match query joins on category, value tolerance, bilateral geography. Top-K under 30ms at 100k listings.</div>
+        </div>
+      </div>
+
+      <div class="swap-example">
+        <div class="sect-tag">§ The match — Sriram &amp; Sarah · same week, opposite directions</div>
+
+        <div class="swap-pair">
+          <div class="swap-side">
+            <div class="who-line"><span class="who-name">Sriram</span></div>
+            <div class="route">Auckland → Christchurch · in 24 days</div>
+            <div class="item-row">
+              <div class="name">IKEA SÖDERHAMN, 3-seat</div>
+              <div class="meta">Like new · 2 yrs · grey</div>
+              <div class="price">$1,238</div>
+            </div>
+          </div>
+
+          <div class="swap-center">
+            <div class="score-big">0.91</div>
+            <div class="score-label">composite match</div>
+            <div class="delta"><strong>Comparable.</strong> Both within ±10% of category midpoint. Bilateral inter-city.</div>
+          </div>
+
+          <div class="swap-side">
+            <div class="who-line"><span class="who-name">Sarah</span></div>
+            <div class="route">Christchurch → Auckland · in 22 days</div>
+            <div class="item-row">
+              <div class="name">West Elm Andes, 3-seat</div>
+              <div class="meta">Like new · 1.5 yrs · charcoal</div>
+              <div class="price">$1,320</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sect-tag" style="margin-top: 36px;">§ The three filters · combined into one composite</div>
+
+      <div class="composite-grid">
+        <div class="composite-card">
+          <div class="l">i. Semantic similarity</div>
+          <div class="v">0.87 <span style="font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5);">× 0.4</span></div>
+          <div class="desc">CLIP cosine over photos and title. Catches "both are 3-seat fabric couches with similar silhouettes" without keyword matching.</div>
+        </div>
+        <div class="composite-card">
+          <div class="l">ii. Value alignment</div>
+          <div class="v">0.94 <span style="font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5);">× 0.4</span></div>
+          <div class="desc">Decays linearly with delta. Same value = 1.0; at tolerance boundary = 0.0. Couches' category tolerance is ±25%.</div>
+        </div>
+        <div class="composite-card">
+          <div class="l">iii. Geography</div>
+          <div class="v">1.00 <span style="font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5);">× 0.2</span></div>
+          <div class="desc">Perfect bilateral inter-city = 1.0. Same-city = 0.5. One-sided = excluded entirely from results.</div>
+        </div>
+      </div>
+
+      <div style="background: rgba(255,181,71,0.10); border: 1px solid rgba(255,181,71,0.30); border-radius: 12px; padding: 20px; margin-top: 28px;">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--sun-500); text-transform: uppercase; font-weight: 600; margin-bottom: 8px;">Composite</div>
+        <div style="font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--paper); letter-spacing: -0.025em; margin-bottom: 6px;">
+          0.87 × 0.4 + 0.94 × 0.4 + 1.00 × 0.2 = <span style="color: var(--sun-500);">0.92</span>
+        </div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5;">Rounded display: <strong style="color: var(--paper);">91%</strong>. Sriram and Sarah see each other as the strongest match on each of their listing pages.</div>
+      </div>
+
+      <div class="section-foot">
+        <div class="principle">
+          <div class="l">Principle — Three filters, one query</div>
+          <div class="v">The match is computed in a single SQL pass with pgvector. No separate pipelines for value scoring or geography logic. Keeps the engine debuggable and the latency under 30ms.</div>
+        </div>
+        <div class="principle">
+          <div class="l">Principle — Composite over single signal</div>
+          <div class="v">Pure semantic match surfaces visually-similar but wrongly-priced items. Pure value match surfaces same-priced unrelated items. The composite punishes weakness in any of the three — and that's exactly what users mean by "comparable."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============== §04 SCHEMA TEASER =============== -->
+  <section class="flow" id="schema" style="margin-top: 64px;">
+    <div class="flow-num">
+      <span>§ 04 — Schema</span>
+      <span>Postgres + pgvector · Prisma · 13 tables</span>
+    </div>
+    <h2 class="flow-title">Thirteen tables. <span class="loop">Two-sided</span> by design.</h2>
+    <p class="flow-deck">Full schema in <code style="background: var(--brand-50); color: var(--brand-700); padding: 2px 6px; border-radius: 4px; font-size: 13px;">livinloop-schema.md</code>. The spine below is the part that makes the swap mechanic work — every Listing is both an offering AND a wanted, geography is paired, valuation lives on the row.</p>
+
+    <div class="schema-block">
+<span class="com">// The five tables that matter most. Full schema in livinloop-schema.md.</span>
+
+<span class="kw">model</span> <span class="typ">Listing</span> {
+  <span class="at">id</span>            <span class="typ">String</span>        @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">userId</span>        <span class="typ">String</span>
+  <span class="at">categoryId</span>    <span class="typ">String</span>        <span class="com">// same-category swaps only</span>
+
+  <span class="com">// AI-extracted descriptive</span>
+  <span class="at">title</span>         <span class="typ">String</span>
+  <span class="at">brand</span>         <span class="typ">String</span>?       <span class="com">// "IKEA"</span>
+  <span class="at">model</span>         <span class="typ">String</span>?       <span class="com">// "SÖDERHAMN"</span>
+  <span class="at">ageYears</span>      <span class="typ">Float</span>?
+  <span class="at">condition</span>     <span class="typ">Condition</span>
+
+  <span class="com">// === THE VALUATION ===</span>
+  <span class="at">originalRetailCents</span>  <span class="typ">Int</span>?
+  <span class="at">estimatedValueCents</span>  <span class="typ">Int</span>?   <span class="com">// AI-derived</span>
+  <span class="at">askingValueCents</span>     <span class="typ">Int</span>     <span class="com">// user can override</span>
+  <span class="at">valuationBreakdown</span>   <span class="typ">Json</span>?   <span class="com">// shown to user</span>
+
+  <span class="com">// === THE TWO-SIDED GEOGRAPHY ===</span>
+  <span class="at">originCityId</span>  <span class="typ">String</span>        <span class="com">// where the item physically is</span>
+  <span class="at">wantedCityId</span>  <span class="typ">String</span>        <span class="com">// where swap partner must be</span>
+
+  <span class="at">status</span>        <span class="typ">ListingStatus</span> <span class="com">// DRAFT, LIVE, PROPOSED, LOCKED, SWAPPED</span>
+  <span class="at">photos</span>        <span class="typ">Photo</span>[]
+  <span class="at">embedding</span>     <span class="typ">ListingEmbedding</span>?
+
+  @@<span class="at">index</span>([<span class="at">categoryId</span>, <span class="at">status</span>, <span class="at">originCityId</span>, <span class="at">wantedCityId</span>, <span class="at">askingValueCents</span>])
+}
+
+<span class="kw">model</span> <span class="typ">ListingEmbedding</span> {
+  <span class="at">listingId</span>     <span class="typ">String</span>   @<span class="at">id</span>
+  <span class="at">vector</span>        <span class="typ">Unsupported</span>(<span class="str">"vector(768)"</span>) <span class="com">// pgvector + HNSW</span>
+}
+
+<span class="kw">model</span> <span class="typ">SwapMatch</span> {
+  <span class="at">id</span>              <span class="typ">String</span>   @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">listingAId</span>      <span class="typ">String</span>
+  <span class="at">listingBId</span>      <span class="typ">String</span>
+  <span class="at">semanticScore</span>   <span class="typ">Float</span>    <span class="com">// 0..1, CLIP cosine</span>
+  <span class="at">valueScore</span>      <span class="typ">Float</span>    <span class="com">// 0..1, INTERNAL only — never surfaced</span>
+  <span class="at">geographyScore</span>  <span class="typ">Float</span>    <span class="com">// 1.0 bilateral, 0.5 same-city</span>
+  <span class="at">overallScore</span>    <span class="typ">Float</span>    <span class="com">// composite, ranks results</span>
+  <span class="com">// no valueDelta — platform doesn't surface a "gap" anywhere</span>
+}
+
+<span class="kw">model</span> <span class="typ">SwapProposal</span> {
+  <span class="at">id</span>              <span class="typ">String</span>          @<span class="at">id</span> @<span class="at">default</span>(<span class="at">cuid</span>())
+  <span class="at">fromUserId</span>      <span class="typ">String</span>
+  <span class="at">toUserId</span>        <span class="typ">String</span>
+  <span class="at">listingAId</span>      <span class="typ">String</span>          <span class="com">// proposer's</span>
+  <span class="at">listingBId</span>      <span class="typ">String</span>          <span class="com">// recipient's</span>
+  <span class="at">message</span>         <span class="typ">String</span>?         <span class="com">// optional, opens human convo</span>
+  <span class="at">status</span>          <span class="typ">ProposalStatus</span>
+  <span class="at">expiresAt</span>       <span class="typ">DateTime</span>        <span class="com">// 72h</span>
+  <span class="com">// no settlement fields — swap is item-for-item, money is off-platform if at all</span>
+}
+    </div>
+  </section>
+
+  <!-- =============== §05 PIPELINE + APIs =============== -->
+  <section class="flow" id="api">
+    <div class="flow-num">
+      <span>§ 05 — Photo pipeline + APIs</span>
+      <span>Carried from LivAround · server-side only</span>
+    </div>
+    <h2 class="flow-title">All AI runs <span class="loop">server-side</span>.</h2>
+    <p class="flow-deck">The architectural rule from prior mobile work: client uploads bytes, server does everything else. No on-device frame extraction. No on-device inference. Photos go via tus to R2, then BullMQ workers handle Gemini extraction, valuation, and CLIP embedding.</p>
+
+    <div class="embed-flow" style="background: var(--paper); border: 1px solid var(--slate-200); border-radius: 14px; padding: 28px; margin-top: 24px;">
+      <div class="embed-card" style="background: var(--sand); border-color: var(--slate-200);">
+        <div class="step" style="color: var(--brand-600);">i. Client</div>
+        <div class="what" style="color: var(--ink);">Capture &amp; upload</div>
+        <div class="desc" style="color: var(--slate-700);">expo-camera or browser FileReader → tus resumable upload to R2. No compression, no frame extraction.</div>
+      </div>
+      <div class="arrow" style="color: var(--brand-600);">→</div>
+      <div class="embed-card" style="background: var(--sand); border-color: var(--slate-200);">
+        <div class="step" style="color: var(--brand-600);">ii. Worker · Gemini</div>
+        <div class="what" style="color: var(--ink);">Extract + <span style="color: var(--brand-600);">valuate</span></div>
+        <div class="desc" style="color: var(--slate-700);">BullMQ worker pulls from R2. Gemini extracts brand/model/condition/dimensions/retail estimate. Server applies depreciation curve.</div>
+      </div>
+      <div class="arrow" style="color: var(--brand-600);">→</div>
+      <div class="embed-card" style="background: var(--sand); border-color: var(--slate-200);">
+        <div class="step" style="color: var(--brand-600);">iii. Worker · CLIP</div>
+        <div class="what" style="color: var(--ink);">Embed + persist</div>
+        <div class="desc" style="color: var(--slate-700);">After user publishes, CLIP encoder over images + text. Vector stored in Postgres. Listing flips PROCESSING → LIVE.</div>
+      </div>
+    </div>
+
+    <div class="api-list">
+      <div class="sect-tag" style="margin-bottom: 16px;">§ The handful of endpoints that drive the whole app</div>
+      <div class="api-row">
+        <span class="method">POST</span>
+        <span class="path">/api/listings</span>
+        <span class="desc">Create draft. Returns listingId + presigned R2 upload URLs.</span>
+      </div>
+      <div class="api-row">
+        <span class="method">POST</span>
+        <span class="path">/api/listings/:id/publish</span>
+        <span class="desc">Validate + flip DRAFT → PROCESSING. Triggers embedding worker.</span>
+      </div>
+      <div class="api-row">
+        <span class="method get">GET</span>
+        <span class="path">/api/listings/:id/matches</span>
+        <span class="desc">Top-K SwapMatch rows for this listing, ranked by composite.</span>
+      </div>
+      <div class="api-row">
+        <span class="method">POST</span>
+        <span class="path">/api/proposals</span>
+        <span class="desc">Create proposal · listingAId, listingBId, optional message.</span>
+      </div>
+      <div class="api-row">
+        <span class="method">POST</span>
+        <span class="path">/api/proposals/:id/accept</span>
+        <span class="desc">Recipient accepts. Locks both listings, creates Conversation, notifies both.</span>
+      </div>
+      <div class="api-row">
+        <span class="method">POST</span>
+        <span class="path">/api/conversations/:id/confirm-complete</span>
+        <span class="desc">Dual-confirm step. Both parties tap to close the loop. Listings → SWAPPED.</span>
+      </div>
+    </div>
+
+    <div class="section-foot">
+      <div class="principle">
+        <div class="l">Stack — boring on purpose</div>
+        <div class="v">Next.js · Prisma · Postgres + pgvector · Auth.js (magic links) · BullMQ · R2 · tus.io · Gemini 2.5 Flash · CLIP via Replicate. Every component mature, swappable, well-documented.</div>
+      </div>
+      <div class="principle">
+        <div class="l">Photo pipeline reused</div>
+        <div class="v">tus → R2 → BullMQ + sharp + Gemini is carried verbatim from LivAround. Different Gemini prompt (item valuation vs room walkthrough), same plumbing. Saves ~2 weeks of build.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="doc-foot">
+  <div class="foot-inner">
+    <a href="#top" class="ll-lockup">
+      <span class="ll-mark"><svg width="28" height="28"><use href="#ll-mark"/></svg></span>
+      <span class="ll-wordmark">livin<span class="loop">loop</span></span>
+    </a>
+    <span class="meta">App wireframe · Schema · Pipeline</span>
+    <span class="meta">v1 · May 2026</span>
+  </div>
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.head-tabs a');
+  const sections = ['#lister', '#recipient', '#engine', '#schema', '#api'];
+  tabs.forEach(t => {
+    t.addEventListener('click', e => {
+      const href = t.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        const id = '#' + en.target.id;
+        tabs.forEach(t => t.classList.toggle('active', t.getAttribute('href') === id));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => {
+    const el = document.querySelector(s);
+    if (el) observer.observe(el);
+  });
+</script>
+
+</body>
+</html>
