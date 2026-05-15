@@ -83,6 +83,16 @@ export async function PATCH(
   if (d.wantedNotes !== undefined) data.wantedNotes = d.wantedNotes;
   if (d.availableUntilISO !== undefined) data.availableUntil = new Date(d.availableUntilISO);
 
+  // updateListingSchema is a full .partial(), so {} passes zod but
+  // prisma rejects an empty data object with a runtime error. Catch
+  // it here and return 422 with a useful message.
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json(
+      { error: 'no_fields_to_update' },
+      { status: 422 },
+    );
+  }
+
   // Atomic update gated by ownership: returns count=0 if the row
   // doesn't exist or belongs to another user. We then read once to
   // distinguish 404 from 403 for a useful response.

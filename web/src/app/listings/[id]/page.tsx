@@ -31,27 +31,27 @@ export default async function ListingDetail({
   if (!isOwner && listing.status !== 'LIVE') notFound();
 
   // Server Actions are callable HTTP endpoints — don't rely on the
-  // `isOwner` UI conditional below to gate them. Re-check auth,
-  // ownership, AND the source-status precondition inside each
-  // action so a stale form post or replay can't change state.
+  // `isOwner` UI conditional below to gate them. Re-check auth and
+  // use an atomic conditional write keyed on ownership + status.
+  // `updateMany` returns count=0 (no error) when the precondition
+  // fails, so we just redirect back to the listing page; the user
+  // sees the now-current status. No throw → no 500 on stale submits.
   async function publish() {
     'use server';
     const s = await auth();
-    if (!s?.user?.email) throw new Error('unauthorized');
-    const result = await prisma.listing.updateMany({
+    if (!s?.user?.email) redirect('/signin');
+    await prisma.listing.updateMany({
       where: { id, user: { email: s.user.email }, status: 'DRAFT' },
       data: { status: 'LIVE', publishedAt: new Date() },
     });
-    if (result.count === 0) {
-      throw new Error('publish_blocked: not owner or not in DRAFT');
-    }
+    redirect(`/listings/${id}`);
   }
 
   async function withdraw() {
     'use server';
     const s = await auth();
-    if (!s?.user?.email) throw new Error('unauthorized');
-    const result = await prisma.listing.updateMany({
+    if (!s?.user?.email) redirect('/signin');
+    await prisma.listing.updateMany({
       where: {
         id,
         user: { email: s.user.email },
@@ -59,9 +59,7 @@ export default async function ListingDetail({
       },
       data: { status: 'WITHDRAWN' },
     });
-    if (result.count === 0) {
-      throw new Error('withdraw_blocked: not owner or not in DRAFT/LIVE');
-    }
+    redirect(`/listings/${id}`);
   }
 
   return (

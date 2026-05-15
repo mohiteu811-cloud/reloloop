@@ -5,6 +5,27 @@ import { createListingSchema } from '@/lib/listings';
 
 export const dynamic = 'force-dynamic';
 
+// Strict YYYY-MM-DD parser. Rejects garbage strings (where
+// `new Date(...)` would throw RangeError) and overflow dates like
+// 2026-02-31 (where `new Date(...)` would silently normalize to
+// March 3rd). Returns the ISO datetime at UTC midnight, or null.
+function parseCalendarDate(raw: string): string | null {
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  if (
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() !== mo - 1 ||
+    date.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return date.toISOString();
+}
+
 export default async function NewListing() {
   const session = await auth();
   if (!session?.user?.email) redirect('/signin');
@@ -25,6 +46,7 @@ export default async function NewListing() {
     // bounds (negative prices, missing required fields, etc.).
     const dollarsRaw = Number(formData.get('askingValueDollars') ?? NaN);
     const dateRaw = String(formData.get('availableUntil') ?? '');
+    const parsedDate = parseCalendarDate(dateRaw);
     const candidate = {
       title: String(formData.get('title') ?? '').trim(),
       description: (() => {
@@ -38,9 +60,10 @@ export default async function NewListing() {
         : NaN,
       originCityId: String(formData.get('originCityId') ?? ''),
       wantedCityId: String(formData.get('wantedCityId') ?? ''),
-      // <input type="date"> gives YYYY-MM-DD. Coerce to ISO datetime
-      // (UTC midnight) so the schema's z.string().datetime() accepts it.
-      availableUntilISO: dateRaw ? new Date(dateRaw).toISOString() : '',
+      // null when the date is missing, malformed, or overflowed.
+      // zod's `z.string().datetime()` will reject the missing case;
+      // we coerce to empty string to keep that path clean.
+      availableUntilISO: parsedDate ?? '',
     };
 
     const parsed = createListingSchema.safeParse(candidate);
