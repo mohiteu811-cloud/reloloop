@@ -2,12 +2,13 @@ import { Worker, type Processor } from 'bullmq';
 import { redisConnection, bullmqPrefix } from '../lib/redis';
 import { prisma } from '../lib/prisma';
 import { photoPostprocessProcessor } from './jobs/photo-postprocess';
+import { listingAutofillProcessor } from './jobs/listing-autofill';
 
 // Queue names per reloloop-schema.md §7.1, with `:` swapped for `-`
-// because BullMQ 5.x reserves `:` (it's the Redis key separator;
-// putting it in a queue name corrupts the key structure that
-// BullMQ builds internally). Schema doc labels ("photo:postprocess")
-// are fine — they're docs, not runtime identifiers.
+// because BullMQ 5.x reserves `:` (it's the Redis key separator).
+// M2 wired photo-postprocess; M3a wires listing-autofill. The rest
+// stay as stubs until their milestones (M4 embeddings + matching,
+// M6 fee timeout).
 const queueNames = [
   'photo-postprocess',
   'listing-autofill',
@@ -26,7 +27,7 @@ const stubProcessor: Processor = async (job) => {
 
 const handlers: Record<QueueName, Processor> = {
   'photo-postprocess': photoPostprocessProcessor as Processor,
-  'listing-autofill': stubProcessor,
+  'listing-autofill': listingAutofillProcessor as Processor,
   'listing-embed': stubProcessor,
   'match-compute': stubProcessor,
   'match-nightly': stubProcessor,
@@ -46,10 +47,6 @@ for (const w of workers) {
   w.on('failed', (job, err) => {
     console.error(`[worker] ${w.name} job ${job?.id} failed`, err);
   });
-  // BullMQ emits `error` on Redis disconnects and other runtime
-  // faults. An unhandled `error` event in Node crashes the
-  // process — swallow + log so a transient Redis blip doesn't
-  // take down all six queues.
   w.on('error', (err) => {
     console.error(`[worker] ${w.name} error`, err);
   });
