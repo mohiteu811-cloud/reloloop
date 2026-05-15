@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "LivinLoop",
+    "slug": "livinloop",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "livinloop",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "co.livinloop.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "co.livinloop.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow LivinLoop to use the camera to capture photos of items you want to swap."
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "https://app.livinloop.co"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

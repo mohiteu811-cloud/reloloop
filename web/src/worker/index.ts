@@ -1,11 +1,12 @@
 import { Worker, type Processor } from 'bullmq';
 import { redisConnection, bullmqPrefix } from '../lib/redis';
 import { prisma } from '../lib/prisma';
+import { photoPostprocessProcessor } from './jobs/photo-postprocess';
 
-// Queue names per reloloop-schema.md §7.1. Handlers are stubs in M1;
-// real implementations land alongside the photo pipeline (M2), the
-// Claude extraction + valuation (M3), embeddings + matching (M4),
-// proposals (M5), and fees (M6).
+// Queue names per reloloop-schema.md §7.1. M2 wires the real
+// photo:postprocess handler (sharp + thumbnails); the rest stay
+// as no-op stubs until their milestones (M3 Claude extraction,
+// M4 embeddings + matching, M6 fee timeout).
 const queueNames = [
   'photo:postprocess',
   'listing:autofill',
@@ -15,14 +16,25 @@ const queueNames = [
   'fee:gate-timeout',
 ] as const;
 
+type QueueName = (typeof queueNames)[number];
+
 const stubProcessor: Processor = async (job) => {
   console.log(`[worker] ${job.queueName} received job ${job.id}`, job.data);
   return { stubbed: true };
 };
 
+const handlers: Record<QueueName, Processor> = {
+  'photo:postprocess': photoPostprocessProcessor as Processor,
+  'listing:autofill': stubProcessor,
+  'listing:embed': stubProcessor,
+  'match:compute': stubProcessor,
+  'match:nightly': stubProcessor,
+  'fee:gate-timeout': stubProcessor,
+};
+
 const workers = queueNames.map(
   (name) =>
-    new Worker(name, stubProcessor, {
+    new Worker(name, handlers[name], {
       connection: redisConnection,
       prefix: bullmqPrefix,
       concurrency: 4,
