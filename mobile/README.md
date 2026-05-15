@@ -27,7 +27,7 @@ npx eas build --platform ios --profile development
 npx eas build --platform android --profile development
 ```
 
-Bundle ID is `co.livinloop.app` (see `app.json`). EAS project
+Bundle ID is `com.livinloop.app` (see `app.json`). EAS project
 ID gets filled in on `eas init` the first time you run.
 
 ## What's wired up
@@ -41,7 +41,7 @@ ID gets filled in on `eas init` the first time you run.
 
 - Auth — magic-link from `web/`'s Auth.js + Resend, deep-linked
   back into the app via the `livinloop://` URL scheme.
-- API client (fetch wrapper hitting `app.livinloop.co`).
+- API client (fetch wrapper hitting `app.livinloop.com`).
 - Photo upload — once auth lands, wire the camera's "Use photo"
   action to `POST /api/listings/:id/photos/presign` → PUT to R2
   → `POST /api/listings/:id/photos`.

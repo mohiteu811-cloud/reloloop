@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // intentional, so /api/health and unauth pages still work even
       // without email wired up.
       apiKey: process.env.RESEND_API_KEY ?? '',
-      from: process.env.EMAIL_FROM ?? 'noreply@livinloop.co',
+      from: process.env.EMAIL_FROM ?? 'noreply@livinloop.com',
     }),
   ],
   pages: {

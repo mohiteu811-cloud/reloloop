@@ -107,7 +107,7 @@ Uses `railway.json` (repo root):
 misconfigured the healthcheck fails (with a generic `{ status:
 "error" }` body — driver details stay in server logs).
 
-Domain: `app.livinloop.co` (web + API share a host in v1 since
+Domain: `app.livinloop.com` (web + API share a host in v1 since
 we're a Next.js monolith).
 
 ### 2. `worker` — BullMQ consumers
@@ -132,12 +132,12 @@ web owns schema sync.
 
 Queues consumed (stubs in M1, real handlers added per milestone):
 
-- `photo:postprocess` — sharp thumbnails + perceptual hash (M2)
-- `listing:autofill` — Claude vision extraction + valuation (M3)
-- `listing:embed` — Replicate CLIP → ListingEmbedding (M4)
-- `match:compute` — pgvector query → SwapMatch rows (M4)
-- `match:nightly` — cron, 02:00 NZST full recompute (M4)
-- `fee:gate-timeout` — cron, refund unpaid acceptances after 7 days (M6)
+- `photo-postprocess` — sharp thumbnails + perceptual hash (M2)
+- `listing-autofill` — Claude vision extraction + valuation (M3)
+- `listing-embed` — Replicate CLIP → ListingEmbedding (M4)
+- `match-compute` — pgvector query → SwapMatch rows (M4)
+- `match-nightly` — cron, 02:00 NZST full recompute (M4)
+- `fee-gate-timeout` — cron, refund unpaid acceptances after 7 days (M6)
 
 ### 3. `postgres` — Railway Postgres plugin
 

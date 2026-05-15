@@ -8,11 +8,11 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "bundleIdentifier": "co.livinloop.app",
+      "bundleIdentifier": "com.livinloop.app",
       "supportsTablet": false
     },
     "android": {
-      "package": "co.livinloop.app",
+      "package": "com.livinloop.app",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       }
@@ -27,7 +27,7 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "https://app.livinloop.co"
+      "apiBaseUrl": "https://app.livinloop.com"
     },
     "experiments": {
       "typedRoutes": true
