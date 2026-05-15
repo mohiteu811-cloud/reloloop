@@ -118,7 +118,19 @@ export async function POST(
 
   // Worker handler is internally idempotent (overwrites thumb + dims),
   // so re-enqueueing on retry is wasteful but correct.
-  await photoPostprocessQueue.add('process', { photoId: outcome.photo!.id });
+  //
+  // removeOnComplete/removeOnFail bound Redis memory: completed jobs
+  // evict after 7d / 1000 most-recent; failed after 30d / 5000 so we
+  // keep enough history to debug a recent regression but don't grow
+  // unbounded.
+  await photoPostprocessQueue.add(
+    'process',
+    { photoId: outcome.photo!.id },
+    {
+      removeOnComplete: { age: 60 * 60 * 24 * 7, count: 1000 },
+      removeOnFail: { age: 60 * 60 * 24 * 30, count: 5000 },
+    },
+  );
 
   return NextResponse.json({ photo: outcome.photo }, { status: 201 });
 }

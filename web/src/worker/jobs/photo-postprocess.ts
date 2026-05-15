@@ -29,16 +29,24 @@ export const photoPostprocessProcessor: Processor<PhotoPostprocessJob> = async (
   }
   const buffer = Buffer.from(await obj.Body.transformToByteArray());
 
-  // 2. Read metadata + generate the thumbnail.
-  const img = sharp(buffer, { failOn: 'truncated' });
-  const meta = await img.metadata();
-  const thumbBuf = await img
-    .rotate() // honors EXIF orientation
+  // 2. Apply EXIF rotation to a buffer first — sharp's `metadata()`
+  // reads from the source and ignores pipeline transforms, so we
+  // need an already-rotated buffer to get correct portrait/landscape
+  // dimensions. Without this, an iPhone portrait photo would persist
+  // swapped width/height even though the thumb is correctly oriented.
+  const { data: rotatedData, info: rotatedInfo } = await sharp(buffer, {
+    failOn: 'truncated',
+  })
+    .rotate()
+    .toBuffer({ resolveWithObject: true });
+
+  // 3. Generate the 480px WebP thumbnail from the rotated buffer.
+  const thumbBuf = await sharp(rotatedData)
     .resize({ width: 480, withoutEnlargement: true })
     .webp({ quality: 80 })
     .toBuffer();
 
-  // 3. Upload the thumb back at a deterministic suffix.
+  // 4. Upload the thumb back at a deterministic suffix.
   const thumbKey = `${photo.r2Key}.thumb.webp`;
   await r2.send(
     new PutObjectCommand({
@@ -49,16 +57,16 @@ export const photoPostprocessProcessor: Processor<PhotoPostprocessJob> = async (
     }),
   );
 
-  // 4. Persist dimensions + thumb URL.
+  // 5. Persist post-rotation dimensions + thumb URL.
   await prisma.photo.update({
     where: { id: photoId },
     data: {
       thumbUrl: `${r2PublicUrl}/${thumbKey}`,
-      width: meta.width ?? null,
-      height: meta.height ?? null,
+      width: rotatedInfo.width,
+      height: rotatedInfo.height,
       bytes: buffer.length,
     },
   });
 
-  return { thumbKey, width: meta.width, height: meta.height };
+  return { thumbKey, width: rotatedInfo.width, height: rotatedInfo.height };
 };

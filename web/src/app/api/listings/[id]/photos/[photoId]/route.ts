@@ -48,9 +48,7 @@ export async function DELETE(
   }
 
   // Atomic conditional delete: only removes the row if it still
-  // belongs to a mutable-status listing owned by this user. If a
-  // publish/transition committed between the read above and this
-  // statement, count===0 and we 409.
+  // belongs to a mutable-status listing owned by this user.
   const result = await prisma.photo.deleteMany({
     where: {
       id: photoId,
@@ -61,17 +59,27 @@ export async function DELETE(
       },
     },
   });
+
   if (result.count === 0) {
-    // Re-read to surface the current status in the error so the
-    // client knows whether to retry or give up.
+    // count===0 can happen in two ways under concurrent traffic:
+    //   1. Another DELETE for this photo already committed — the
+    //      row is gone. Treat as idempotent success so retries are
+    //      safe.
+    //   2. A publish/transition committed between our read and our
+    //      delete — the row exists but the listing is now frozen.
+    //      Return 409 with the current status so the client can
+    //      tell the user.
     const current = await prisma.photo.findUnique({
       where: { id: photoId },
       select: { listing: { select: { status: true } } },
     });
+    if (!current) {
+      return NextResponse.json({ deleted: true, alreadyGone: true });
+    }
     return NextResponse.json(
       {
         error: 'invalid_status',
-        currentStatus: current?.listing.status ?? photo.listing.status,
+        currentStatus: current.listing.status,
       },
       { status: 409 },
     );

@@ -6,8 +6,13 @@ import { presignUpload } from '@/lib/r2-presign';
 
 export const runtime = 'nodejs';
 
+// HEIC is intentionally excluded: sharp's default prebuilt
+// binaries don't decode HEIC, so a successful upload would fail
+// in the worker. iPhone uploads need to be converted to JPEG
+// client-side (expo-image-manipulator does this) before calling
+// /presign.
 const presignSchema = z.object({
-  contentType: z.enum(['image/jpeg', 'image/png', 'image/heic', 'image/webp']),
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
   sizeBytes: z
     .number()
     .int()
@@ -66,7 +71,6 @@ export async function POST(
   const extMap: Record<string, string> = {
     'image/jpeg': 'jpg',
     'image/png': 'png',
-    'image/heic': 'heic',
     'image/webp': 'webp',
   };
   const ext = extMap[parsed.data.contentType];

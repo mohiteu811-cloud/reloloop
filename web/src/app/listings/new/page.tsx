@@ -26,9 +26,15 @@ function parseCalendarDate(raw: string): string | null {
   return date.toISOString();
 }
 
-export default async function NewListing() {
+export default async function NewListing({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; issues?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.email) redirect('/signin');
+
+  const sp = await searchParams;
 
   const [cities, categories] = await Promise.all([
     prisma.city.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
@@ -38,12 +44,8 @@ export default async function NewListing() {
   async function createListing(formData: FormData) {
     'use server';
     const session = await auth();
-    if (!session?.user?.email) throw new Error('unauthorized');
+    if (!session?.user?.email) redirect('/signin');
 
-    // Server Actions are callable HTTP endpoints — don't trust
-    // FormData. Validate everything through the same zod schema
-    // the API route uses, so a crafted POST can't bypass HTML
-    // bounds (negative prices, missing required fields, etc.).
     const dollarsRaw = Number(formData.get('askingValueDollars') ?? NaN);
     const dateRaw = String(formData.get('availableUntil') ?? '');
     const parsedDate = parseCalendarDate(dateRaw);
@@ -60,21 +62,25 @@ export default async function NewListing() {
         : NaN,
       originCityId: String(formData.get('originCityId') ?? ''),
       wantedCityId: String(formData.get('wantedCityId') ?? ''),
-      // null when the date is missing, malformed, or overflowed.
-      // zod's `z.string().datetime()` will reject the missing case;
-      // we coerce to empty string to keep that path clean.
       availableUntilISO: parsedDate ?? '',
     };
 
     const parsed = createListingSchema.safeParse(candidate);
     if (!parsed.success) {
-      throw new Error(
-        `invalid_listing: ${parsed.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`,
-      );
+      // Don't throw — throwing turns a validation miss into a 500.
+      // Redirect back to the form with the error in the query string
+      // so the page can show a banner and the user can fix it.
+      const params = new URLSearchParams({
+        error: 'invalid_listing',
+        issues: parsed.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join('; '),
+      });
+      redirect(`/listings/new?${params.toString()}`);
     }
 
     const user = await prisma.user.findUniqueOrThrow({
-      where: { email: session.user.email },
+      where: { email: session.user!.email! },
     });
     const d = parsed.data;
     const listing = await prisma.listing.create({
@@ -98,6 +104,24 @@ export default async function NewListing() {
   return (
     <main style={{ maxWidth: 640, margin: '32px auto', padding: '0 24px' }}>
       <h1 style={{ fontSize: 28 }}>New listing</h1>
+      {sp.error && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 12,
+            background: '#fff4f4',
+            border: '1px solid #f99',
+            color: '#900',
+            borderRadius: 6,
+            fontSize: 14,
+          }}
+        >
+          <strong>Couldn&apos;t create listing.</strong>
+          {sp.issues && (
+            <div style={{ marginTop: 4 }}>{sp.issues}</div>
+          )}
+        </div>
+      )}
       <form
         action={createListing}
         style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}
