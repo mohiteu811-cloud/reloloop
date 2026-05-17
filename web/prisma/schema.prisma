@@ -1,0 +1,450 @@
+// LivinLoop schema. Source of truth: reloloop-schema.md §2.2.
+// Keep this file in sync with the schema doc.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, vector]
+  // directUrl is only needed when DATABASE_URL points at a pooler
+  // (e.g. PgBouncer). Railway Postgres is direct, so we omit it.
+  // Add `directUrl = env("DIRECT_URL")` here if we ever pool.
+}
+
+// ============================================================
+// AUTH — Auth.js v5 wants these tables present
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  phone         String?
+
+  city   City?   @relation("UserHomeCity", fields: [cityId], references: [id])
+  cityId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  moves          Move[]
+  listings       Listing[]
+  proposalsSent  SwapProposal[]            @relation("ProposalFromUser")
+  proposalsRecvd SwapProposal[]            @relation("ProposalToUser")
+  conversations  ConversationParticipant[]
+  messages       Message[]
+  feePayments    FeePayment[]
+
+  @@index([email])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// GEOGRAPHY
+// ============================================================
+
+model City {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  name    String
+  country String  @default("NZ")
+  lat     Float
+  lng     Float
+  active  Boolean @default(true)
+
+  users          User[]    @relation("UserHomeCity")
+  listingsOrigin Listing[] @relation("ListingOriginCity")
+  listingsWanted Listing[] @relation("ListingWantedCity")
+  movesFrom      Move[]    @relation("MoveFromCity")
+  movesTo        Move[]    @relation("MoveToCity")
+
+  @@index([slug])
+}
+
+// ============================================================
+// MOVE — optional context about an upcoming relocation
+// ============================================================
+
+model Move {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fromCityId String
+  fromCity   City   @relation("MoveFromCity", fields: [fromCityId], references: [id])
+  toCityId   String
+  toCity     City   @relation("MoveToCity", fields: [toCityId], references: [id])
+
+  moveDate        DateTime
+  flexibilityDays Int      @default(7)
+
+  status MoveStatus @default(PLANNING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([toCityId, moveDate])
+  @@index([userId, status])
+}
+
+enum MoveStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================================
+// CATEGORY — 12-item taxonomy, same-category swaps only
+// ============================================================
+
+model ItemCategory {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  name      String
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  // Default value-tolerance for matches in this category,
+  // as basis points (2000 = 20%).
+  matchToleranceBps Int @default(2000)
+
+  // Depreciation curve as JSON:
+  // { yearOneRetention, yearlyDecay, floor }
+  depreciationCurve Json
+
+  listings Listing[]
+
+  @@index([slug])
+}
+
+// ============================================================
+// LISTING — two-sided by design
+// ============================================================
+
+enum Condition {
+  LIKE_NEW
+  GOOD
+  USED
+  WORN
+}
+
+enum ListingStatus {
+  DRAFT
+  PROCESSING
+  LIVE
+  PROPOSED
+  LOCKED
+  SWAPPED
+  WITHDRAWN
+}
+
+model Listing {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId  String
+  category    ItemCategory @relation(fields: [categoryId], references: [id])
+  title       String
+  description String?      @db.Text
+
+  brand     String?
+  model     String?
+  ageYears  Float?
+  condition Condition
+
+  widthCm  Int?
+  depthCm  Int?
+  heightCm Int?
+  weightKg Float?
+
+  originalRetailCents  Int?
+  estimatedValueCents  Int?
+  askingValueCents     Int
+  askingValueRationale String? @db.Text
+  valuationBreakdown   Json?
+
+  originCityId String
+  originCity   City   @relation("ListingOriginCity", fields: [originCityId], references: [id])
+  wantedCityId String
+  wantedCity   City   @relation("ListingWantedCity", fields: [wantedCityId], references: [id])
+
+  availableUntil DateTime
+  wantedNotes    String?  @db.Text
+
+  status      ListingStatus @default(DRAFT)
+  publishedAt DateTime?
+  swappedAt   DateTime?
+
+  photos       Photo[]
+  embedding    ListingEmbedding?
+  proposalsAsA SwapProposal[]    @relation("ProposalListingA")
+  proposalsAsB SwapProposal[]    @relation("ProposalListingB")
+  matchesAsA   SwapMatch[]       @relation("MatchListingA")
+  matchesAsB   SwapMatch[]       @relation("MatchListingB")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId, status, originCityId, wantedCityId, askingValueCents])
+  @@index([userId, status])
+  @@index([status, publishedAt])
+}
+
+// ============================================================
+// PHOTO — carried over from LivAround pipeline
+// ============================================================
+
+model Photo {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  r2Key          String
+  url            String
+  thumbUrl       String?
+  width          Int?
+  height         Int?
+  bytes          Int?
+  perceptualHash String?
+  sortOrder      Int     @default(0)
+
+  uploadedAt DateTime @default(now())
+
+  // Confirm endpoint upserts on this compound key so a retried
+  // POST /photos (mobile timeout, network blip) doesn't create a
+  // duplicate row pointing at the same R2 object.
+  @@unique([listingId, r2Key])
+  @@index([listingId])
+}
+
+// ============================================================
+// EMBEDDING — drives semantic matching
+// ============================================================
+
+model ListingEmbedding {
+  listingId String  @id
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  vector Unsupported("vector(768)")
+
+  modelName    String
+  modelVersion String
+
+  computedAt DateTime @default(now())
+
+  // HNSW index created in a raw SQL migration:
+  // see prisma/migrations/00000000000000_init_pgvector/migration.sql
+}
+
+// ============================================================
+// SWAP MATCH — pre-computed pairings
+// ============================================================
+
+model SwapMatch {
+  id String @id @default(cuid())
+
+  listingAId String
+  listingA   Listing @relation("MatchListingA", fields: [listingAId], references: [id], onDelete: Cascade)
+  listingBId String
+  listingB   Listing @relation("MatchListingB", fields: [listingBId], references: [id], onDelete: Cascade)
+
+  semanticScore  Float
+  valueScore     Float
+  geographyScore Float
+  overallScore   Float
+
+  computedAt DateTime @default(now())
+
+  @@unique([listingAId, listingBId])
+  @@index([listingAId, overallScore])
+  @@index([listingBId, overallScore])
+}
+
+// ============================================================
+// SWAP PROPOSAL
+// ============================================================
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  WITHDRAWN
+  CANCELLED
+}
+
+model SwapProposal {
+  id String @id @default(cuid())
+
+  fromUserId String
+  fromUser   User   @relation("ProposalFromUser", fields: [fromUserId], references: [id])
+  toUserId   String
+  toUser     User   @relation("ProposalToUser", fields: [toUserId], references: [id])
+
+  listingAId String
+  listingA   Listing @relation("ProposalListingA", fields: [listingAId], references: [id])
+  listingBId String
+  listingB   Listing @relation("ProposalListingB", fields: [listingBId], references: [id])
+
+  message String? @db.Text
+
+  status        ProposalStatus @default(PENDING)
+  expiresAt     DateTime
+  respondedAt   DateTime?
+  declineReason String?
+
+  conversation Conversation?
+  fee          SwapFee?
+
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([toUserId, status])
+  @@index([fromUserId, status])
+  @@index([listingAId])
+  @@index([listingBId])
+}
+
+// ============================================================
+// SWAP FEE — 1% platform take, split 50/50
+// ============================================================
+
+enum FeeStatus {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+  FAILED
+}
+
+model SwapFee {
+  id String @id @default(cuid())
+
+  proposalId String       @unique
+  proposal   SwapProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  swapValueCents   Int
+  feeBps           Int @default(100)
+  totalFeeCents    Int
+  perPartyFeeCents Int
+
+  status     FeeStatus @default(PENDING)
+  paidAt     DateTime?
+  refundedAt DateTime?
+
+  payments FeePayment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+enum FeePaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model FeePayment {
+  id String @id @default(cuid())
+
+  feeId String
+  fee   SwapFee @relation(fields: [feeId], references: [id], onDelete: Cascade)
+
+  payerId String
+  payer   User   @relation(fields: [payerId], references: [id])
+
+  amountCents Int
+  currency    String @default("NZD")
+
+  status FeePaymentStatus @default(PENDING)
+
+  paypalOrderId    String? @unique
+  paypalCaptureId  String?
+  paypalPayerEmail String?
+  rawWebhookEvent  Json?
+
+  paidAt        DateTime?
+  refundedAt    DateTime?
+  failureReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([feeId, payerId])
+  @@index([payerId, status])
+  @@index([status])
+}
+
+// ============================================================
+// CONVERSATION — kicks in on proposal acceptance
+// ============================================================
+
+model Conversation {
+  id String @id @default(cuid())
+
+  proposalId String       @unique
+  proposal   SwapProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  lastMessageAt DateTime?
+
+  // Set when both FeePayments hit PAID. While null, the API
+  // redacts each user's email/phone from the other's view.
+  contactRevealedAt DateTime?
+
+  pickupConfirmedByA DateTime?
+  pickupConfirmedByB DateTime?
+  swapCompletedByA   DateTime?
+  swapCompletedByB   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lastReadAt DateTime?
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User         @relation(fields: [authorId], references: [id])
+
+  body        String @db.Text
+  attachments Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
