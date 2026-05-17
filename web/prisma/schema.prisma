@@ -10,9 +10,6 @@ datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
   extensions = [pgcrypto, vector]
-  // directUrl is only needed when DATABASE_URL points at a pooler
-  // (e.g. PgBouncer). Railway Postgres is direct, so we omit it.
-  // Add `directUrl = env("DIRECT_URL")` here if we ever pool.
 }
 
 // ============================================================
@@ -75,7 +72,7 @@ model City {
 }
 
 // ============================================================
-// MOVE — optional context about an upcoming relocation
+// MOVE
 // ============================================================
 
 model Move {
@@ -108,7 +105,7 @@ enum MoveStatus {
 }
 
 // ============================================================
-// CATEGORY — 12-item taxonomy, same-category swaps only
+// CATEGORY
 // ============================================================
 
 model ItemCategory {
@@ -118,12 +115,7 @@ model ItemCategory {
   active    Boolean @default(true)
   sortOrder Int     @default(0)
 
-  // Default value-tolerance for matches in this category,
-  // as basis points (2000 = 20%).
   matchToleranceBps Int @default(2000)
-
-  // Depreciation curve as JSON:
-  // { yearOneRetention, yearlyDecay, floor }
   depreciationCurve Json
 
   listings Listing[]
@@ -178,6 +170,13 @@ model Listing {
   askingValueRationale String? @db.Text
   valuationBreakdown   Json?
 
+  // AI-noticed defects from listing-autofill. Surfaced on the
+  // review screen as a separate "AI noticed" section so the user
+  // can decide whether to mention them in the description, but
+  // NOT auto-merged into title/description. Empty array when no
+  // extraction has run or the AI saw nothing wrong.
+  visibleDefects String[] @default([])
+
   originCityId String
   originCity   City   @relation("ListingOriginCity", fields: [originCityId], references: [id])
   wantedCityId String
@@ -206,7 +205,7 @@ model Listing {
 }
 
 // ============================================================
-// PHOTO — carried over from LivAround pipeline
+// PHOTO
 // ============================================================
 
 model Photo {
@@ -225,15 +224,12 @@ model Photo {
 
   uploadedAt DateTime @default(now())
 
-  // Confirm endpoint upserts on this compound key so a retried
-  // POST /photos (mobile timeout, network blip) doesn't create a
-  // duplicate row pointing at the same R2 object.
   @@unique([listingId, r2Key])
   @@index([listingId])
 }
 
 // ============================================================
-// EMBEDDING — drives semantic matching
+// EMBEDDING
 // ============================================================
 
 model ListingEmbedding {
@@ -246,13 +242,10 @@ model ListingEmbedding {
   modelVersion String
 
   computedAt DateTime @default(now())
-
-  // HNSW index created in a raw SQL migration:
-  // see prisma/migrations/00000000000000_init_pgvector/migration.sql
 }
 
 // ============================================================
-// SWAP MATCH — pre-computed pairings
+// SWAP MATCH
 // ============================================================
 
 model SwapMatch {
@@ -321,7 +314,7 @@ model SwapProposal {
 }
 
 // ============================================================
-// SWAP FEE — 1% platform take, split 50/50
+// SWAP FEE
 // ============================================================
 
 enum FeeStatus {
@@ -394,7 +387,7 @@ model FeePayment {
 }
 
 // ============================================================
-// CONVERSATION — kicks in on proposal acceptance
+// CONVERSATION
 // ============================================================
 
 model Conversation {
@@ -407,9 +400,6 @@ model Conversation {
   messages     Message[]
 
   lastMessageAt DateTime?
-
-  // Set when both FeePayments hit PAID. While null, the API
-  // redacts each user's email/phone from the other's view.
   contactRevealedAt DateTime?
 
   pickupConfirmedByA DateTime?
