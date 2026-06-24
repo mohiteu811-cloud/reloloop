@@ -96,8 +96,6 @@ export async function POST(
         if (listing.user.email !== session.user!.email) {
           return { kind: 'forbidden' };
         }
-        // DRAFT only. PROCESSING is locked because the AI worker is
-        // writing the listing's fields.
         if (listing.status !== 'DRAFT') {
           return { kind: 'invalid_status', currentStatus: listing.status };
         }
@@ -112,6 +110,16 @@ export async function POST(
             bytes: parsed.data.bytes,
           },
           update: {},
+        });
+        // Photo set just changed — any AI-noticed defects from a
+        // prior extraction were tied to a different set of images
+        // and are now potentially stale. Clear them so the review
+        // screen doesn't keep telling the user about damage that's
+        // only in deleted photos. The user can re-run AI to get
+        // a fresh defect list for the current set.
+        await tx.listing.update({
+          where: { id },
+          data: { visibleDefects: [] },
         });
         return { kind: 'ok', photo };
       },

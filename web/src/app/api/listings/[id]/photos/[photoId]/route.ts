@@ -6,7 +6,6 @@ import { r2, r2Bucket } from '@/lib/r2';
 
 export const runtime = 'nodejs';
 
-// DRAFT only — PROCESSING locks the listing while the AI worker runs.
 const MUTABLE_LISTING_STATUSES = ['DRAFT'] as const;
 
 export async function DELETE(
@@ -66,6 +65,23 @@ export async function DELETE(
       { status: 409 },
     );
   }
+
+  // Photo set changed — clear AI-noticed defects since they were
+  // tied to a different set of images. Same rationale as the
+  // confirm route. Best-effort: if this update fails for some
+  // reason (it really shouldn't — we just authenticated above),
+  // we still return success on the photo delete.
+  await prisma.listing
+    .updateMany({
+      where: { id, user: { email: session.user.email } },
+      data: { visibleDefects: [] },
+    })
+    .catch((err) => {
+      console.error('[photo:delete] failed to clear defects', {
+        listingId: id,
+        err,
+      });
+    });
 
   await r2
     .send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: photo.r2Key }))

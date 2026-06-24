@@ -85,16 +85,19 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     console.warn(`[listing-autofill] listing ${listingId} not found, skipping`);
     return { skipped: true };
   }
-  // Only run when the extract endpoint has explicitly flipped us
-  // into PROCESSING. If we're in any other state — because the
-  // endpoint reverted (enqueue failed) or because BullMQ picked up
-  // a retry after the final-failure handler already reset us —
-  // skip silently.
-  if (listing.status !== 'PROCESSING') {
+  // Accept both DRAFT and PROCESSING for forward/backward compat
+  // across the M3a ↔ M3b worker rollout:
+  //   - New web pre-flips DRAFT → PROCESSING before enqueue (M3b)
+  //   - Old web enqueues without pre-flip; listing stays DRAFT.
+  // Either way the worker writes `status: 'DRAFT'` after persist so
+  // a listing never gets stuck in PROCESSING. The race against user
+  // edits is closed by the API/PATCH/edit-page guards, not by the
+  // worker's pre-check.
+  if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
     console.warn(
       `[listing-autofill] ${listingId} skipped, status=${listing.status}`,
     );
-    return { skipped: true, reason: 'not_processing' };
+    return { skipped: true, reason: 'wrong_status' };
   }
   if (listing.photos.length === 0) {
     throw new Error('no_photos');
@@ -165,13 +168,14 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     breakdown.estimatedValueCents,
   );
 
-  // Atomic persist + status flip back to DRAFT. Guarded on
-  // `status: 'PROCESSING'` so a concurrent withdraw/cancel can't
-  // be silently overwritten.
+  // Loose where-clause matches the loose pre-check above. We ALWAYS
+  // set status: 'DRAFT' regardless of starting state, so no listing
+  // can get stuck in PROCESSING because of a rollout race between web
+  // and worker services.
   const result = await prisma.listing.updateMany({
     where: {
       id: listingId,
-      status: 'PROCESSING',
+      status: { in: ['DRAFT', 'PROCESSING'] },
     },
     data: {
       categoryId: category.id,
@@ -210,11 +214,13 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
   return { listingId, estimatedValueCents: breakdown.estimatedValueCents };
 };
 
-// Called from worker/index.ts after the listing-autofill Worker is
-// created. On the FINAL attempt's failure (BullMQ has exhausted all
-// retries), revert the listing's status from PROCESSING back to
-// DRAFT so the user can edit and re-trigger. Intermediate failures
-// just retry without touching status.
+// Final-attempt failure handler: when BullMQ has exhausted retries
+// and the job is permanently failed, revert PROCESSING → DRAFT so
+// the user can edit and retry. Intermediate failures retry without
+// touching status. The where clause is scoped to PROCESSING so we
+// don't accidentally revert a listing that's already DRAFT (e.g.
+// because the processor itself completed the flip on a prior
+// successful run that we're seeing a duplicate failure event for).
 export function attachListingAutofillFailureHandler(worker: {
   on: (event: 'failed', cb: (job: unknown, err: Error) => void) => void;
 }) {
@@ -227,7 +233,7 @@ export function attachListingAutofillFailureHandler(worker: {
     };
     const attempts = j.opts?.attempts ?? 1;
     const attemptsMade = j.attemptsMade ?? 0;
-    if (attemptsMade < attempts) return; // not the final attempt
+    if (attemptsMade < attempts) return;
     const listingId = j.data?.listingId;
     if (!listingId) return;
     try {
