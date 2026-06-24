@@ -8,8 +8,6 @@ export const dynamic = 'force-dynamic';
 
 const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
 
-// Strict YYYY-MM-DD parser. Rejects garbage strings and overflow
-// dates like 2026-02-31. Returns ISO datetime at UTC midnight, or null.
 function parseCalendarDate(raw: string): string | null {
   const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
@@ -27,9 +25,6 @@ function parseCalendarDate(raw: string): string | null {
   return date.toISOString();
 }
 
-// Treat empty form input as null (for nullable columns) so the user
-// can clear AI-set values via PATCH. The wrapped Prisma column is
-// nullable in the DB schema and the zod schema now accepts null.
 function emptyToNull(v: FormDataEntryValue | null): string | null {
   if (v === null) return null;
   const s = String(v).trim();
@@ -56,26 +51,39 @@ export default async function EditListing({
   const session = await auth();
   if (!session?.user?.email) redirect('/signin');
 
-  const [listing, cities, categories] = await Promise.all([
-    prisma.listing.findUnique({
-      where: { id },
-      include: { user: { select: { email: true } } },
+  // Fetch the listing first so we know which city/category IDs to
+  // keep visible even if they've been deactivated since assignment.
+  const listing = await prisma.listing.findUnique({
+    where: { id },
+    include: { user: { select: { email: true } } },
+  });
+  if (!listing) notFound();
+  if (listing.user.email !== session.user.email) notFound();
+  if (!MUTABLE_LISTING_STATUSES.has(listing.status)) {
+    redirect(`/listings/${id}`);
+  }
+
+  // Include the listing's currently-assigned IDs in the option set
+  // even if their `active` flag was turned off after the listing
+  // was created. Otherwise the <select> would silently fall back
+  // to the first active option and an unrelated save (e.g. changing
+  // the title) would rewrite category/origin/wanted city.
+  const [cities, categories] = await Promise.all([
+    prisma.city.findMany({
+      where: {
+        OR: [
+          { active: true },
+          { id: listing.originCityId },
+          { id: listing.wantedCityId },
+        ],
+      },
+      orderBy: { name: 'asc' },
     }),
-    prisma.city.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
     prisma.itemCategory.findMany({
-      where: { active: true },
+      where: { OR: [{ active: true }, { id: listing.categoryId }] },
       orderBy: { sortOrder: 'asc' },
     }),
   ]);
-
-  if (!listing) notFound();
-  // 404 (not 403) for non-owner so listing IDs aren't probeable.
-  if (listing.user.email !== session.user.email) notFound();
-  if (!MUTABLE_LISTING_STATUSES.has(listing.status)) {
-    // LIVE/PROPOSED/LOCKED/SWAPPED/WITHDRAWN — not editable. Bounce
-    // back to detail rather than rendering a form the user can't submit.
-    redirect(`/listings/${id}`);
-  }
 
   async function updateListing(formData: FormData) {
     'use server';
@@ -86,9 +94,6 @@ export default async function EditListing({
     const dateRaw = String(formData.get('availableUntil') ?? '');
     const parsedDate = parseCalendarDate(dateRaw);
 
-    // Build the candidate matching updateListingSchema. Nullable
-    // text fields use emptyToNull so an empty input clears them;
-    // nullable number fields use emptyToNullableNumber.
     const candidate = {
       title: String(formData.get('title') ?? '').trim(),
       description: emptyToNull(formData.get('description')),
@@ -100,6 +105,10 @@ export default async function EditListing({
       widthCm: emptyToNullableNumber(formData.get('widthCm')),
       depthCm: emptyToNullableNumber(formData.get('depthCm')),
       heightCm: emptyToNullableNumber(formData.get('heightCm')),
+      // Preserve sub-dollar precision: the worker writes cents
+      // directly so a listing can legitimately be e.g. $123.45.
+      // Rounding the input to whole dollars would silently drop
+      // those cents on every unrelated edit.
       askingValueCents: Number.isFinite(dollarsRaw)
         ? Math.round(dollarsRaw * 100)
         : NaN,
@@ -148,9 +157,6 @@ export default async function EditListing({
         data,
       });
       if (result.count === 0) {
-        // Lost the race (status transitioned mid-edit) or not the
-        // owner anymore. Bounce back to detail; refreshed render
-        // tells the user what state the listing is actually in.
         redirect(`/listings/${id}`);
       }
     } catch (err) {
@@ -172,6 +178,10 @@ export default async function EditListing({
   }
 
   const availableUntilDate = listing.availableUntil.toISOString().slice(0, 10);
+  // Render dollars to 2 decimal places so cent-precise asking
+  // values (e.g. AI-derived $123.45) round-trip through edits
+  // without being silently truncated.
+  const askingValueDollars = (listing.askingValueCents / 100).toFixed(2);
 
   return (
     <main style={{ maxWidth: 640, margin: '32px auto', padding: '0 24px' }}>
@@ -239,6 +249,7 @@ export default async function EditListing({
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
+                {c.active ? '' : ' (inactive)'}
               </option>
             ))}
           </select>
@@ -257,10 +268,14 @@ export default async function EditListing({
           </select>
         </Field>
         <Field label="Age (years, optional)">
+          {/* step="any" — the worker can persist fractional ages
+              (e.g. 1.3 from Claude's estimatedAgeYears). A fixed
+              step would block save with HTML validation even when
+              the user only edits an unrelated field. */}
           <input
             name="ageYears"
             type="number"
-            step="0.5"
+            step="any"
             min="0"
             max="100"
             defaultValue={listing.ageYears ?? ''}
@@ -303,13 +318,18 @@ export default async function EditListing({
           </Field>
         </Row>
         <Field label="Asking value (NZD)">
+          {/* step="0.01" + defaultValue with 2 decimals preserves
+              sub-dollar precision from the worker's cent-level
+              writes (e.g. $123.45). Whole-dollar rounding here
+              would silently truncate cents on every unrelated
+              edit. */}
           <input
             name="askingValueDollars"
             type="number"
-            step="1"
-            min="1"
+            step="0.01"
+            min="0.01"
             required
-            defaultValue={Math.round(listing.askingValueCents / 100)}
+            defaultValue={askingValueDollars}
             style={inputStyle}
           />
         </Field>
@@ -324,6 +344,7 @@ export default async function EditListing({
               {cities.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
+                  {c.active ? '' : ' (inactive)'}
                 </option>
               ))}
             </select>
@@ -338,6 +359,7 @@ export default async function EditListing({
               {cities.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
+                  {c.active ? '' : ' (inactive)'}
                 </option>
               ))}
             </select>

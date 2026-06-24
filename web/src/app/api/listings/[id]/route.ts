@@ -24,19 +24,22 @@ export async function GET(
   });
   if (!listing) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
-  // Visibility: owner sees any status; everyone else only sees LIVE.
-  // Return 404 (not 403) on hidden listings so IDs aren't probeable.
   const isOwner =
     !!session?.user?.email && listing.user.email === session.user.email;
   if (!isOwner && listing.status !== 'LIVE') {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  // Strip owner-only fields when the viewer isn't the owner.
   if (!isOwner) {
-    const { user, ...rest } = listing;
+    // Strip owner-only fields. visibleDefects in particular is an
+    // AI hint surfaced on the review screen for the owner to decide
+    // whether to mention in their description — leaking it via the
+    // public API would surface defects the owner deliberately chose
+    // not to disclose. user.email is also owner-only.
+    const { user, visibleDefects: _defects, ...publicListing } = listing;
+    void _defects;
     return NextResponse.json({
-      listing: { ...rest, user: { id: user.id, name: user.name } },
+      listing: { ...publicListing, user: { id: user.id, name: user.name } },
     });
   }
   return NextResponse.json({ listing });
@@ -81,12 +84,8 @@ export async function PATCH(
   if (d.askingValueCents !== undefined) data.askingValueCents = d.askingValueCents;
   if (d.originCityId !== undefined) data.originCityId = d.originCityId;
   if (d.wantedCityId !== undefined) data.wantedCityId = d.wantedCityId;
-  if (d.wantedNotes !== undefined) data.wantedNotes = d.wantedNotes;
   if (d.availableUntilISO !== undefined) data.availableUntil = new Date(d.availableUntilISO);
 
-  // updateListingSchema is a full .partial(), so {} passes zod but
-  // prisma rejects an empty data object with a runtime error. Catch
-  // it here and return 422 with a useful message.
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
       { error: 'no_fields_to_update' },
@@ -94,13 +93,6 @@ export async function PATCH(
     );
   }
 
-  // Atomic update gated by ownership: returns count=0 if the row
-  // doesn't exist or belongs to another user. We then read once to
-  // distinguish 404 from 403 for a useful response. P2003
-  // (foreign-key violation) is caught and mapped to 422 like the
-  // POST handler does — PATCH accepts categoryId/originCityId/
-  // wantedCityId too, and bad IDs are a client error not a server
-  // fault.
   try {
     const result = await prisma.listing.updateMany({
       where: { id, user: { email: session.user.email } },
