@@ -41,5 +41,9 @@
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "_comment": "BullMQ ships its own nested ioredis copy. Without this override, npm installs two ioredis trees and TypeScript treats them as distinct types, so `new Queue(name, { connection: redisConnection })` fails the build with a 'protected property AbstractConnector' mismatch. `$ioredis` tells npm to reuse our top-level ioredis resolution everywhere in the tree, deduplicating to one copy.",
+    "ioredis": "$ioredis"
   }
 }
