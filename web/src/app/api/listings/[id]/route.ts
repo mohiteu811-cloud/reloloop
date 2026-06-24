@@ -31,11 +31,9 @@ export async function GET(
   }
 
   if (!isOwner) {
-    // Strip owner-only fields. visibleDefects in particular is an
-    // AI hint surfaced on the review screen for the owner to decide
-    // whether to mention in their description — leaking it via the
-    // public API would surface defects the owner deliberately chose
-    // not to disclose. user.email is also owner-only.
+    // Strip owner-only fields. visibleDefects is an AI hint for the
+    // owner's review screen — leaking it via the public API would
+    // surface defects the owner deliberately chose not to disclose.
     const { user, visibleDefects: _defects, ...publicListing } = listing;
     void _defects;
     return NextResponse.json({
@@ -84,6 +82,7 @@ export async function PATCH(
   if (d.askingValueCents !== undefined) data.askingValueCents = d.askingValueCents;
   if (d.originCityId !== undefined) data.originCityId = d.originCityId;
   if (d.wantedCityId !== undefined) data.wantedCityId = d.wantedCityId;
+  if (d.wantedNotes !== undefined) data.wantedNotes = d.wantedNotes;
   if (d.availableUntilISO !== undefined) data.availableUntil = new Date(d.availableUntilISO);
 
   if (Object.keys(data).length === 0) {

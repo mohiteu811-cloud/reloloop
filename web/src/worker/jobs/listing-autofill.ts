@@ -57,7 +57,6 @@ async function loadPhotoForClaude(r2Key: string): Promise<{
   );
   if (!obj.Body) throw new Error(`r2 object body missing: ${r2Key}`);
   const buf = Buffer.from(await obj.Body.transformToByteArray());
-
   const compressed = await sharp(buf, { failOn: 'truncated' })
     .rotate()
     .resize({
@@ -68,11 +67,7 @@ async function loadPhotoForClaude(r2Key: string): Promise<{
     })
     .jpeg({ quality: 85 })
     .toBuffer();
-
-  return {
-    data: compressed.toString('base64'),
-    mediaType: 'image/jpeg',
-  };
+  return { data: compressed.toString('base64'), mediaType: 'image/jpeg' };
 }
 
 export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
@@ -90,11 +85,16 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     console.warn(`[listing-autofill] listing ${listingId} not found, skipping`);
     return { skipped: true };
   }
-  if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
+  // Only run when the extract endpoint has explicitly flipped us
+  // into PROCESSING. If we're in any other state — because the
+  // endpoint reverted (enqueue failed) or because BullMQ picked up
+  // a retry after the final-failure handler already reset us —
+  // skip silently.
+  if (listing.status !== 'PROCESSING') {
     console.warn(
       `[listing-autofill] ${listingId} skipped, status=${listing.status}`,
     );
-    return { skipped: true, reason: 'status_changed_before_run' };
+    return { skipped: true, reason: 'not_processing' };
   }
   if (listing.photos.length === 0) {
     throw new Error('no_photos');
@@ -165,10 +165,13 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     breakdown.estimatedValueCents,
   );
 
+  // Atomic persist + status flip back to DRAFT. Guarded on
+  // `status: 'PROCESSING'` so a concurrent withdraw/cancel can't
+  // be silently overwritten.
   const result = await prisma.listing.updateMany({
     where: {
       id: listingId,
-      status: { in: ['DRAFT', 'PROCESSING'] },
+      status: 'PROCESSING',
     },
     data: {
       categoryId: category.id,
@@ -184,10 +187,8 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
       estimatedValueCents: breakdown.estimatedValueCents,
       askingValueCents,
       valuationBreakdown: breakdown,
-      // M3b: persist AI-noticed defects. UI surfaces them on the
-      // review screen so the user can decide whether to add them
-      // to the description — not auto-merged.
       visibleDefects: extracted.visibleDefects,
+      status: 'DRAFT',
     },
   });
 
@@ -208,3 +209,41 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
 
   return { listingId, estimatedValueCents: breakdown.estimatedValueCents };
 };
+
+// Called from worker/index.ts after the listing-autofill Worker is
+// created. On the FINAL attempt's failure (BullMQ has exhausted all
+// retries), revert the listing's status from PROCESSING back to
+// DRAFT so the user can edit and re-trigger. Intermediate failures
+// just retry without touching status.
+export function attachListingAutofillFailureHandler(worker: {
+  on: (event: 'failed', cb: (job: unknown, err: Error) => void) => void;
+}) {
+  worker.on('failed', async (job, err) => {
+    if (!job || typeof job !== 'object') return;
+    const j = job as {
+      attemptsMade?: number;
+      opts?: { attempts?: number };
+      data?: { listingId?: string };
+    };
+    const attempts = j.opts?.attempts ?? 1;
+    const attemptsMade = j.attemptsMade ?? 0;
+    if (attemptsMade < attempts) return; // not the final attempt
+    const listingId = j.data?.listingId;
+    if (!listingId) return;
+    try {
+      await prisma.listing.updateMany({
+        where: { id: listingId, status: 'PROCESSING' },
+        data: { status: 'DRAFT' },
+      });
+      console.warn(
+        `[listing-autofill] ${listingId} reverted to DRAFT after final failure`,
+        { error: String(err) },
+      );
+    } catch (cleanupErr) {
+      console.error(
+        `[listing-autofill] revert failed for ${listingId}`,
+        cleanupErr,
+      );
+    }
+  });
+}

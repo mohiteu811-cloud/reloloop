@@ -1,14 +1,14 @@
 import { Worker, type Processor } from 'bullmq';
 import { redisConnection, bullmqPrefix } from '../lib/redis';
 import { prisma } from '../lib/prisma';
-import { photoPostprocessProcessor } from './jobs/photo-postprocess';
-import { listingAutofillProcessor } from './jobs/listing-autofill';
+import {
+  photoPostprocessProcessor,
+} from './jobs/photo-postprocess';
+import {
+  listingAutofillProcessor,
+  attachListingAutofillFailureHandler,
+} from './jobs/listing-autofill';
 
-// Queue names per reloloop-schema.md §7.1, with `:` swapped for `-`
-// because BullMQ 5.x reserves `:` (it's the Redis key separator).
-// M2 wired photo-postprocess; M3a wires listing-autofill. The rest
-// stay as stubs until their milestones (M4 embeddings + matching,
-// M6 fee timeout).
 const queueNames = [
   'photo-postprocess',
   'listing-autofill',
@@ -51,6 +51,14 @@ for (const w of workers) {
     console.error(`[worker] ${w.name} error`, err);
   });
   w.on('ready', () => console.log(`[worker] ${w.name} ready`));
+}
+
+// Job-specific cleanup: when listing-autofill's final retry fails,
+// flip the listing back from PROCESSING to DRAFT so the user can
+// retry. Separate from the generic failed-logger above.
+const autofillWorker = workers.find((w) => w.name === 'listing-autofill');
+if (autofillWorker) {
+  attachListingAutofillFailureHandler(autofillWorker);
 }
 
 async function shutdown(signal: string) {

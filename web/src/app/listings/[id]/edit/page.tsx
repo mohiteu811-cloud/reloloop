@@ -6,8 +6,6 @@ import { updateListingSchema } from '@/lib/listings';
 
 export const dynamic = 'force-dynamic';
 
-const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
-
 function parseCalendarDate(raw: string): string | null {
   const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
@@ -51,23 +49,18 @@ export default async function EditListing({
   const session = await auth();
   if (!session?.user?.email) redirect('/signin');
 
-  // Fetch the listing first so we know which city/category IDs to
-  // keep visible even if they've been deactivated since assignment.
   const listing = await prisma.listing.findUnique({
     where: { id },
     include: { user: { select: { email: true } } },
   });
   if (!listing) notFound();
   if (listing.user.email !== session.user.email) notFound();
-  if (!MUTABLE_LISTING_STATUSES.has(listing.status)) {
+  // DRAFT only — PROCESSING means the AI extractor is mid-write and
+  // a manual edit here would race the worker's persist.
+  if (listing.status !== 'DRAFT') {
     redirect(`/listings/${id}`);
   }
 
-  // Include the listing's currently-assigned IDs in the option set
-  // even if their `active` flag was turned off after the listing
-  // was created. Otherwise the <select> would silently fall back
-  // to the first active option and an unrelated save (e.g. changing
-  // the title) would rewrite category/origin/wanted city.
   const [cities, categories] = await Promise.all([
     prisma.city.findMany({
       where: {
@@ -84,6 +77,15 @@ export default async function EditListing({
       orderBy: { sortOrder: 'asc' },
     }),
   ]);
+
+  // Snapshot the valuation inputs at render time so the server
+  // action can detect whether the user changed any of them and
+  // clear the now-stale breakdown.
+  const snapshot = {
+    condition: listing.condition,
+    ageYears: listing.ageYears,
+    categoryId: listing.categoryId,
+  };
 
   async function updateListing(formData: FormData) {
     'use server';
@@ -105,10 +107,6 @@ export default async function EditListing({
       widthCm: emptyToNullableNumber(formData.get('widthCm')),
       depthCm: emptyToNullableNumber(formData.get('depthCm')),
       heightCm: emptyToNullableNumber(formData.get('heightCm')),
-      // Preserve sub-dollar precision: the worker writes cents
-      // directly so a listing can legitimately be e.g. $123.45.
-      // Rounding the input to whole dollars would silently drop
-      // those cents on every unrelated edit.
       askingValueCents: Number.isFinite(dollarsRaw)
         ? Math.round(dollarsRaw * 100)
         : NaN,
@@ -147,12 +145,27 @@ export default async function EditListing({
       data.availableUntil = new Date(d.availableUntilISO);
     }
 
+    // If any valuation input changed, the AI's persisted breakdown
+    // is stale (its condition/age/curve no longer match the listing).
+    // Clear breakdown + estimatedValueCents so the detail page hides
+    // the now-misleading ValuationCard. The user can re-run AI from
+    // the detail page if they want a fresh estimate. askingValueCents
+    // is kept (it's user-controlled).
+    const valuationInputChanged =
+      (d.condition !== undefined && d.condition !== snapshot.condition) ||
+      (d.ageYears !== undefined && d.ageYears !== snapshot.ageYears) ||
+      (d.categoryId !== undefined && d.categoryId !== snapshot.categoryId);
+    if (valuationInputChanged) {
+      data.valuationBreakdown = null;
+      data.estimatedValueCents = null;
+    }
+
     try {
       const result = await prisma.listing.updateMany({
         where: {
           id,
           user: { email: s.user.email },
-          status: { in: ['DRAFT', 'PROCESSING'] },
+          status: 'DRAFT',
         },
         data,
       });
@@ -178,9 +191,6 @@ export default async function EditListing({
   }
 
   const availableUntilDate = listing.availableUntil.toISOString().slice(0, 10);
-  // Render dollars to 2 decimal places so cent-precise asking
-  // values (e.g. AI-derived $123.45) round-trip through edits
-  // without being silently truncated.
   const askingValueDollars = (listing.askingValueCents / 100).toFixed(2);
 
   return (
@@ -188,6 +198,8 @@ export default async function EditListing({
       <h1 style={{ fontSize: 28 }}>Edit listing</h1>
       <p style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
         Override any field the AI got wrong. Empty fields are cleared.
+        Changes to condition, age, or category clear the AI valuation —
+        re-run AI from the detail page for a fresh estimate.
       </p>
       {sp.error && (
         <div
@@ -268,10 +280,6 @@ export default async function EditListing({
           </select>
         </Field>
         <Field label="Age (years, optional)">
-          {/* step="any" — the worker can persist fractional ages
-              (e.g. 1.3 from Claude's estimatedAgeYears). A fixed
-              step would block save with HTML validation even when
-              the user only edits an unrelated field. */}
           <input
             name="ageYears"
             type="number"
@@ -318,11 +326,6 @@ export default async function EditListing({
           </Field>
         </Row>
         <Field label="Asking value (NZD)">
-          {/* step="0.01" + defaultValue with 2 decimals preserves
-              sub-dollar precision from the worker's cent-level
-              writes (e.g. $123.45). Whole-dollar rounding here
-              would silently truncate cents on every unrelated
-              edit. */}
           <input
             name="askingValueDollars"
             type="number"

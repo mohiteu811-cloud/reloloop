@@ -46,8 +46,6 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_key' }, { status: 422 });
   }
 
-  // Build the public URL up front; this throws if R2_PUBLIC_BASE_URL
-  // is unset so a misconfigured deploy can't persist broken URLs.
   let publicUrl: string;
   try {
     publicUrl = r2PublicUrlFor(parsed.data.r2Key);
@@ -56,7 +54,6 @@ export async function POST(
     return NextResponse.json({ error: 'r2_misconfigured' }, { status: 503 });
   }
 
-  // Verify the upload actually landed in R2 before creating the row.
   try {
     await r2.send(
       new HeadObjectCommand({
@@ -99,7 +96,9 @@ export async function POST(
         if (listing.user.email !== session.user!.email) {
           return { kind: 'forbidden' };
         }
-        if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
+        // DRAFT only. PROCESSING is locked because the AI worker is
+        // writing the listing's fields.
+        if (listing.status !== 'DRAFT') {
           return { kind: 'invalid_status', currentStatus: listing.status };
         }
         const photo = await tx.photo.upsert({
@@ -133,10 +132,6 @@ export async function POST(
     );
   }
 
-  // Deterministic jobId keyed on photoId. removeOnComplete: true /
-  // removeOnFail: true evict eagerly (not via age-based lazy sweep)
-  // so a retried confirm doesn't see a sticky completed jobId on a
-  // low-traffic queue. Failure history lives in worker stdout.
   await photoPostprocessQueue.add(
     'process',
     { photoId: outcome.photo!.id },

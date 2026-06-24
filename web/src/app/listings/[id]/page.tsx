@@ -8,8 +8,6 @@ import type { ValuationBreakdown } from '@/lib/valuation';
 
 export const dynamic = 'force-dynamic';
 
-const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
-
 function parseBreakdown(raw: unknown): ValuationBreakdown | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -56,12 +54,16 @@ export default async function ListingDetail({
   const isOwner = listing.user.email === session.user.email;
   if (!isOwner && listing.status !== 'LIVE') notFound();
 
-  const canEditPhotos =
-    isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
-  const canExtract =
-    isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
-  const canEditFields =
-    isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
+  // All owner mutations gate on DRAFT only. PROCESSING means the AI
+  // worker is actively writing the listing's fields and a parallel
+  // user write would race. The status reverts to DRAFT on worker
+  // completion or final failure, at which point all controls
+  // reappear.
+  const isDraft = listing.status === 'DRAFT';
+  const canEditPhotos = isOwner && isDraft;
+  const canExtract = isOwner && isDraft;
+  const canEditFields = isOwner && isDraft;
+  const isProcessing = listing.status === 'PROCESSING';
   const breakdown = parseBreakdown(listing.valuationBreakdown);
   const hasPhotos = listing.photos.length > 0;
   const defects = listing.visibleDefects ?? [];
@@ -134,6 +136,23 @@ export default async function ListingDetail({
           </Link>
         )}
       </header>
+      {isProcessing && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 10,
+            background: '#eef',
+            border: '1px solid #ccd',
+            color: '#335',
+            borderRadius: 6,
+            fontSize: 13,
+          }}
+        >
+          AI is analyzing your photos. Edits and uploads are paused until
+          this finishes (usually under 30 seconds). The page will reflect
+          the new estimate once it&apos;s ready.
+        </div>
+      )}
       <dl
         style={{
           display: 'grid',
@@ -175,7 +194,7 @@ export default async function ListingDetail({
           </>
         )}
         <dt style={{ color: '#888' }}>Asking value</dt>
-        <dd style={{ margin: 0 }}>${(listing.askingValueCents / 100).toFixed(0)} NZD</dd>
+        <dd style={{ margin: 0 }}>${(listing.askingValueCents / 100).toFixed(2)} NZD</dd>
         <dt style={{ color: '#888' }}>From</dt>
         <dd style={{ margin: 0 }}>{listing.originCity.name}</dd>
         <dt style={{ color: '#888' }}>Moving to</dt>
@@ -342,7 +361,7 @@ function ValuationCard({ breakdown }: { breakdown: ValuationBreakdown }) {
         }}
       >
         <strong style={{ fontSize: 14 }}>Estimated value today</strong>
-        <strong style={{ fontSize: 18 }}>${estimate.toFixed(0)} NZD</strong>
+        <strong style={{ fontSize: 18 }}>${estimate.toFixed(2)} NZD</strong>
       </div>
     </section>
   );
