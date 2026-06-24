@@ -31,9 +31,6 @@ export async function GET(
   }
 
   if (!isOwner) {
-    // Strip owner-only fields. visibleDefects is an AI hint for the
-    // owner's review screen — leaking it via the public API would
-    // surface defects the owner deliberately chose not to disclose.
     const { user, visibleDefects: _defects, ...publicListing } = listing;
     void _defects;
     return NextResponse.json({
@@ -93,18 +90,32 @@ export async function PATCH(
   }
 
   try {
+    // DRAFT only — PROCESSING means the AI worker is mid-write
+    // (see worker/jobs/listing-autofill.ts). Allowing PATCH then
+    // would race the worker's persist and silently lose the user's
+    // corrections when the worker finishes.
     const result = await prisma.listing.updateMany({
-      where: { id, user: { email: session.user.email } },
+      where: { id, user: { email: session.user.email }, status: 'DRAFT' },
       data,
     });
     if (result.count === 0) {
-      const exists = await prisma.listing.findUnique({
+      // Re-read once to disambiguate 404 / 403 / 409.
+      const existing = await prisma.listing.findUnique({
         where: { id },
-        select: { id: true },
+        select: {
+          status: true,
+          user: { select: { email: true } },
+        },
       });
+      if (!existing) {
+        return NextResponse.json({ error: 'not_found' }, { status: 404 });
+      }
+      if (existing.user.email !== session.user.email) {
+        return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+      }
       return NextResponse.json(
-        { error: exists ? 'forbidden' : 'not_found' },
-        { status: exists ? 403 : 404 },
+        { error: 'invalid_status', currentStatus: existing.status },
+        { status: 409 },
       );
     }
   } catch (err) {

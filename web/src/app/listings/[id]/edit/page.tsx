@@ -55,8 +55,6 @@ export default async function EditListing({
   });
   if (!listing) notFound();
   if (listing.user.email !== session.user.email) notFound();
-  // DRAFT only — PROCESSING means the AI extractor is mid-write and
-  // a manual edit here would race the worker's persist.
   if (listing.status !== 'DRAFT') {
     redirect(`/listings/${id}`);
   }
@@ -78,9 +76,6 @@ export default async function EditListing({
     }),
   ]);
 
-  // Snapshot the valuation inputs at render time so the server
-  // action can detect whether the user changed any of them and
-  // clear the now-stale breakdown.
   const snapshot = {
     condition: listing.condition,
     ageYears: listing.ageYears,
@@ -145,18 +140,17 @@ export default async function EditListing({
       data.availableUntil = new Date(d.availableUntilISO);
     }
 
-    // If any valuation input changed, the AI's persisted breakdown
-    // is stale (its condition/age/curve no longer match the listing).
-    // Clear breakdown + estimatedValueCents so the detail page hides
-    // the now-misleading ValuationCard. The user can re-run AI from
-    // the detail page if they want a fresh estimate. askingValueCents
-    // is kept (it's user-controlled).
     const valuationInputChanged =
       (d.condition !== undefined && d.condition !== snapshot.condition) ||
       (d.ageYears !== undefined && d.ageYears !== snapshot.ageYears) ||
       (d.categoryId !== undefined && d.categoryId !== snapshot.categoryId);
     if (valuationInputChanged) {
-      data.valuationBreakdown = null;
+      // Prisma's JSON-null API: clearing a Json? column requires
+      // Prisma.DbNull (sets the column to SQL NULL). A raw `null`
+      // gets serialized as the JSON literal `null` and Prisma
+      // refuses the write at runtime. estimatedValueCents is a
+      // regular Int? so plain null is correct there.
+      data.valuationBreakdown = Prisma.DbNull;
       data.estimatedValueCents = null;
     }
 
