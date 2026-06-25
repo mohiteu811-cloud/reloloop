@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { listingEmbedQueue } from '@/lib/queues';
 import { PhotoSection } from './photo-section';
 import { ExtractButton } from './extract-button';
 import type { ValuationBreakdown } from '@/lib/valuation';
@@ -54,11 +55,6 @@ export default async function ListingDetail({
   const isOwner = listing.user.email === session.user.email;
   if (!isOwner && listing.status !== 'LIVE') notFound();
 
-  // All owner mutations gate on DRAFT only. PROCESSING means the AI
-  // worker is actively writing the listing's fields and a parallel
-  // user write would race. The status reverts to DRAFT on worker
-  // completion or final failure, at which point all controls
-  // reappear.
   const isDraft = listing.status === 'DRAFT';
   const canEditPhotos = isOwner && isDraft;
   const canExtract = isOwner && isDraft;
@@ -68,19 +64,76 @@ export default async function ListingDetail({
   const hasPhotos = listing.photos.length > 0;
   const defects = listing.visibleDefects ?? [];
 
+  // M4 — "Possible swaps". Only meaningful for LIVE listings.
+  // We query directly via Prisma rather than fetching the JSON API
+  // because we're already a server component; one fewer hop.
+  const matches =
+    isOwner && listing.status === 'LIVE'
+      ? await prisma.swapMatch.findMany({
+          where: { listingAId: listing.id },
+          orderBy: { overallScore: 'desc' },
+          take: 10,
+          include: {
+            listingB: {
+              select: {
+                id: true,
+                title: true,
+                askingValueCents: true,
+                status: true,
+                originCity: { select: { name: true } },
+                wantedCity: { select: { name: true } },
+                photos: {
+                  orderBy: [{ sortOrder: 'asc' }, { uploadedAt: 'asc' }],
+                  take: 1,
+                  select: { thumbUrl: true, url: true },
+                },
+                user: { select: { name: true } },
+              },
+            },
+          },
+        })
+      : [];
+  // Drop pairs where the other side has transitioned out of LIVE
+  // since the match row was last written (nightly cron handles
+  // proper cleanup).
+  const liveMatches = matches.filter((m) => m.listingB.status === 'LIVE');
+
   async function publish() {
     'use server';
     const s = await auth();
     if (!s?.user?.email) redirect('/signin');
-    await prisma.listing.updateMany({
+    const flip = await prisma.listing.updateMany({
       where: {
         id,
         user: { email: s.user.email },
         status: 'DRAFT',
         photos: { some: {} },
       },
-      data: { status: 'LIVE', publishedAt: new Date() },
+      data: { status: 'PROCESSING' },
     });
+    if (flip.count > 0) {
+      try {
+        await listingEmbedQueue.add(
+          'embed',
+          { listingId: id },
+          {
+            jobId: `embed-${id}`,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 5000 },
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        );
+      } catch (err) {
+        await prisma.listing
+          .updateMany({
+            where: { id, status: 'PROCESSING' },
+            data: { status: 'DRAFT' },
+          })
+          .catch(() => {});
+        throw err;
+      }
+    }
     redirect(`/listings/${id}`);
   }
 
@@ -148,9 +201,9 @@ export default async function ListingDetail({
             fontSize: 13,
           }}
         >
-          AI is analyzing your photos. Edits and uploads are paused until
-          this finishes (usually under 30 seconds). The page will reflect
-          the new estimate once it&apos;s ready.
+          Working on your listing in the background. Edits and uploads are
+          paused until this finishes (usually under a minute). The page will
+          reflect the new state once it&apos;s ready.
         </div>
       )}
       <dl
@@ -237,6 +290,15 @@ export default async function ListingDetail({
             ))}
           </ul>
         </section>
+      )}
+
+      {isOwner && listing.status === 'LIVE' && (
+        <MatchesSection
+          matches={liveMatches}
+          myOriginCityName={listing.originCity.name}
+          myWantedCityName={listing.wantedCity.name}
+          myAskingValueCents={listing.askingValueCents}
+        />
       )}
 
       {isOwner && (
@@ -363,6 +425,140 @@ function ValuationCard({ breakdown }: { breakdown: ValuationBreakdown }) {
         <strong style={{ fontSize: 14 }}>Estimated value today</strong>
         <strong style={{ fontSize: 18 }}>${estimate.toFixed(2)} NZD</strong>
       </div>
+    </section>
+  );
+}
+
+type MatchRow = {
+  id: string;
+  semanticScore: number;
+  valueScore: number;
+  geographyScore: number;
+  overallScore: number;
+  listingB: {
+    id: string;
+    title: string;
+    askingValueCents: number;
+    status: string;
+    originCity: { name: string };
+    wantedCity: { name: string };
+    photos: { thumbUrl: string | null; url: string }[];
+    user: { name: string | null };
+  };
+};
+
+function MatchesSection({
+  matches,
+  myOriginCityName,
+  myWantedCityName,
+  myAskingValueCents,
+}: {
+  matches: MatchRow[];
+  myOriginCityName: string;
+  myWantedCityName: string;
+  myAskingValueCents: number;
+}) {
+  return (
+    <section style={{ marginTop: 32 }}>
+      <h2 style={{ fontSize: 18, marginBottom: 4 }}>Possible swaps</h2>
+      <p style={{ fontSize: 12, color: '#888', margin: '0 0 12px' }}>
+        {matches.length === 0
+          ? 'No matches yet. Matches show up when someone in your destination city lists a similar item, or when a same-city swap appears. Check back later — we re-run matches nightly.'
+          : 'Ranked by how well your item matches. Asking values shown for each — you decide whether the items feel equivalent enough to swap.'}
+      </p>
+      {matches.length > 0 && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 12,
+          }}
+        >
+          {matches.map((m) => {
+            const isBilateral = m.geographyScore >= 0.99;
+            const ownerFirst =
+              (m.listingB.user.name ?? '').split(/\s+/)[0] || 'Someone';
+            const geographyText = isBilateral
+              ? `${ownerFirst} is moving ${m.listingB.originCity.name} → ${m.listingB.wantedCity.name}. You're moving ${myOriginCityName} → ${myWantedCityName}.`
+              : `Also in ${m.listingB.originCity.name}.`;
+            const photo = m.listingB.photos[0];
+            const photoSrc = photo?.thumbUrl ?? photo?.url ?? null;
+            const overallPct = Math.round(m.overallScore * 100);
+            const deltaCents = m.listingB.askingValueCents - myAskingValueCents;
+            const deltaDollars = Math.round(deltaCents / 100);
+            const valueText =
+              deltaCents === 0
+                ? 'Same asking value as yours.'
+                : deltaCents > 0
+                  ? `Their item is $${Math.abs(deltaDollars)} more than yours.`
+                  : `Their item is $${Math.abs(deltaDollars)} less than yours.`;
+
+            return (
+              <article
+                key={m.id}
+                style={{
+                  border: '1px solid #eee',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ aspectRatio: '4 / 3', background: '#f5f5f5' }}>
+                  {photoSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photoSrc}
+                      alt=""
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      alignItems: 'baseline',
+                    }}
+                  >
+                    <strong style={{ fontSize: 14, lineHeight: 1.3 }}>
+                      {m.listingB.title}
+                    </strong>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: '#fff',
+                        background: overallPct >= 80 ? '#0a7' : overallPct >= 70 ? '#5b3df5' : '#888',
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {overallPct}% match
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#444' }}>
+                    ${(m.listingB.askingValueCents / 100).toFixed(0)} NZD
+                    <span style={{ color: '#888', marginLeft: 6 }}>· by {ownerFirst}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#666', lineHeight: 1.4 }}>
+                    {geographyText}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#666' }}>{valueText}</div>
+                  {/* TODO M5: 'Propose swap' button hits the proposals API. */}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

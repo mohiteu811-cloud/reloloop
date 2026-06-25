@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { listingEmbedQueue } from '@/lib/queues';
 
 export const runtime = 'nodejs';
 
+// POST /api/listings/:id/publish
+//
+// Status flow per reloloop-schema.md §3.1 step 5:
+//   DRAFT (with photos) --[publish]--> PROCESSING --[embed worker]--> LIVE
+//
+// The atomic flip + enqueue here means the user can't double-publish
+// or edit between flip and embed, and every other owner mutation
+// (edit page, photo upload/delete, re-extract) gates on DRAFT.
 export async function POST(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -14,24 +23,20 @@ export async function POST(
   }
   const { id } = await ctx.params;
 
-  // Single atomic conditional write: only updates if the row
-  // exists, the caller owns it, it's currently DRAFT, AND it has
-  // at least one photo. The `photos: { some: {} }` predicate stops
-  // empty-gallery listings from going LIVE — the marketplace
-  // assumes every visible listing has at least one photo for the
-  // match card art.
-  const result = await prisma.listing.updateMany({
+  // Atomic DRAFT → PROCESSING with ownership + photos guards.
+  // publishedAt is NOT set here — the embed worker sets it when
+  // the listing actually goes LIVE.
+  const flip = await prisma.listing.updateMany({
     where: {
       id,
       user: { email: session.user.email },
       status: 'DRAFT',
       photos: { some: {} },
     },
-    data: { status: 'LIVE', publishedAt: new Date() },
+    data: { status: 'PROCESSING' },
   });
 
-  if (result.count === 0) {
-    // Disambiguate 404 / 403 / 409 / 422 with a single read.
+  if (flip.count === 0) {
     const existing = await prisma.listing.findUnique({
       where: { id },
       select: {
@@ -61,13 +66,37 @@ export async function POST(
         { status: 422 },
       );
     }
-    // Shouldn't be reachable, but be loud if it ever is.
-    console.error('[publish] unexpected count=0 with all preconditions met', {
-      id,
-    });
     return NextResponse.json({ error: 'unknown' }, { status: 500 });
   }
 
-  const updated = await prisma.listing.findUnique({ where: { id } });
-  return NextResponse.json({ listing: updated });
+  try {
+    await listingEmbedQueue.add(
+      'embed',
+      { listingId: id },
+      {
+        jobId: `embed-${id}`,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  } catch (err) {
+    // Don't leave the listing stuck in PROCESSING if Redis is down
+    // or the enqueue otherwise fails. Best-effort revert.
+    await prisma.listing
+      .updateMany({
+        where: { id, status: 'PROCESSING' },
+        data: { status: 'DRAFT' },
+      })
+      .catch((revertErr) => {
+        console.error(
+          `[publish] could not revert ${id} from PROCESSING after enqueue failure`,
+          revertErr,
+        );
+      });
+    throw err;
+  }
+
+  return NextResponse.json({ enqueued: true });
 }

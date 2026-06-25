@@ -1,13 +1,16 @@
 import { Worker, type Processor } from 'bullmq';
 import { redisConnection, bullmqPrefix } from '../lib/redis';
 import { prisma } from '../lib/prisma';
-import {
-  photoPostprocessProcessor,
-} from './jobs/photo-postprocess';
+import { photoPostprocessProcessor } from './jobs/photo-postprocess';
 import {
   listingAutofillProcessor,
   attachListingAutofillFailureHandler,
 } from './jobs/listing-autofill';
+import {
+  listingEmbedProcessor,
+  attachListingEmbedFailureHandler,
+} from './jobs/listing-embed';
+import { matchComputeProcessor } from './jobs/match-compute';
 
 const queueNames = [
   'photo-postprocess',
@@ -28,8 +31,8 @@ const stubProcessor: Processor = async (job) => {
 const handlers: Record<QueueName, Processor> = {
   'photo-postprocess': photoPostprocessProcessor as Processor,
   'listing-autofill': listingAutofillProcessor as Processor,
-  'listing-embed': stubProcessor,
-  'match-compute': stubProcessor,
+  'listing-embed': listingEmbedProcessor as Processor,
+  'match-compute': matchComputeProcessor as Processor,
   'match-nightly': stubProcessor,
   'fee-gate-timeout': stubProcessor,
 };
@@ -53,13 +56,13 @@ for (const w of workers) {
   w.on('ready', () => console.log(`[worker] ${w.name} ready`));
 }
 
-// Job-specific cleanup: when listing-autofill's final retry fails,
-// flip the listing back from PROCESSING to DRAFT so the user can
-// retry. Separate from the generic failed-logger above.
+// Job-specific failure handlers: revert PROCESSING → DRAFT after
+// the final retry so a listing can't get stuck waiting for an AI
+// step that will never succeed.
 const autofillWorker = workers.find((w) => w.name === 'listing-autofill');
-if (autofillWorker) {
-  attachListingAutofillFailureHandler(autofillWorker);
-}
+if (autofillWorker) attachListingAutofillFailureHandler(autofillWorker);
+const embedWorker = workers.find((w) => w.name === 'listing-embed');
+if (embedWorker) attachListingEmbedFailureHandler(embedWorker);
 
 async function shutdown(signal: string) {
   console.log(`[worker] ${signal} received, draining...`);
