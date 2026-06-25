@@ -8,8 +8,6 @@ import type { ValuationBreakdown } from '@/lib/valuation';
 
 export const dynamic = 'force-dynamic';
 
-const MUTABLE_LISTING_STATUSES = new Set(['DRAFT', 'PROCESSING']);
-
 function parseBreakdown(raw: unknown): ValuationBreakdown | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -56,21 +54,24 @@ export default async function ListingDetail({
   const isOwner = listing.user.email === session.user.email;
   if (!isOwner && listing.status !== 'LIVE') notFound();
 
-  const canEditPhotos =
-    isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
-  const canExtract =
-    isOwner && MUTABLE_LISTING_STATUSES.has(listing.status);
+  // All owner mutations gate on DRAFT only. PROCESSING means the AI
+  // worker is actively writing the listing's fields and a parallel
+  // user write would race. The status reverts to DRAFT on worker
+  // completion or final failure, at which point all controls
+  // reappear.
+  const isDraft = listing.status === 'DRAFT';
+  const canEditPhotos = isOwner && isDraft;
+  const canExtract = isOwner && isDraft;
+  const canEditFields = isOwner && isDraft;
+  const isProcessing = listing.status === 'PROCESSING';
   const breakdown = parseBreakdown(listing.valuationBreakdown);
   const hasPhotos = listing.photos.length > 0;
+  const defects = listing.visibleDefects ?? [];
 
   async function publish() {
     'use server';
     const s = await auth();
     if (!s?.user?.email) redirect('/signin');
-    // Same photo-count guard as POST /api/listings/:id/publish so a
-    // stale tab can't promote an empty gallery to LIVE. updateMany
-    // with zero matches is a no-op; the page refresh below re-renders
-    // current state so the user sees why publish didn't happen.
     await prisma.listing.updateMany({
       where: {
         id,
@@ -103,16 +104,62 @@ export default async function ListingDetail({
       <Link href="/listings" style={{ color: '#888', fontSize: 14, textDecoration: 'none' }}>
         ← Your listings
       </Link>
-      <h1 style={{ fontSize: 28, marginTop: 16 }}>{listing.title}</h1>
-      <div style={{ fontSize: 13, color: '#888', marginBottom: 16 }}>
-        Status: {listing.status}
-      </div>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 16,
+          marginTop: 16,
+        }}
+      >
+        <div>
+          <h1 style={{ fontSize: 28, margin: 0 }}>{listing.title}</h1>
+          <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
+            Status: {listing.status}
+          </div>
+        </div>
+        {canEditFields && (
+          <Link
+            href={`/listings/${listing.id}/edit`}
+            style={{
+              fontSize: 13,
+              color: '#5b3df5',
+              textDecoration: 'none',
+              padding: '6px 12px',
+              border: '1px solid #5b3df5',
+              borderRadius: 6,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Edit details
+          </Link>
+        )}
+      </header>
+      {isProcessing && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 10,
+            background: '#eef',
+            border: '1px solid #ccd',
+            color: '#335',
+            borderRadius: 6,
+            fontSize: 13,
+          }}
+        >
+          AI is analyzing your photos. Edits and uploads are paused until
+          this finishes (usually under 30 seconds). The page will reflect
+          the new estimate once it&apos;s ready.
+        </div>
+      )}
       <dl
         style={{
           display: 'grid',
           gridTemplateColumns: 'auto 1fr',
           gap: '4px 24px',
           fontSize: 14,
+          marginTop: 16,
         }}
       >
         <dt style={{ color: '#888' }}>Category</dt>
@@ -147,7 +194,7 @@ export default async function ListingDetail({
           </>
         )}
         <dt style={{ color: '#888' }}>Asking value</dt>
-        <dd style={{ margin: 0 }}>${(listing.askingValueCents / 100).toFixed(0)} NZD</dd>
+        <dd style={{ margin: 0 }}>${(listing.askingValueCents / 100).toFixed(2)} NZD</dd>
         <dt style={{ color: '#888' }}>From</dt>
         <dd style={{ margin: 0 }}>{listing.originCity.name}</dd>
         <dt style={{ color: '#888' }}>Moving to</dt>
@@ -166,6 +213,31 @@ export default async function ListingDetail({
       />
 
       {breakdown && <ValuationCard breakdown={breakdown} />}
+
+      {isOwner && defects.length > 0 && (
+        <section
+          style={{
+            marginTop: 24,
+            padding: 16,
+            background: '#fff8e1',
+            border: '1px solid #f0d27a',
+            borderRadius: 8,
+          }}
+        >
+          <h2 style={{ fontSize: 16, margin: 0, marginBottom: 4 }}>
+            AI noticed in your photos
+          </h2>
+          <p style={{ fontSize: 12, color: '#7a5d00', margin: '0 0 8px' }}>
+            Not auto-applied. Consider mentioning these in your description
+            so swap partners know what to expect.
+          </p>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#5d4400' }}>
+            {defects.map((d, i) => (
+              <li key={i}>{d}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {isOwner && (
         <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -289,7 +361,7 @@ function ValuationCard({ breakdown }: { breakdown: ValuationBreakdown }) {
         }}
       >
         <strong style={{ fontSize: 14 }}>Estimated value today</strong>
-        <strong style={{ fontSize: 18 }}>${estimate.toFixed(0)} NZD</strong>
+        <strong style={{ fontSize: 18 }}>${estimate.toFixed(2)} NZD</strong>
       </div>
     </section>
   );

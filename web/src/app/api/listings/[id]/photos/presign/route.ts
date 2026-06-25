@@ -6,25 +6,15 @@ import { presignUpload } from '@/lib/r2-presign';
 
 export const runtime = 'nodejs';
 
-// HEIC is intentionally excluded: sharp's default prebuilt
-// binaries don't decode HEIC, so a successful upload would fail
-// in the worker. iPhone uploads need to be converted to JPEG
-// client-side (expo-image-manipulator does this) before calling
-// /presign.
 const presignSchema = z.object({
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
   sizeBytes: z
     .number()
     .int()
     .min(1)
-    .max(15 * 1024 * 1024), // 15MB cap
+    .max(15 * 1024 * 1024),
 });
 
-// POST /api/listings/:id/photos/presign
-// Returns a presigned PUT URL the client uploads the raw photo to.
-// We don't create a Photo row here — if the client never finishes
-// the upload + confirm round-trip, the R2 object stays orphaned and
-// the bucket's lifecycle policy cleans it up.
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -43,11 +33,10 @@ export async function POST(
   if (listing.user.email !== session.user.email) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
-  // Photos can only be added while the listing is being prepared
-  // (DRAFT) or actively processed (PROCESSING, e.g. mid-AI-extract).
-  // Once LIVE/PROPOSED/LOCKED/SWAPPED/WITHDRAWN, the photo set is
-  // frozen.
-  if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
+  // DRAFT only. PROCESSING means the AI worker is mid-write and a
+  // new photo would be invisible to the in-flight extraction (it
+  // only sees the photos at job-start time).
+  if (listing.status !== 'DRAFT') {
     return NextResponse.json(
       { error: 'invalid_status', currentStatus: listing.status },
       { status: 409 },

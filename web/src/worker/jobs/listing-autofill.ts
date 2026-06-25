@@ -17,9 +17,6 @@ import {
 
 export type ListingAutofillJob = { listingId: string };
 
-// askingValueCents floor matches createListingSchema's `.min(100)`
-// in lib/listings.ts so the worker can never silently push a row
-// below the API-validated minimum.
 const ASKING_VALUE_FLOOR_CENTS = 100;
 
 const extractionSchema = z.object({
@@ -60,11 +57,6 @@ async function loadPhotoForClaude(r2Key: string): Promise<{
   );
   if (!obj.Body) throw new Error(`r2 object body missing: ${r2Key}`);
   const buf = Buffer.from(await obj.Body.transformToByteArray());
-
-  // Downscale to a 1568px long edge (Anthropic's recommended max for
-  // vision) + JPEG q85. Keeps base64-inflated payload comfortably
-  // under the 32MB Messages API cap even with 4 photos in flight,
-  // and bakes in EXIF rotation so Claude sees the photo upright.
   const compressed = await sharp(buf, { failOn: 'truncated' })
     .rotate()
     .resize({
@@ -75,11 +67,7 @@ async function loadPhotoForClaude(r2Key: string): Promise<{
     })
     .jpeg({ quality: 85 })
     .toBuffer();
-
-  return {
-    data: compressed.toString('base64'),
-    mediaType: 'image/jpeg',
-  };
+  return { data: compressed.toString('base64'), mediaType: 'image/jpeg' };
 }
 
 export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
@@ -97,11 +85,19 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     console.warn(`[listing-autofill] listing ${listingId} not found, skipping`);
     return { skipped: true };
   }
+  // Accept both DRAFT and PROCESSING for forward/backward compat
+  // across the M3a ↔ M3b worker rollout:
+  //   - New web pre-flips DRAFT → PROCESSING before enqueue (M3b)
+  //   - Old web enqueues without pre-flip; listing stays DRAFT.
+  // Either way the worker writes `status: 'DRAFT'` after persist so
+  // a listing never gets stuck in PROCESSING. The race against user
+  // edits is closed by the API/PATCH/edit-page guards, not by the
+  // worker's pre-check.
   if (listing.status !== 'DRAFT' && listing.status !== 'PROCESSING') {
     console.warn(
       `[listing-autofill] ${listingId} skipped, status=${listing.status}`,
     );
-    return { skipped: true, reason: 'status_changed_before_run' };
+    return { skipped: true, reason: 'wrong_status' };
   }
   if (listing.photos.length === 0) {
     throw new Error('no_photos');
@@ -167,18 +163,15 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
     depreciationCurve: category.depreciationCurve as unknown as DepreciationCurve,
   });
 
-  // Floor the asking value so a tiny AI retail estimate or a deep
-  // depreciation × WORN combination can't drive the listing below
-  // the API-layer minimum (createListingSchema.askingValueCents
-  // requires ≥ 100). The estimate itself is kept truthful in
-  // breakdown.estimatedValueCents so the user sees what the AI
-  // actually computed and can decide whether the listing is worth
-  // publishing at all.
   const askingValueCents = Math.max(
     ASKING_VALUE_FLOOR_CENTS,
     breakdown.estimatedValueCents,
   );
 
+  // Loose where-clause matches the loose pre-check above. We ALWAYS
+  // set status: 'DRAFT' regardless of starting state, so no listing
+  // can get stuck in PROCESSING because of a rollout race between web
+  // and worker services.
   const result = await prisma.listing.updateMany({
     where: {
       id: listingId,
@@ -198,6 +191,8 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
       estimatedValueCents: breakdown.estimatedValueCents,
       askingValueCents,
       valuationBreakdown: breakdown,
+      visibleDefects: extracted.visibleDefects,
+      status: 'DRAFT',
     },
   });
 
@@ -218,3 +213,43 @@ export const listingAutofillProcessor: Processor<ListingAutofillJob> = async (
 
   return { listingId, estimatedValueCents: breakdown.estimatedValueCents };
 };
+
+// Final-attempt failure handler: when BullMQ has exhausted retries
+// and the job is permanently failed, revert PROCESSING → DRAFT so
+// the user can edit and retry. Intermediate failures retry without
+// touching status. The where clause is scoped to PROCESSING so we
+// don't accidentally revert a listing that's already DRAFT (e.g.
+// because the processor itself completed the flip on a prior
+// successful run that we're seeing a duplicate failure event for).
+export function attachListingAutofillFailureHandler(worker: {
+  on: (event: 'failed', cb: (job: unknown, err: Error) => void) => void;
+}) {
+  worker.on('failed', async (job, err) => {
+    if (!job || typeof job !== 'object') return;
+    const j = job as {
+      attemptsMade?: number;
+      opts?: { attempts?: number };
+      data?: { listingId?: string };
+    };
+    const attempts = j.opts?.attempts ?? 1;
+    const attemptsMade = j.attemptsMade ?? 0;
+    if (attemptsMade < attempts) return;
+    const listingId = j.data?.listingId;
+    if (!listingId) return;
+    try {
+      await prisma.listing.updateMany({
+        where: { id: listingId, status: 'PROCESSING' },
+        data: { status: 'DRAFT' },
+      });
+      console.warn(
+        `[listing-autofill] ${listingId} reverted to DRAFT after final failure`,
+        { error: String(err) },
+      );
+    } catch (cleanupErr) {
+      console.error(
+        `[listing-autofill] revert failed for ${listingId}`,
+        cleanupErr,
+      );
+    }
+  });
+}

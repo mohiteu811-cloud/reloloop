@@ -6,12 +6,8 @@ import { r2, r2Bucket } from '@/lib/r2';
 
 export const runtime = 'nodejs';
 
-// Photos are mutable while a listing is being prepared. Once it's
-// LIVE/PROPOSED/LOCKED/SWAPPED/WITHDRAWN the photo set is frozen —
-// matching the upload/confirm endpoints' rule.
-const MUTABLE_LISTING_STATUSES = ['DRAFT', 'PROCESSING'] as const;
+const MUTABLE_LISTING_STATUSES = ['DRAFT'] as const;
 
-// DELETE /api/listings/:id/photos/:photoId
 export async function DELETE(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string; photoId: string }> },
@@ -22,11 +18,6 @@ export async function DELETE(
   }
   const { id, photoId } = await ctx.params;
 
-  // Read r2Key (and listing status, for error disambiguation) up
-  // front so we can unlink R2 after the row is gone. We still do
-  // the actual delete as an atomic conditional write below so a
-  // concurrent publish between the read and the delete can't strip
-  // photos from a now-frozen listing.
   const photo = await prisma.photo.findUnique({
     where: { id: photoId },
     select: {
@@ -47,8 +38,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
-  // Atomic conditional delete: only removes the row if it still
-  // belongs to a mutable-status listing owned by this user.
   const result = await prisma.photo.deleteMany({
     where: {
       id: photoId,
@@ -61,14 +50,6 @@ export async function DELETE(
   });
 
   if (result.count === 0) {
-    // count===0 can happen in two ways under concurrent traffic:
-    //   1. Another DELETE for this photo already committed — the
-    //      row is gone. Treat as idempotent success so retries are
-    //      safe.
-    //   2. A publish/transition committed between our read and our
-    //      delete — the row exists but the listing is now frozen.
-    //      Return 409 with the current status so the client can
-    //      tell the user.
     const current = await prisma.photo.findUnique({
       where: { id: photoId },
       select: { listing: { select: { status: true } } },
@@ -85,9 +66,23 @@ export async function DELETE(
     );
   }
 
-  // R2 cleanup is best-effort: if it fails, the orphaned object
-  // falls out via lifecycle policy rather than leaving the row
-  // pointing at deleted bytes.
+  // Photo set changed — clear AI-noticed defects since they were
+  // tied to a different set of images. Same rationale as the
+  // confirm route. Best-effort: if this update fails for some
+  // reason (it really shouldn't — we just authenticated above),
+  // we still return success on the photo delete.
+  await prisma.listing
+    .updateMany({
+      where: { id, user: { email: session.user.email } },
+      data: { visibleDefects: [] },
+    })
+    .catch((err) => {
+      console.error('[photo:delete] failed to clear defects', {
+        listingId: id,
+        err,
+      });
+    });
+
   await r2
     .send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: photo.r2Key }))
     .catch((err) => {
